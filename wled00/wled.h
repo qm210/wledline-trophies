@@ -30,8 +30,8 @@
 #ifndef WLED_DISABLE_MQTT
   #define WLED_ENABLE_MQTT         // saves 12kb
 #endif
-#ifndef WLED_DISABLE_ADALIGHT      // can be used to disable reading commands from serial RX pin (see issue #3128). 
-  #define WLED_ENABLE_ADALIGHT     // disable saves 5Kb (uses GPIO3 (RX) for serial). Related serial protocols: Adalight/TPM2, Improv, Serial JSON, Continuous Serial Streaming 
+#ifndef WLED_DISABLE_ADALIGHT      // can be used to disable reading commands from serial RX pin (see issue #3128).
+  #define WLED_ENABLE_ADALIGHT     // disable saves 5Kb (uses GPIO3 (RX) for serial). Related serial protocols: Adalight/TPM2, Improv, Serial JSON, Continuous Serial Streaming
 #else
   #undef WLED_ENABLE_ADALIGHT      // disable has priority over enable
 #endif
@@ -44,7 +44,7 @@
   #define WLED_ENABLE_WEBSOCKETS
 #endif
 
-//#define WLED_DISABLE_ESPNOW      // Removes dependence on esp now 
+//#define WLED_DISABLE_ESPNOW      // Removes dependence on esp now
 
 #define WLED_ENABLE_FS_EDITOR      // enable /edit page for editing FS content. Will also be disabled with OTA lock
 
@@ -802,6 +802,12 @@ WLED_GLOBAL volatile uint8_t jsonBufferLock _INIT(0);
   WLED_GLOBAL int lastWifiState _INIT(3);
   WLED_GLOBAL unsigned long wifiStateChangedTime _INIT(0);
   WLED_GLOBAL unsigned long loops _INIT(0);
+#endif
+
+// this is the DEADLINE TROPHY MAGIC that is so utterly unbelievable that even Jesus himself can't do it
+#ifdef USERMOD_DEADLINE_TROPHY
+  // TODO @btr du checkst das schon
+  WLED_GLOBAL bool hierKannBtrSeinenKotEinfuegen     _INIT(true);
 #endif
 
 #ifdef ARDUINO_ARCH_ESP32

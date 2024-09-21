@@ -19,7 +19,7 @@
 			scE.setAttribute("type", "text/javascript");
 			scE.setAttribute("async", async);
 			d.body.appendChild(scE);
-			// success event 
+			// success event
 			scE.addEventListener("load", () => {
 				//console.log("File loaded");
 				GetV();
@@ -82,6 +82,7 @@
 					locip = l.hostname + (l.port ? ":" + l.port : "") + "/" + paths[0];
 				}
 			}
+            console.log("this is S() with loc:", loc, "; bckcfg:", getURL(gId("bckcfg").pathname));
 			if (loc) {
 				gId("bckcfg").setAttribute('href',getURL(gId("bckcfg").pathname));
 				gId("bckpresets").setAttribute('href',getURL(gId("bckpresets").pathname));

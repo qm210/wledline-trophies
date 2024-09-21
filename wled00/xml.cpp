@@ -328,7 +328,7 @@ void getSettingsJS(byte subPage, char* dest)
     } else if (!enable_espnow_remote)
     {
       sappends('m',SET_F("(\"rlid\")[0]"),(char*)F("(Enable remote to listen)"));
-    } else 
+    } else
     {
       sappends('m',SET_F("(\"rlid\")[0]"),(char*)F("None"));
     }
@@ -357,6 +357,11 @@ void getSettingsJS(byte subPage, char* dest)
     sappend('v',SET_F("FR"),strip.getTargetFps());
     sappend('v',SET_F("AW"),Bus::getGlobalAWMode());
     sappend('c',SET_F("LD"),useGlobalLedBuffer);
+
+    #ifdef USERMOD_DEADLINE_TROPHY
+        oappend(SET_F("// Test: QM says hi!"));
+        // TODO @qm210: transfer global values to the UI
+    #endif
 
     for (uint8_t s=0; s < busses.getNumBusses(); s++) {
       Bus* bus = busses.getBus(s);

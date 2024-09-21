@@ -23,7 +23,7 @@
 			scE.setAttribute("type", "text/javascript");
 			scE.setAttribute("async", async);
 			d.body.appendChild(scE);
-			// success event 
+			// success event
 			scE.addEventListener("load", () => {
 				GetV();
 				checkSi();
@@ -516,7 +516,8 @@ Length: <input type="number" name="XC${i}" id="xc${i}" class="l" min="1" max="65
 
 			function receivedText(e) {
 				let lines = e.target.result;
-				var c = JSON.parse(lines); 
+				var c = JSON.parse(lines);
+                console.log("parsed json", c);
 				if (c.hw) {
 					if (c.hw.led) {
 						for (var i=0; i<10; i++) addLEDs(-1);
