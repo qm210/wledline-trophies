@@ -359,8 +359,11 @@ void getSettingsJS(byte subPage, char* dest)
     sappend('c',SET_F("LD"),useGlobalLedBuffer);
 
     #ifdef USERMOD_DEADLINE_TROPHY
-        oappend(SET_F("// Test: QM says hi!"));
+        oappend(SET_F("/* USERMOD_DEADLINE */ "));
+        // use this flag in order to hide certain features
+        oappend(SET_F("d.DEADLINE_TROPHY_MOD = true;"));
         // TODO @qm210: transfer global values to the UI
+        oappend(SET_F("/* END USERMODE_DEADLINE */ "));
     #endif
 
     for (uint8_t s=0; s < busses.getNumBusses(); s++) {

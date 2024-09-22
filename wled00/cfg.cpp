@@ -1,6 +1,11 @@
 #include "wled.h"
 #include "wled_ethernet.h"
 
+#ifdef USE_DEADLINE_CONFIG
+//#include "../usermods/DEADLINE_TROPHY/usermod_deadline_trophy.h"
+#include "../usermods/DEADLINE_TROPHY/config_overwrite.h"
+#endif
+
 /*
  * Serializes and parses the cfg.json and wsec.json settings files, stored in internal FS.
  * The structure of the JSON is not to be considered an official API and may change without notice.
@@ -575,10 +580,6 @@ bool deserializeConfig(JsonObject doc, bool fromFS) {
   CJSON(e131ProxyUniverse, dmx[F("e131proxy")]);
   #endif
 
-  #ifdef USERMOD_DEADLINE_TROPHY
-    // TODO @qm210 set the global variables (that @btr might have defined by now) from the JSON document here
-  #endif
-
   DEBUG_PRINTLN(F("Starting usermod config."));
   JsonObject usermods_settings = doc["um"];
   if (!usermods_settings.isNull()) {
@@ -624,9 +625,19 @@ void deserializeConfigFromFS() {
     return;
   }
 
+  JsonObject cfg = doc.as<JsonObject>();
+  bool needsSave = false;
+
+  #ifdef USE_DEADLINE_CONFIG
+    DEBUG_PRINTLN(F("[USE_DEADLINE_CONFIG] Overwrite config by hard-coded deadline config"));
+    // DeadlineTrophyUsermod::overwriteConfigForTrophy(cfg);
+    overwriteConfigForTrophy(cfg);
+    needsSave = true;
+  #endif
+
   // NOTE: This routine deserializes *and* applies the configuration
   //       Therefore, must also initialize ethernet from this function
-  bool needsSave = deserializeConfig(doc.as<JsonObject>(), true);
+  needsSave = deserializeConfig(cfg, true) || needsSave;
   releaseJSONBufferLock();
 
   if (needsSave) serializeConfig(); // usermods required new parameters

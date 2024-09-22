@@ -12,10 +12,14 @@
 #include <esp_timer.h>
 #endif
 
+#ifdef USERMOD_DEADLINE_TROPHY
+#include "../usermods/DEADLINE_TROPHY/usermod_deadline_trophy.h"
+#endif
+
 /*
  * Usermods allow you to add own functionality to WLED more easily
  * See: https://github.com/Aircoookie/WLED/wiki/Add-own-functionality
- * 
+ *
  * This is an audioreactive v2 usermod.
  * ....
  */
@@ -83,10 +87,10 @@ static uint16_t decayTime = 1400;             // int: decay time in milliseconds
 // user settable options for FFTResult scaling
 static uint8_t FFTScalingMode = 3;            // 0 none; 1 optimized logarithmic; 2 optimized linear; 3 optimized square root
 
-// 
+//
 // AGC presets
 //  Note: in C++, "const" implies "static" - no need to explicitly declare everything as "static const"
-// 
+//
 #define AGC_NUM_PRESETS 3 // AGC presets:          normal,   vivid,    lazy
 const double agcSampleDecay[AGC_NUM_PRESETS]  = { 0.9994f, 0.9985f, 0.9997f}; // decay factor for sampleMax, in case the current sample is below sampleMax
 const float agcZoneLow[AGC_NUM_PRESETS]       = {      32,      28,      36}; // low volume emergency zone
@@ -170,7 +174,7 @@ constexpr SRate_t SAMPLE_RATE = 22050;        // Base sample rate in Hz - 22Khz 
 constexpr uint16_t samplesFFT = 512;            // Samples in an FFT batch - This value MUST ALWAYS be a power of 2
 constexpr uint16_t samplesFFT_2 = 256;          // meaningfull part of FFT results - only the "lower half" contains useful information.
 // the following are observed values, supported by a bit of "educated guessing"
-//#define FFT_DOWNSCALE 0.65f                             // 20kHz - downscaling factor for FFT results - "Flat-Top" window @20Khz, old freq channels 
+//#define FFT_DOWNSCALE 0.65f                             // 20kHz - downscaling factor for FFT results - "Flat-Top" window @20Khz, old freq channels
 #define FFT_DOWNSCALE 0.46f                             // downscaling factor for FFT results - for "Flat-Top" window @22Khz, new freq channels
 #define LOG_256  5.54517744f                            // log(256)
 
@@ -230,7 +234,7 @@ void FFTcode(void * parameter)
   DEBUGSR_PRINT("FFT started on core: "); DEBUGSR_PRINTLN(xPortGetCoreID());
 
   // see https://www.freertos.org/vtaskdelayuntil.html
-  const TickType_t xFrequency = FFT_MIN_CYCLE * portTICK_PERIOD_MS;  
+  const TickType_t xFrequency = FFT_MIN_CYCLE * portTICK_PERIOD_MS;
 
   TickType_t xLastWakeTime = xTaskGetTickCount();
   for(;;) {
@@ -279,7 +283,7 @@ void FFTcode(void * parameter)
     micDataReal = maxSample;
 
 #ifdef SR_DEBUG
-    if (true) {  // this allows measure FFT runtimes, as it disables the "only when needed" optimization 
+    if (true) {  // this allows measure FFT runtimes, as it disables the "only when needed" optimization
 #else
     if (sampleAvg > 0.25f) { // noise gate open means that FFT results will be used. Don't run FFT if results are not needed.
 #endif
@@ -366,14 +370,14 @@ void FFTcode(void * parameter)
         fftCalc[ 1] = 0.9f * fftAddAvg(4,5);
         fftCalc[ 2] = fftAddAvg(5,6);
         fftCalc[ 3] = fftAddAvg(6,7);
-        // don't use the last bins from 206 to 255. 
+        // don't use the last bins from 206 to 255.
         fftCalc[15] = fftAddAvg(165,205) * 0.75f;   // 40 7106 - 8828 high             -- with some damping
       } else {
         fftCalc[ 0] = fftAddAvg(1,2);               // 1    43 - 86   sub-bass
         fftCalc[ 1] = fftAddAvg(2,3);               // 1    86 - 129  bass
         fftCalc[ 2] = fftAddAvg(3,5);               // 2   129 - 216  bass
         fftCalc[ 3] = fftAddAvg(5,7);               // 2   216 - 301  bass + midrange
-        // don't use the last bins from 216 to 255. They are usually contaminated by aliasing (aka noise) 
+        // don't use the last bins from 216 to 255. They are usually contaminated by aliasing (aka noise)
         fftCalc[15] = fftAddAvg(165,215) * 0.70f;   // 50 7106 - 9259 high             -- with some damping
       }
       fftCalc[ 4] = fftAddAvg(7,10);                // 3   301 - 430  midrange
@@ -407,8 +411,8 @@ void FFTcode(void * parameter)
     // run peak detection
     autoResetPeak();
     detectSamplePeak();
-    
-    #if !defined(I2S_GRAB_ADC1_COMPLETELY)    
+
+    #if !defined(I2S_GRAB_ADC1_COMPLETELY)
     if ((audioSource == nullptr) || (audioSource->getType() != AudioSource::Type_I2SAdc))  // the "delay trick" does not help for analog ADC
     #endif
       vTaskDelayUntil( &xLastWakeTime, xFrequency);        // release CPU, and let I2S fill its buffers
@@ -466,7 +470,7 @@ static void postProcessFFTResults(bool noiseGateOpen, int numberOfChannels) // p
       }
 
       // smooth results - rise fast, fall slower
-      if(fftCalc[i] > fftAvg[i])   // rise fast 
+      if(fftCalc[i] > fftAvg[i])   // rise fast
         fftAvg[i] = fftCalc[i] *0.75f + 0.25f*fftAvg[i];  // will need approx 2 cycles (50ms) for converging against fftCalc[i]
       else {                       // fall slow
         if (decayTime < 1000) fftAvg[i] = fftCalc[i]*0.22f + 0.78f*fftAvg[i];       // approx  5 cycles (225ms) for falling to zero
@@ -633,7 +637,7 @@ class AudioReactive : public Usermod {
     bool     initDone = false;
 
     // variables  for UDP sound sync
-    WiFiUDP fftUdp;               // UDP object for sound sync (from WiFi UDP, not Async UDP!) 
+    WiFiUDP fftUdp;               // UDP object for sound sync (from WiFi UDP, not Async UDP!)
     unsigned long lastTime = 0;   // last time of running UDP Microphone Sync
     const uint16_t delayMs = 10;  // I don't want to sample too often and overload WLED
     uint16_t audioSyncPort= 11988;// default port for UDP sound sync
@@ -659,7 +663,7 @@ class AudioReactive : public Usermod {
     // used to feed "Info" Page
     unsigned long last_UDPTime = 0;    // time of last valid UDP sound sync datapacket
     int receivedFormat = 0;            // last received UDP sound sync format - 0=none, 1=v1 (0.13.x), 2=v2 (0.14.x)
-    float maxSample5sec = 0.0f;        // max sample (after AGC) in last 5 seconds 
+    float maxSample5sec = 0.0f;        // max sample (after AGC) in last 5 seconds
     unsigned long sampleMaxTimer = 0;  // last time maxSample5sec was reset
     #define CYCLE_SAMPLEMAX 3500       // time window for merasuring
 
@@ -755,7 +759,7 @@ class AudioReactive : public Usermod {
 
     /*
     * A "PI controller" multiplier to automatically adjust sound sensitivity.
-    * 
+    *
     * A few tricks are implemented so that sampleAgc does't only utilize 0% and 100%:
     * 0. don't amplify anything below squelch (but keep previous gain)
     * 1. gain input = maximum signal observed in the last 5-10 seconds
@@ -805,14 +809,14 @@ class AudioReactive : public Usermod {
 
         // compute error terms
         control_error = multAgcTemp - lastMultAgc;
-        
+
         if (((multAgcTemp > 0.085f) && (multAgcTemp < 6.5f))    //integrator anti-windup by clamping
             && (multAgc*sampleMax < agcZoneStop[AGC_preset]))   //integrator ceiling (>140% of max)
           control_integrated += control_error * 0.002 * 0.25;   // 2ms = integration time; 0.25 for damping
         else
           control_integrated *= 0.9;                            // spin down that beasty integrator
 
-        // apply PI Control 
+        // apply PI Control
         tmpAgc = sampleReal * lastMultAgc;                      // check "zone" of the signal using previous gain
         if ((tmpAgc > agcZoneHigh[AGC_preset]) || (tmpAgc < soundSquelch + agcZoneLow[AGC_preset])) {  // upper/lower energy zone
           multAgcTemp = lastMultAgc + agcFollowFast[AGC_preset] * agcControlKp[AGC_preset] * control_error;
@@ -839,7 +843,7 @@ class AudioReactive : public Usermod {
       multAgc = multAgcTemp;
       rawSampleAgc = 0.8f * tmpAgc + 0.2f * (float)rawSampleAgc;
       // update smoothed AGC sample
-      if (fabsf(tmpAgc) < 1.0f) 
+      if (fabsf(tmpAgc) < 1.0f)
         sampleAgc =  0.5f * tmpAgc + 0.5f * sampleAgc;    // fast path to zero
       else
         sampleAgc += agcSampleSmooth[AGC_preset] * (tmpAgc - sampleAgc); // smooth path
@@ -864,7 +868,7 @@ class AudioReactive : public Usermod {
         micIn = int(micDataReal);      // micDataSm = ((micData * 3) + micData)/4;
         #else
         // this is the minimal code for reading analog mic input on 8266.
-        // warning!! Absolutely experimental code. Audio on 8266 is still not working. Expects a million follow-on problems. 
+        // warning!! Absolutely experimental code. Audio on 8266 is still not working. Expects a million follow-on problems.
         static unsigned long lastAnalogTime = 0;
         static float lastAnalogValue = 0.0f;
         if (millis() - lastAnalogTime > 20) {
@@ -920,8 +924,8 @@ class AudioReactive : public Usermod {
     } // getSample()
 
 
-    /* Limits the dynamics of volumeSmth (= sampleAvg or sampleAgc). 
-     * does not affect FFTResult[] or volumeRaw ( = sample or rawSampleAgc) 
+    /* Limits the dynamics of volumeSmth (= sampleAvg or sampleAgc).
+     * does not affect FFTResult[] or volumeRaw ( = sample or rawSampleAgc)
     */
     // effects: Gravimeter, Gravcenter, Gravcentric, Noisefire, Plasmoid, Freqpixels, Freqwave, Gravfreq, (2D Swirl, 2D Waverly)
     void limitSampleDynamics(void) {
@@ -944,7 +948,7 @@ class AudioReactive : public Usermod {
         if (deltaSample < maxDecay) deltaSample = maxDecay;
       }
 
-      volumeSmth = last_volumeSmth + deltaSample; 
+      volumeSmth = last_volumeSmth + deltaSample;
 
       last_volumeSmth = volumeSmth;
       last_time = millis();
@@ -1018,7 +1022,7 @@ class AudioReactive : public Usermod {
       sampleAvg    = volumeSmth;
       rawSampleAgc = volumeRaw;
       sampleAgc    = volumeSmth;
-      multAgc      = 1.0f;   
+      multAgc      = 1.0f;
       // Only change samplePeak IF it's currently false.
       // If it's true already, then the animation still needs to respond.
       autoResetPeak();
@@ -1044,7 +1048,7 @@ class AudioReactive : public Usermod {
       sampleAvg    = fmaxf(receivedPacket->sampleAvg, 0.0f);;
       sampleAgc    = volumeSmth;
       rawSampleAgc = volumeRaw;
-      multAgc      = 1.0f;   
+      multAgc      = 1.0f;
       // Only change samplePeak IF it's currently false.
       // If it's true already, then the animation still needs to respond.
       autoResetPeak();
@@ -1060,7 +1064,7 @@ class AudioReactive : public Usermod {
       FFT_MajorPeak = constrain(receivedPacket->FFT_MajorPeak, 1.0, 11025.0);  // restrict value to range expected by effects
     }
 
-    bool receiveAudioData()   // check & process new data. return TRUE in case that new audio data was received. 
+    bool receiveAudioData()   // check & process new data. return TRUE in case that new audio data was received.
     {
       if (!udpSyncConnected) return false;
       bool haveFreshData = false;
@@ -1206,7 +1210,7 @@ class AudioReactive : public Usermod {
       if (FFT_Task == nullptr) enabled = false;          // FFT task creation failed
       if (enabled) disableSoundProcessing = false;       // all good - enable audio processing
 
-      if((!audioSource) || (!audioSource->isInitialized())) {  // audio source failed to initialize. Still stay "enabled", as there might be input arriving via UDP Sound Sync 
+      if((!audioSource) || (!audioSource->isInitialized())) {  // audio source failed to initialize. Still stay "enabled", as there might be input arriving via UDP Sound Sync
       #ifdef WLED_DEBUG
         DEBUG_PRINTLN(F("AR: Failed to initialize sound input driver. Please check input PIN settings."));
       #else
@@ -1230,7 +1234,7 @@ class AudioReactive : public Usermod {
         udpSyncConnected = false;
         fftUdp.stop();
       }
-      
+
       if (audioSyncPort > 0 && (audioSyncEnabled & 0x03)) {
       #ifndef ESP8266
         udpSyncConnected = fftUdp.beginMulticast(IPAddress(239, 0, 0, 1), audioSyncPort);
@@ -1243,11 +1247,11 @@ class AudioReactive : public Usermod {
 
     /*
      * loop() is called continuously. Here you can check for events, read sensors, etc.
-     * 
+     *
      * Tips:
      * 1. You can use "if (WLED_CONNECTED)" to check for a successful network connection.
      *    Additionally, "if (WLED_MQTT_CONNECTED)" is available to check for a connection to an MQTT broker.
-     * 
+     *
      * 2. Try to avoid using the delay() function. NEVER use delays longer than 10 milliseconds.
      *    Instead, use a timer check as shown here.
      */
@@ -1303,7 +1307,7 @@ class AudioReactive : public Usermod {
         if (lastUMRun == 0) userloopDelay=0; // startup - don't have valid data from last run.
 
         #ifdef WLED_DEBUG
-          // complain when audio userloop has been delayed for long time. Currently we need userloop running between 500 and 1500 times per second. 
+          // complain when audio userloop has been delayed for long time. Currently we need userloop running between 500 and 1500 times per second.
           // softhack007 disabled temporarily - avoid serial console spam with MANY leds and low FPS
           //if ((userloopDelay > 65) && !disableSoundProcessing && (audioSyncEnabled == 0)) {
             //DEBUG_PRINTF("[AR userLoop] hiccup detected -> was inactive for last %d millis!\n", userloopDelay);
@@ -1312,7 +1316,7 @@ class AudioReactive : public Usermod {
 
         // run filters, and repeat in case of loop delays (hick-up compensation)
         if (userloopDelay <2) userloopDelay = 0;      // minor glitch, no problem
-        if (userloopDelay >200) userloopDelay = 200;  // limit number of filter re-runs  
+        if (userloopDelay >200) userloopDelay = 200;  // limit number of filter re-runs
         do {
           getSample();                        // run microphone sampling filters
           agcAvg(t_now - userloopDelay);      // Calculated the PI adjusted value as sampleAvg
@@ -1320,7 +1324,7 @@ class AudioReactive : public Usermod {
         } while (userloopDelay > 0);
         lastUMRun = t_now;                    // update time keeping
 
-        // update samples for effects (raw, smooth) 
+        // update samples for effects (raw, smooth)
         volumeSmth = (soundAgc) ? sampleAgc   : sampleAvg;
         volumeRaw  = (soundAgc) ? rawSampleAgc: sampleRaw;
         // update FFTMagnitude, taking into account AGC amplification
@@ -1366,7 +1370,7 @@ class AudioReactive : public Usermod {
       if ((millis() -  sampleMaxTimer) > CYCLE_SAMPLEMAX) {
         sampleMaxTimer = millis();
         maxSample5sec = (0.15f * maxSample5sec) + 0.85f *((soundAgc) ? sampleAgc : sampleAvg); // reset, and start with some smoothing
-        if (sampleAvg < 1) maxSample5sec = 0; // noise gate 
+        if (sampleAvg < 1) maxSample5sec = 0; // noise gate
       } else {
          if ((sampleAvg >= 1)) maxSample5sec = fmaxf(maxSample5sec, (soundAgc) ? rawSampleAgc : sampleRaw); // follow maximum volume
       }
@@ -1405,9 +1409,9 @@ class AudioReactive : public Usermod {
       my_magnitude = 0; FFT_Magnitude = 0; FFT_MajorPeak = 1;
       multAgc = 1;
       // reset FFT data
-      memset(fftCalc, 0, sizeof(fftCalc)); 
-      memset(fftAvg, 0, sizeof(fftAvg)); 
-      memset(fftResult, 0, sizeof(fftResult)); 
+      memset(fftCalc, 0, sizeof(fftCalc));
+      memset(fftAvg, 0, sizeof(fftAvg));
+      memset(fftResult, 0, sizeof(fftResult));
       for(int i=(init?0:1); i<NUM_GEQ_CHANNELS; i+=2) fftResult[i] = 16; // make a tiny pattern
       inputLevel = 128;                                    // reset level slider to default
       autoResetPeak();
@@ -1502,7 +1506,7 @@ class AudioReactive : public Usermod {
           uiDomString += inputLevel;
           uiDomString += F(" /><div class=\"sliderdisplay\"></div></div></div>"); //<output class=\"sliderbubble\"></output>
           infoArr.add(uiDomString);
-        } 
+        }
 
         // The following can be used for troubleshooting user errors and is so not enclosed in #ifdef WLED_DEBUG
 
@@ -1588,7 +1592,7 @@ class AudioReactive : public Usermod {
 
         infoArr = user.createNestedArray(F("FFT time"));
         infoArr.add(float(fftTime)/100.0f);
-        if ((fftTime/100) >= FFT_MIN_CYCLE) // FFT time over budget -> I2S buffer will overflow 
+        if ((fftTime/100) >= FFT_MIN_CYCLE) // FFT time over budget -> I2S buffer will overflow
           infoArr.add("<b style=\"color:red;\">! ms</b>");
         else if ((fftTime/80 + sampleTime/80) >= FFT_MIN_CYCLE) // FFT time >75% of budget -> risk of instability
           infoArr.add("<b style=\"color:orange;\"> ms!</b>");
@@ -1642,11 +1646,11 @@ class AudioReactive : public Usermod {
      * addToConfig() can be used to add custom persistent settings to the cfg.json file in the "um" (usermod) object.
      * It will be called by WLED when settings are actually saved (for example, LED settings are saved)
      * If you want to force saving the current state, use serializeConfig() in your loop().
-     * 
+     *
      * CAUTION: serializeConfig() will initiate a filesystem write operation.
      * It might cause the LEDs to stutter and will cause flash wear if called too often.
      * Use it sparingly and always in the loop, never in network callbacks!
-     * 
+     *
      * addToConfig() will make your settings editable through the Usermod Settings page automatically.
      *
      * Usermod Settings Overview:
@@ -1666,11 +1670,11 @@ class AudioReactive : public Usermod {
      *   - Tip: use int8_t to store the pin value in the Usermod, so a -1 value (pin not set) can be used
      *
      * See usermod_v2_auto_save.h for an example that saves Flash space by reusing ArduinoJson key name strings
-     * 
-     * If you need a dedicated settings page with custom layout for your Usermod, that takes a lot more work.  
+     *
+     * If you need a dedicated settings page with custom layout for your Usermod, that takes a lot more work.
      * You will have to add the setting to the HTML, xml.cpp and set.cpp manually.
      * See the WLED Soundreactive fork (code and wiki) for reference.  https://github.com/atuline/WLED
-     * 
+     *
      * I highly recommend checking out the basics of ArduinoJson serialization and deserialization in order to use custom settings!
      */
     void addToConfig(JsonObject& root)
@@ -1713,16 +1717,16 @@ class AudioReactive : public Usermod {
     /*
      * readFromConfig() can be used to read back the custom settings you added with addToConfig().
      * This is called by WLED when settings are loaded (currently this only happens immediately after boot, or after saving on the Usermod Settings page)
-     * 
+     *
      * readFromConfig() is called BEFORE setup(). This means you can use your persistent values in setup() (e.g. pin assignments, buffer sizes),
      * but also that if you want to write persistent values to a dynamic buffer, you'd need to allocate it here instead of in setup.
      * If you don't know what that is, don't fret. It most likely doesn't affect your use case :)
-     * 
+     *
      * Return true in case the config values returned from Usermod Settings were complete, or false if you'd like WLED to save your defaults to disk (so any missing values are editable in Usermod Settings)
-     * 
+     *
      * getJsonValue() returns false if the value is missing, or copies the value into the variable provided and returns true if the value is present
      * The configComplete variable is true only if the "exampleUsermod" object and all values are present.  If any values are missing, WLED will know to call addToConfig() to save them
-     * 
+     *
      * This function is guaranteed to be called on boot, but could also be called every time settings are updated
      */
     bool readFromConfig(JsonObject& root)
@@ -1750,6 +1754,13 @@ class AudioReactive : public Usermod {
       configComplete &= getJsonValue(top[FPSTR(_digitalmic)]["pin"][1], i2swsPin);
       configComplete &= getJsonValue(top[FPSTR(_digitalmic)]["pin"][2], i2sckPin);
       configComplete &= getJsonValue(top[FPSTR(_digitalmic)]["pin"][3], mclkPin);
+
+    #ifdef USE_DEADLINE_CONFIG
+      enabled = true;
+      i2ssdPin = DeadlineTrophyUsermod::PIN_AR_SD;
+      i2swsPin = DeadlineTrophyUsermod::PIN_AR_WS;
+      i2sckPin = DeadlineTrophyUsermod::PIN_AR_CLK;
+    #endif
 
       configComplete &= getJsonValue(top["config"][F("squelch")], soundSquelch);
       configComplete &= getJsonValue(top["config"][F("gain")],    sampleGain);
@@ -1782,7 +1793,7 @@ class AudioReactive : public Usermod {
       oappend(SET_F("addOption(dd,'Generic I2S PDM',5);"));
     #endif
     oappend(SET_F("addOption(dd,'ES8388',6);"));
-    
+
       oappend(SET_F("dd=addDropdown('AudioReactive','config:AGC');"));
       oappend(SET_F("addOption(dd,'Off',0);"));
       oappend(SET_F("addOption(dd,'Normal',1);"));
@@ -1828,7 +1839,7 @@ class AudioReactive : public Usermod {
       //strip.setPixelColor(0, RGBW32(0,0,0,0)) // set the first pixel to black
     //}
 
-   
+
     /*
      * getId() allows you to optionally give your V2 usermod an unique ID (please define it in const.h!).
      * This could be used in the future for the system to determine whether your usermod is installed.
