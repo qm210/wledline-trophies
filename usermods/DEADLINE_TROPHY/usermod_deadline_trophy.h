@@ -15,9 +15,10 @@ public:
 
 private:
 
-    float logoThermValue = 0.0;
-    float otherThermValue = 0.0;
-    float vCapValue = 0.0;
+    // analog readings
+    uint16_t logoThermValue = 0;
+    uint16_t otherThermValue = 0;
+    uint16_t vCapValue = 0;
 
     float limitFunc_logoThermSlope = 0.0;
     float limitFunc_logoThermOffset = 0.0;
@@ -26,7 +27,6 @@ private:
 
     float vCapThreshold = 4.6;
     float vInputThreshold = 4.6;
-
 
 public:
 
@@ -38,7 +38,22 @@ public:
 
     void loop()
     {
-        // TODO @btr fun might go here
+        // TODO @btr moar fun might go here
+
+        logoThermValue = analogRead(PIN_LOGOTHERM);
+        otherThermValue = analogRead(PIN_OTHERTHERM);
+        vCapValue = analogRead(PIN_VCAP);
+
+        // cf. button.cpp: handleAnalog()
+        // - would yield() be useful? (or is this thing fast anyhow)
+        // - button.cpp handleAnalog() does some smoothing, maybe that's nice for us, too
+
+        // just some testing whether we see ANY change
+        // --> i.e. update the LED Settings page by F5 and watch it change :)
+        strip.ablMilliampsMax = random(0, 800);
+
+        // qm210: let's try to update the UI per web socket
+        // updateInterfaces(CALL_MODE_WS_SEND);
     }
 
     void addToConfig(JsonObject& doc)

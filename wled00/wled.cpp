@@ -635,7 +635,7 @@ bool WLED::initEthernet()
   /*
   For LAN8720 the most correct way is to perform clean reset each time before init
   applying LOW to power or nRST pin for at least 100 us (please refer to datasheet, page 59)
-  ESP_IDF > V4 implements it (150 us, lan87xx_reset_hw(esp_eth_phy_t *phy) function in 
+  ESP_IDF > V4 implements it (150 us, lan87xx_reset_hw(esp_eth_phy_t *phy) function in
   /components/esp_eth/src/esp_eth_phy_lan87xx.c, line 280)
   but ESP_IDF < V4 does not. Lets do it:
   [not always needed, might be relevant in some EMI situations at startup and for hot resets]
@@ -678,6 +678,7 @@ bool WLED::initEthernet()
 void WLED::initConnection()
 {
   #ifdef WLED_ENABLE_WEBSOCKETS
+  DEBUG_PRINTLN(F("Init Web Socket Connection..."));
   ws.onEvent(wsEvent);
   #endif
 

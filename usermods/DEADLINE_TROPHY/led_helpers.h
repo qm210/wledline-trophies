@@ -1,5 +1,4 @@
-#ifndef DEADLINE_TROPHY_LED_HELPERS_H_
-#define DEADLINE_TROPHY_LED_HELPERS_H_
+#pragma once
 
 #include "wled.h"
 
@@ -27,7 +26,7 @@ JsonObject trophyLedStripe(JsonArray outputs, int start, int len, int dataPin, i
 }
 
 JsonObject trophySinglePwm(JsonArray outputs, int start, int dataPin) {
-    auto result = outputs.createNestedObject();
+    auto result = trophyBaseOutput(outputs);
     result["type"] = 41; // "white pwm"
     result["start"] = start;
     result["len"] = 1;
@@ -35,5 +34,3 @@ JsonObject trophySinglePwm(JsonArray outputs, int start, int dataPin) {
     result["freq"] = 6510;
     return result;
 }
-
-#endif
