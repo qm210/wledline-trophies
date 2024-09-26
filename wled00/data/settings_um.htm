@@ -27,7 +27,7 @@
 		scE.setAttribute("type", "text/javascript");
 		scE.setAttribute("async", async);
 		d.body.appendChild(scE);
-		// success event 
+		// success event
 		scE.addEventListener("load", () => {
 			GetV();
 			for (let r of d.rsvd) { pins.push(r); pinO.push("rsvd"); } // reserved pins
@@ -301,6 +301,8 @@
 			if (urows==="") urows = "Usermods configuration not found.<br>Press <i>Save</i> to initialize defaults.";
 			gId("um").innerHTML = urows;
 			loadJS(getURL('/settings/s.js?p=8'), false);	// If we set async false, file is loaded and executed, then next statement is processed
+
+            console.log("Deadline Values?", d.DEADLINE_VALUES);
 		})
 		.catch((error)=>{
 			gId('lserr').style.display = "inline";
@@ -324,20 +326,27 @@
 		<span id="lserr" style="color:red; display:none">&#9888; Could not load configuration.</span><hr>
 		</div>
 		<h2>Usermod Setup</h2>
-		Global I<sup>2</sup>C GPIOs (HW)<br>
-		<i class="warn">(change requires reboot!)</i><br>
-		SDA:<input type="number" min="-1" max="48" name="SDA" onchange="check(this,'if')" class="s" placeholder="SDA">
-		SCL:<input type="number" min="-1" max="48" name="SCL" onchange="check(this,'if')" class="s" placeholder="SCL">
-		<hr class="sml">
-		Global SPI GPIOs (HW)<br>
-		<i class="warn">(only changable on ESP32, change requires reboot!)</i><br>
-		MOSI:<input type="number" min="-1" max="48" name="MOSI" onchange="check(this,'if')" class="s" placeholder="MOSI">
-		MISO:<input type="number" min="-1" max="48" name="MISO" onchange="check(this,'if')" class="s" placeholder="MISO">
-		SCLK:<input type="number" min="-1" max="48" name="SCLK" onchange="check(this,'if')" class="s" placeholder="SCLK">
-		<hr class="sml">
+
+        <!-- HIDE FOR DEADLINE TROPHY -->
+        <div style="display:none">
+            Global I<sup>2</sup>C GPIOs (HW)<br>
+            <i class="warn">(change requires reboot!)</i><br>
+            SDA:<input type="number" min="-1" max="48" name="SDA" onchange="check(this,'if')" class="s" placeholder="SDA">
+            SCL:<input type="number" min="-1" max="48" name="SCL" onchange="check(this,'if')" class="s" placeholder="SCL">
+            <hr class="sml">
+            Global SPI GPIOs (HW)<br>
+            <i class="warn">(only changable on ESP32, change requires reboot!)</i><br>
+            MOSI:<input type="number" min="-1" max="48" name="MOSI" onchange="check(this,'if')" class="s" placeholder="MOSI">
+            MISO:<input type="number" min="-1" max="48" name="MISO" onchange="check(this,'if')" class="s" placeholder="MISO">
+            SCLK:<input type="number" min="-1" max="48" name="SCLK" onchange="check(this,'if')" class="s" placeholder="SCLK">
+            <hr class="sml">
+        </div>
+
 		Reboot after save? <input type="checkbox" name="RBT"><br>
 		<div id="um">Loading settings...</div>
-		<hr><button type="button" onclick="B()">Back</button><button type="submit">Save</button>
+        <div id="deadline_values"></div>
+		<hr>
+        <button type="button" onclick="B()">Back</button><button type="submit">Save</button>
 	</form>
 </body>
 

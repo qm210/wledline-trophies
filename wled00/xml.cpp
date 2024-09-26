@@ -1,6 +1,10 @@
 #include "wled.h"
 #include "wled_ethernet.h"
 
+#ifdef USERMOD_DEADLINE_TROPHY
+#include "../usermods/DEADLINE_TROPHY/usermod_deadline_trophy.h"
+#endif
+
 /*
  * Sending XML status files to client
  */
@@ -359,10 +363,19 @@ void getSettingsJS(byte subPage, char* dest)
     sappend('c',SET_F("LD"),useGlobalLedBuffer);
 
     #ifdef USERMOD_DEADLINE_TROPHY
+        auto umDeadline = (DeadlineTrophyUsermod*)usermods.lookup(USERMOD_ID_DEADLINE_TROPHY);
         oappend(SET_F("/* USERMOD_DEADLINE */ "));
-        // use this flag in order to hide certain features
-        oappend(SET_F("d.DEADLINE_TROPHY_MOD = true;"));
-        // TODO @qm210: transfer global values to the UI
+        if (umDeadline != nullptr)
+        {
+            oappend(SET_F("d.DEADLINE_TROPHY_MOD = true;"));
+            oappend(SET_F("d.DEADLINE_VALUES = {logoTherm: "));
+            oappendi(umDeadline->logoTherm());
+            oappend(SET_F(", otherTherm: "));
+            oappendi(umDeadline->otherTherm());
+            oappend(SET_F(", vCap: "));
+            oappendi(umDeadline->vCap());
+            oappend(SET_F("};"));
+        }
         oappend(SET_F("/* END USERMODE_DEADLINE */ "));
     #endif
 
@@ -713,6 +726,21 @@ void getSettingsJS(byte subPage, char* dest)
     oappend(SET_F("addInfo('MISO','")); oappendi(HW_PIN_MISOSPI);  oappend(SET_F("');"));
     oappend(SET_F("addInfo('SCLK','")); oappendi(HW_PIN_CLOCKSPI); oappend(SET_F("');"));
     usermods.appendConfigData();
+
+    #ifdef USERMOD_DEADLINE_TROPHY
+    auto umDeadline = (DeadlineTrophyUsermod*)usermods.lookup(USERMOD_ID_DEADLINE_TROPHY);
+    if (umDeadline != nullptr)
+    {
+        oappend(SET_F("d.DEADLINE_VALUES = {logoTherm: "));
+        oappendi(umDeadline->logoTherm());
+        oappend(SET_F(", otherTherm: "));
+        oappendi(umDeadline->otherTherm());
+        oappend(SET_F(", vCap: "));
+        oappendi(umDeadline->vCap());
+        oappend(SET_F("};"));
+    }
+    #endif
+
   }
 
   if (subPage == SUBPAGE_UPDATE) // update

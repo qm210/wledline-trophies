@@ -604,7 +604,16 @@ void deserializeConfigFromFS() {
 
   if (!requestJSONBufferLock(1)) return;
 
-  DEBUG_PRINTLN(F("Reading settings from /cfg.json..."));
+  #ifdef RESET_CONFIG
+    DEBUG_PRINT(F("[RESET_CONFIG] Delete /cfg.json... "));
+    if (WLED_FS.remove("/cfg.json")) {
+        DEBUG_PRINTLN("done.");
+    } else {
+        DEBUG_PRINTLN("failed.");
+    }
+  #else
+    DEBUG_PRINTLN(F("Reading settings from /cfg.json..."));
+  #endif
 
   success = readObjectFromFile("/cfg.json", nullptr, &doc);
   if (!success) { // if file does not exist, optionally try reading from EEPROM and then save defaults to FS
@@ -630,14 +639,13 @@ void deserializeConfigFromFS() {
 
   #ifdef USE_DEADLINE_CONFIG
     DEBUG_PRINTLN(F("[USE_DEADLINE_CONFIG] Overwrite config by hard-coded deadline config"));
-    // DeadlineTrophyUsermod::overwriteConfigForTrophy(cfg);
     overwriteConfigForTrophy(cfg);
     needsSave = true;
   #endif
 
   // NOTE: This routine deserializes *and* applies the configuration
   //       Therefore, must also initialize ethernet from this function
-  needsSave = deserializeConfig(cfg, true) || needsSave;
+  needsSave |= deserializeConfig(cfg, true);
   releaseJSONBufferLock();
 
   if (needsSave) serializeConfig(); // usermods required new parameters

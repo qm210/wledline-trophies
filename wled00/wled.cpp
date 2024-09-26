@@ -40,8 +40,12 @@ void WLED::loop()
   size_t               loopDelay = loopMillis - lastRun;
   if (lastRun == 0) loopDelay=0; // startup - don't have valid data from last run.
   if (loopDelay > 2) DEBUG_PRINTF("Loop delayed more than %ums.\n", loopDelay);
+
+  #ifndef WLED_DEBUG_HIDE_INFO
   static unsigned long maxLoopMillis = 0;
   static size_t        avgLoopMillis = 0;
+  #endif
+
   static unsigned long maxUsermodMillis = 0;
   static size_t        avgUsermodMillis = 0;
   static unsigned long maxStripMillis = 0;
@@ -210,7 +214,7 @@ void WLED::loop()
     reset();
 
 // DEBUG serial logging (every 30s)
-#ifdef WLED_DEBUG
+#if defined(WLED_DEBUG) && !defined(WLED_DEBUG_HIDE_INFO)
   loopMillis = millis() - loopMillis;
   if (loopMillis > 30) {
     DEBUG_PRINTF("Loop took %lums.\n", loopMillis);
@@ -219,6 +223,7 @@ void WLED::loop()
   }
   avgLoopMillis += loopMillis;
   if (loopMillis > maxLoopMillis) maxLoopMillis = loopMillis;
+
   if (millis() - debugTime > 29999) {
     DEBUG_PRINTLN(F("---DEBUG INFO---"));
     DEBUG_PRINT(F("Runtime: "));       DEBUG_PRINTLN(millis());
@@ -426,6 +431,11 @@ pinManager.allocateMultiplePins(pins, sizeof(pins)/sizeof(managed_pin_type), Pin
   DEBUG_PRINTLN(F("Reading config"));
   deserializeConfigFromFS();
 
+  #ifdef USE_DEADLINE_CONFIG
+    DEBUG_PRINTLN(F("[DEADLINE] Even more hardcode manipulating the config (global vars)."));
+    strip.isMatrix = false;
+  #endif
+
 #if defined(STATUSLED) && STATUSLED>=0
   if (!pinManager.isPinAllocated(STATUSLED)) {
     // NOTE: Special case: The status LED should *NOT* be allocated.
@@ -544,6 +554,7 @@ void WLED::initAP(bool resetAP)
   }
   DEBUG_PRINT(F("Opening access point "));
   DEBUG_PRINTLN(apSSID);
+  DEBUG_PRINTLN(apPass);
   WiFi.softAPConfig(IPAddress(4, 3, 2, 1), IPAddress(4, 3, 2, 1), IPAddress(255, 255, 255, 0));
   WiFi.softAP(apSSID, apPass, apChannel, apHide);
   #if defined(LOLIN_WIFI_FIX) && (defined(ARDUINO_ARCH_ESP32C3) || defined(ARDUINO_ARCH_ESP32S2) || defined(ARDUINO_ARCH_ESP32S3))

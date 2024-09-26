@@ -736,34 +736,39 @@ Length: <input type="number" name="XC${i}" id="xc${i}" class="l" min="1" max="65
 		Custom bus start indices: <input type="checkbox" onchange="tglSi(this.checked)" id="si"><br>
 		Use global LED buffer: <input type="checkbox" name="LD" onchange="UI()"><br>
 		<hr class="sml">
-		<div id="color_order_mapping">
-			Color Order Override:
-			<div id="com_entries"></div>
-			<hr class="sml">
-			<button type="button" id="com_add" onclick="addCOM()">+</button>
-			<button type="button" id="com_rem" onclick="remCOM()">-</button><br>
-		</div>
-		<hr class="sml">
-		<div id="btns"></div>
-		Disable internal pull-up/down: <input type="checkbox" name="IP"><br>
-		Touch threshold: <input type="number" class="s" min="0" max="100" name="TT" required><br>
-		IR GPIO: <input type="number" min="-1" max="48" name="IR" onchange="UI()" class="xs"><select name="IT" onchange="UI()">
-		<option value=0>Remote disabled</option>
-		<option value=1>24-key RGB</option>
-		<option value=2>24-key with CT</option>
-		<option value=3>40-key blue</option>
-		<option value=4>44-key RGB</option>
-		<option value=5>21-key RGB</option>
-		<option value=6>6-key black</option>
-		<option value=7>9-key red</option>
-		<option value=8>JSON remote</option>
-		</select><span style="cursor: pointer;" onclick="off('IR')">&nbsp;&#x2715;</span><br>
-		Apply IR change to main segment only: <input type="checkbox" name="MSO"><br>
-		<div id="json" style="display:none;">JSON file: <input type="file" name="data" accept=".json"><button type="button" class="sml" onclick="uploadFile('/ir.json')">Upload</button><br></div>
-		<a href="https://kno.wled.ge/interfaces/infrared/" target="_blank">IR info</a><br>
-		Relay GPIO: <input type="number" min="-1" max="48" name="RL" onchange="UI()" class="xs"> Invert <input type="checkbox" name="RM"><span style="cursor: pointer;" onclick="off('RL')">&nbsp;&#x2715;</span><br>
-		<hr class="sml">
-		<h3>Defaults</h3>
+
+        <!-- HIDE FOR DEADLINE TROPHY -->
+        <div style="display:none">
+            <div id="color_order_mapping">
+                Color Order Override:
+                <div id="com_entries"></div>
+                <hr class="sml">
+                <button type="button" id="com_add" onclick="addCOM()">+</button>
+                <button type="button" id="com_rem" onclick="remCOM()">-</button><br>
+            </div>
+            <hr class="sml">
+            <div id="btns"></div>
+            Disable internal pull-up/down: <input type="checkbox" name="IP"><br>
+            Touch threshold: <input type="number" class="s" min="0" max="100" name="TT" required><br>
+            IR GPIO: <input type="number" min="-1" max="48" name="IR" onchange="UI()" class="xs"><select name="IT" onchange="UI()">
+            <option value=0>Remote disabled</option>
+            <option value=1>24-key RGB</option>
+            <option value=2>24-key with CT</option>
+            <option value=3>40-key blue</option>
+            <option value=4>44-key RGB</option>
+            <option value=5>21-key RGB</option>
+            <option value=6>6-key black</option>
+            <option value=7>9-key red</option>
+            <option value=8>JSON remote</option>
+            </select><span style="cursor: pointer;" onclick="off('IR')">&nbsp;&#x2715;</span><br>
+            Apply IR change to main segment only: <input type="checkbox" name="MSO"><br>
+            <div id="json" style="display:none;">JSON file: <input type="file" name="data" accept=".json"><button type="button" class="sml" onclick="uploadFile('/ir.json')">Upload</button><br></div>
+            <a href="https://kno.wled.ge/interfaces/infrared/" target="_blank">IR info</a><br>
+            Relay GPIO: <input type="number" min="-1" max="48" name="RL" onchange="UI()" class="xs"> Invert <input type="checkbox" name="RM"><span style="cursor: pointer;" onclick="off('RL')">&nbsp;&#x2715;</span><br>
+            <hr class="sml">
+        </div>
+
+        <h3>Defaults</h3>
 		Turn LEDs on after power up/reset: <input type="checkbox" name="BO"><br>
 		Default brightness: <input name="CA" type="number" class="m" min="0" max="255" required> (0-255)<br><br>
 		Apply preset <input name="BP" type="number" class="m" min="0" max="250" required> at boot (0 uses defaults)
