@@ -248,6 +248,12 @@ void getSettingsJS(byte subPage, char* dest)
   #ifdef WLED_ENABLE_DMX // include only if DMX is enabled
     oappend(PSTR("gId('dmxbtn').style.display='';"));
   #endif
+
+  #ifdef USERMOD_DEADLINE_TROPHY
+    oappend(PSTR("makeDeadlineTrophyWs();"));
+  #else
+    oappend(PSTR("gId('dl_values').style.display='none';"));
+  #endif
   }
 
   if (subPage == SUBPAGE_WIFI)
@@ -361,23 +367,6 @@ void getSettingsJS(byte subPage, char* dest)
     sappend('v',SET_F("FR"),strip.getTargetFps());
     sappend('v',SET_F("AW"),Bus::getGlobalAWMode());
     sappend('c',SET_F("LD"),useGlobalLedBuffer);
-
-    #ifdef USERMOD_DEADLINE_TROPHY
-        auto umDeadline = (DeadlineTrophyUsermod*)usermods.lookup(USERMOD_ID_DEADLINE_TROPHY);
-        oappend(SET_F("/* USERMOD_DEADLINE */ "));
-        if (umDeadline != nullptr)
-        {
-            oappend(SET_F("d.DEADLINE_TROPHY_MOD = true;"));
-            oappend(SET_F("d.DEADLINE_VALUES = {logoTherm: "));
-            oappendi(umDeadline->logoTherm());
-            oappend(SET_F(", otherTherm: "));
-            oappendi(umDeadline->otherTherm());
-            oappend(SET_F(", vCap: "));
-            oappendi(umDeadline->vCap());
-            oappend(SET_F("};"));
-        }
-        oappend(SET_F("/* END USERMODE_DEADLINE */ "));
-    #endif
 
     for (uint8_t s=0; s < busses.getNumBusses(); s++) {
       Bus* bus = busses.getBus(s);
@@ -728,17 +717,19 @@ void getSettingsJS(byte subPage, char* dest)
     usermods.appendConfigData();
 
     #ifdef USERMOD_DEADLINE_TROPHY
-    auto umDeadline = (DeadlineTrophyUsermod*)usermods.lookup(USERMOD_ID_DEADLINE_TROPHY);
-    if (umDeadline != nullptr)
-    {
-        oappend(SET_F("d.DEADLINE_VALUES = {logoTherm: "));
-        oappendi(umDeadline->logoTherm());
-        oappend(SET_F(", otherTherm: "));
-        oappendi(umDeadline->otherTherm());
-        oappend(SET_F(", vCap: "));
-        oappendi(umDeadline->vCap());
-        oappend(SET_F("};"));
-    }
+        // this is pretty useless for now, maybe might use it later.
+        auto umDeadline = (DeadlineTrophyUsermod*)usermods.lookup(USERMOD_ID_DEADLINE_TROPHY);
+        oappend(SET_F("/* USERMOD DEADLINE */ "));
+        if (umDeadline != nullptr)
+        {
+            oappend(SET_F("d.DEADLINE_TROPHY_MOD = true;"));
+            oappend(SET_F("d.DEADLINE_VALUES = "));
+            char line[DEADLINE_VALUES_STRLEN];
+            umDeadline->printValueJson(line);
+            oappend(line);
+            oappend(SET_F(";"));
+        }
+        oappend(SET_F("/* END USERMOD DEADLINE */ "));
     #endif
 
   }

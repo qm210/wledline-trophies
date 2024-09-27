@@ -175,6 +175,7 @@
 					if (foundPin >= 0 && j !== v) txt += ` ${pinO[foundPin]=="if"?"global":pinO[foundPin]}`; // already reserved pin
 					if (d.ro_gpio.includes(j)) txt += " (R/O)";
 					let opt = addOption(sel, txt, j);
+                    if (!opt) continue;
 					if (j === v) opt.selected = true; // this is "our" pin
 					else if (pins.includes(j)) opt.disabled = true; // someone else's pin
 				}
@@ -301,8 +302,6 @@
 			if (urows==="") urows = "Usermods configuration not found.<br>Press <i>Save</i> to initialize defaults.";
 			gId("um").innerHTML = urows;
 			loadJS(getURL('/settings/s.js?p=8'), false);	// If we set async false, file is loaded and executed, then next statement is processed
-
-            console.log("Deadline Values?", d.DEADLINE_VALUES);
 		})
 		.catch((error)=>{
 			gId('lserr').style.display = "inline";
@@ -344,7 +343,6 @@
 
 		Reboot after save? <input type="checkbox" name="RBT"><br>
 		<div id="um">Loading settings...</div>
-        <div id="deadline_values"></div>
 		<hr>
         <button type="button" onclick="B()">Back</button><button type="submit">Save</button>
 	</form>

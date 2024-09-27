@@ -1317,7 +1317,6 @@ function makeWS() {
 	ws = new WebSocket(url);
 	ws.binaryType = "arraybuffer";
 	ws.onmessage = (e)=>{
-        console.log("WS DATA", e);
 		if (e.data instanceof ArrayBuffer) return; // liveview packet
 		var json = JSON.parse(e.data);
 		if (json.leds) return; // JSON liveview packet
@@ -1645,6 +1644,8 @@ function requestJson(command=null)
 		}
 		var s = json.state ? json.state : json;
 		readState(s);
+
+        console.log("Got State", s, ", Info", json.info);
 
 		//load presets and open websocket sequentially
 		if (!pJson || isEmpty(pJson)) setTimeout(()=>{

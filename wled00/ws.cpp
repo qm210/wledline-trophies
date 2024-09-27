@@ -11,6 +11,11 @@ unsigned long wsLastLiveTime = 0;
 
 #define WS_LIVE_INTERVAL 40
 
+#ifdef USERMOD_DEADLINE_TROPHY
+#include "../usermods/DEADLINE_TROPHY/usermod_deadline_trophy.h"
+char deadlineValues[DEADLINE_VALUES_STRLEN];
+#endif
+
 void wsEvent(AsyncWebSocket * server, AsyncWebSocketClient * client, AwsEventType type, void * arg, uint8_t *data, size_t len)
 {
   if(type == WS_EVT_CONNECT){
@@ -49,6 +54,14 @@ void wsEvent(AsyncWebSocket * server, AsyncWebSocketClient * client, AwsEventTyp
           verboseResponse = true;
         } else if (root.containsKey("lv")) {
           wsLiveClientId = root["lv"] ? client->id() : 0;
+        } else if (root.containsKey("dl")) {
+            auto umDeadline = (DeadlineTrophyUsermod*)usermods.lookup(USERMOD_ID_DEADLINE_TROPHY);
+            if (umDeadline != nullptr) {
+                umDeadline->printValueJson(deadlineValues);
+                client->text(deadlineValues);
+            } else {
+                client->text(F("{\"error\":\"Usermod not initialized.\"}"));
+            }
         } else {
           verboseResponse = deserializeState(root);
         }

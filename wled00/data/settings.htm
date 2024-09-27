@@ -7,6 +7,7 @@
 	<script>
 		var d=document;
 		var loc = false, locip, locproto = "http:";
+        var ws;
 		function gId(n){return d.getElementById(n);}
 		// https://www.educative.io/edpresso/how-to-dynamically-load-a-js-file-in-javascript
 		function loadJS(FILE_URL, async = true) {
@@ -50,6 +51,47 @@
 		function getURL(path) {
 			return (loc ? locproto + "//" + locip : "") + path;
 		}
+        function requestTrophyData() {
+            if (!ws || ws.readyState !== WebSocket.OPEN) {
+                makeDeadlineTrophyWs();
+            } else {
+                ws.send("{'dl':true}");
+            }
+        }
+        function makeDeadlineTrophyWs() {
+            if (ws) {
+                ws.close();
+                setTimeout(requestTrophyData, 1000);
+                return;
+            }
+            let url = loc ? getURL('/ws').replace("http","ws") : "ws://"+window.location.hostname+"/ws";
+            console.log("now make deadline trophy ws:", url);
+            ws = new WebSocket(url);
+            ws.onmessage = e => {
+                const json = JSON.parse(e.data);
+                console.log("DEBUG: WS DATA", json);
+                if (json.dl) {
+                    updateTrophyReadings(json.dl);
+                    setTimeout(requestTrophyData, 2000);
+                }
+            };
+            ws.onclose = e => {
+                console.log("[DEADLINE] WebSocket closed.");
+                setTimeout(makeDeadlineTrophyWs, 5000);
+                ws = null;
+            };
+            ws.onopen = e => {
+                console.log("[DEADLINE] WebSocket opened.");
+                requestTrophyData();
+            }
+        }
+        function updateTrophyReadings(data) {
+            gId("dl_readings").style.display = "flex";
+            gId("dl_tempK").innerText = `${data.tempCelsius} °C`;
+            gId("dl_tempK_info").innerText = `[${data.minTemp}, ${data.maxTemp}] °C`;
+            gId("dl_vcc").innerText = `${data.inputVolt} V`;
+            gId("dl_vcc_info").innerText = `[${data.minInputVolt}, ${data.maxInputVolt}] V`;
+        }
 	</script>
 	<style>
 		body {
@@ -74,6 +116,18 @@
 			margin: 2vh auto 0;
 			cursor: pointer;
 		}
+        #dl_readings {
+            font-family: "Comic Sans MS", "Comic Sans", cursive, sans-serif;
+            color: hotpink;
+            text-align: center;
+            font-size: x-large;
+            display: none;
+            flex-direction: column;
+        }
+        #dl_readings td:last-of-type {
+            font-size: smaller;
+            opacity: 0.7;
+        }
 	</style>
 </head>
 <body onload="S()">
@@ -82,7 +136,6 @@
 <button type="submit" onclick="window.location=getURL('/settings/leds')">Trophy LEDS</button>
 <button type="submit" onclick="window.location=getURL('/settings/um')">Usermods</button>
 <button id="2dbtn" type="submit" onclick="window.location=getURL('/settings/2D')">2D Configuration</button>
-<button type="submit" onclick="window.location=getURL('/settings/sec')">Security & Updates</button>
 
 <!-- HIDE FOR DEADLINE TROPHY -->
 <div style="display:none">
@@ -90,6 +143,26 @@
     <button id="dmxbtn" style="display:none;" type="submit" onclick="window.location=getURL('/settings/dmx')">DMX Output</button>
     <button type="submit" onclick="window.location=getURL('/settings/sync')">Sync Interfaces</button>
     <button type="submit" onclick="window.location=getURL('/settings/time')">Time & Macros</button>
+    <button type="submit" onclick="window.location=getURL('/settings/sec')">Security & Updates</button>
+</div>
+
+<div id="dl_readings">
+    <h3>Trophy Readings</h3>
+    <table>
+        <tbody>
+            <tr>
+                <th width="33%">T<sub>logo</sub></th>
+                <td width="33%" id="dl_tempK">?</td>
+                <td width="33%" id="dl_tempK_info"></td>
+            </tr>
+            <tr>
+                <th>V<sub>CC</sub></th>
+                <td id="dl_vcc">?</td>
+                <td id="dl_vcc_info"></td>
+            </tr>
+        </tbody>
+    </table>
+    <button onclick="requestTrophyData">Refresh Readings</button>
 </div>
 
 </body>
