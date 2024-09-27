@@ -27,17 +27,16 @@ public:
         Input Voltage V_CC = 5V in an ideal world
 
         Voltage Division:
-        V_Therm = V_CC * R6 / (R6 + TH1 + R7) = V_CC * R6 / R_ges
-        -> R_ges = V_CC * R6 / V_Therm
-        -> TH1 = (V_CC / V_Therm - 1) * R6 - R7
+        V_Therm = V_CC * (TH1 + R7) / (R6 + TH1 + R7) = V_CC * R6 / R_ges
+        -> TH1 = 1 / (V_CC / V_Therm - 1) * R6 - R7
 
         12-bit ADC: (is somewhat non-linear, but who the shit cares.)
         V_Therm = 3.3V * AnalogReadResult / 4095 = AnalogReadResult * voltageAdcCoeff;
 
-        -> TH1 = (V_CC / voltageAdcCoeff / AnalogReadResult - 1) * R6 - R7
+        -> TH1 = 1 / (V_CC / voltageAdcCoeff / AnalogReadResult - 1) * R6 - R7
 
         Steinhart-Hart (first-order, we are not THAT hart).
-        1/T = 1/T0 + 1/B * ln(R / R0)
+        1/T = 1/T0 + 1/B * ln(TH1 / R0)
         T0 = 298.15 K (nominal temperature where R(TH1) = R0)
         R0 = 1e4 Ohm (nominal resistance at T = T0)
 
@@ -49,7 +48,7 @@ public:
     static constexpr float logoR7_Ohm = 1e3;
     static constexpr float logoThermistor_R0_Ohm = 1e4;
     static constexpr float logoTherm_OneOverT0 = 1. / (273.15 + 25);
-    static constexpr float logoTherm_OneOverB = 1. / 3850.;
+    static constexpr float logoTherm_OneOverB = 1. / 3900.;
     static constexpr float voltageAdcCoeff = 3.3 / 4095.; // 12bit ADC
 
     /*
@@ -69,12 +68,12 @@ private:
     int sampleCursor = 0;
     float currentLogoTempKelvin = 0.;
     float maxLogoTempKelvin = 0.;
-    float minLogoTempKelvin = 0.;
+    float minLogoTempKelvin = 9999.;
 
     uint16_t val_inputVolt[AVERAGE_SAMPLES];
     float currentInputVoltage = 0.;
     float maxInputVoltage = 0.;
-    float minInputVoltage = 999.;
+    float minInputVoltage = 9999.;
 
     float limitFunc_logoThermSlope = 0.0;
     float limitFunc_logoThermOffset = 0.0;
@@ -82,35 +81,32 @@ private:
     float limit_inputVoltageThreshold = 4.6;
 
     int valueForInputCurrentSwitch = 0;
-    float inputCurrentSwitch_waitSeconds = 2.;
-    float inputCurrentSwitch_riseSeconds = 5.;
-
-    int _counter = 0;
+    float inputCurrentSwitch_waitSeconds = 1.;
+    float inputCurrentSwitch_riseSeconds = 1.;
 
     long lastDebugOutAt;
     long startedAt;
     long now;
     float runningSec;
-
-    int _read = 0;
+    int _counter = 0;
 
     // logo temp values
-    float _logoAvg;
-    float _Rtotal_over_R6;
+    float _logoRead;
+    float _voltageRatio;
     float _R_TH1;
     float _logRatio;
 
     // current temp values
-    float _vccAvg;
+    float _vccRead;
 
 public:
 
     void setup()
     {
-        DEBUG_PRINTLN("[DEADLINE] QM says hello!");
+        DEBUG_PRINTF("[DEADLINE] QM watches you! (non-creepily.) Say Hi at qm@z10.info\n");
 
         startedAt = millis();
-        lastDebugOutAt = startedAt;
+        lastDebugOutAt = 0;
 
         hasEnoughSamples = false;
 
@@ -162,20 +158,17 @@ public:
 
     void calcInputVoltage()
     {
-        _vccAvg = getAverage(val_inputVolt);
-        currentInputVoltage = 2. * voltageAdcCoeff * _vccAvg;
+        _vccRead = getAverage(val_inputVolt);
+        currentInputVoltage = 2. * voltageAdcCoeff * _vccRead;
     }
 
     void calcLogoTherm()
     {
-        float maxVoltage = currentInputVoltage; // or take 5V here? must be Common, right?
-
-        // avg is now an ADC value of a 12-Bit Pin (max. 3.3V), cf. above
-        _logoAvg = getAverage(val_logoTherm);
-        _Rtotal_over_R6 = maxVoltage / voltageAdcCoeff / _logoAvg;
-        _R_TH1 = (_Rtotal_over_R6 - 1) * logoR6_Ohm - logoR7_Ohm;
+        _logoRead = getAverage(val_logoTherm);
+        _voltageRatio = currentInputVoltage / (voltageAdcCoeff * _logoRead);
+        _R_TH1 = 1. / (_voltageRatio - 1) * logoR6_Ohm - logoR7_Ohm;
         _logRatio = logf(_R_TH1 / logoThermistor_R0_Ohm);
-        currentLogoTempKelvin = 1. / ( logoTherm_OneOverT0 + logoTherm_OneOverB * _logRatio);
+        currentLogoTempKelvin = 1. / ( logoTherm_OneOverT0 + logoTherm_OneOverB * _logRatio );
     }
 
     void loop()
@@ -183,13 +176,14 @@ public:
         now = millis();
         runningSec = 1e-3 * (now - startedAt);
 
-        readAnalogValues();
-        if (hasEnoughSamples)
-        {
-            calcInputVoltage();
-            calcLogoTherm();
-        }
         setInputCurrentSwitch(runningSec);
+
+        readAnalogValues();
+        if (!hasEnoughSamples)
+            return;
+
+        calcInputVoltage();
+        calcLogoTherm();
 
         // these are for debugging
         if (currentLogoTempKelvin > maxLogoTempKelvin) {
@@ -205,14 +199,14 @@ public:
             minInputVoltage = currentInputVoltage;
         }
 
-        if (now - lastDebugOutAt > 20000)
+        if (now - lastDebugOutAt > 20000 || lastDebugOutAt == 0)
         {
             DEBUG_PRINTF("[DEADLINE_TROPHY] logoTemp=%f K (min %f, max %f) [DEBUG %f, %f, %f, %f]\n",
                 currentLogoTempKelvin,
                 minLogoTempKelvin,
                 maxLogoTempKelvin,
-                _logoAvg,
-                _Rtotal_over_R6,
+                _logoRead,
+                _voltageRatio,
                 _R_TH1,
                 _logRatio
             );
@@ -220,7 +214,7 @@ public:
                 currentInputVoltage,
                 maxInputVoltage,
                 minInputVoltage,
-                _vccAvg
+                _vccRead
             );
             lastDebugOutAt = now;
         }
@@ -230,6 +224,7 @@ public:
         // auto testSine = 400. + 50.0 * sin_t(0.01 * static_cast<float>(_counter));
         // strip.ablMilliampsMax = static_cast<uint16_t>(testSine);
 
+        // was introduced for debugging, keep for debugging ;)
         _counter++;
     }
 
@@ -247,9 +242,9 @@ public:
         lt_lim["mApK"] = limitFunc_logoThermSlope;
         lt_lim["Tcrit"] = limitFunc_logoThermCritical;
         lim["Vlim"] = limit_inputVoltageThreshold;
-        auto a_in = lim.createNestedObject("A_in");
-        a_in["wait"] = 2.;
-        a_in["slop"] = 5.;
+        // auto a_in = lim.createNestedObject("A_in");
+        // a_in["wait"] = 2.;
+        // a_in["slop"] = 5.;
     }
 
     void appendConfigData()
@@ -274,17 +269,23 @@ public:
 
     void printValueJson(char line[])
     {
+        if (!hasEnoughSamples) {
+            sprintf(line, "{\"error\": \"not enough samples taken yet.\"}");
+            return;
+        }
         // needs about 200 characters or something, I haven't counted.
-        // --> set via the DEADLINE_VALUES_STRLEN define above
+        // --> define the DEADLINE_VALUES_STRLEN so this string fits
         sprintf(
             line,
-            "{\"dl\": {\"tempCelsius\": %.3f, \"minTemp\": %.3f, \"maxTemp\": %.3f, \"inputVolt\": %.3f, \"maxInputVolt\": %.3f, \"minInputVolt\": %.3f}}",
+            "{\"dl\": {\"T\": %.3f, \"minT\": %.3f, \"maxT\": %.3f, \"VCC\": %.3f, \"maxVCC\": %.3f, \"minVCC\": %.3f, \"adcT\": %.1f, \"adcV\": %.1f}}",
             currentLogoTempKelvin - 273.15,
             minLogoTempKelvin - 273.15,
             maxLogoTempKelvin - 273.15,
             currentInputVoltage,
             maxInputVoltage,
-            minInputVoltage
+            minInputVoltage,
+            _logoRead,
+            _vccRead
         );
     }
 };

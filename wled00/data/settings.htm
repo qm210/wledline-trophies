@@ -67,9 +67,9 @@
             let url = loc ? getURL('/ws').replace("http","ws") : "ws://"+window.location.hostname+"/ws";
             console.log("now make deadline trophy ws:", url);
             ws = new WebSocket(url);
+            const refreshButton = gId("dl_refresh");
             ws.onmessage = e => {
                 const json = JSON.parse(e.data);
-                console.log("DEBUG: WS DATA", json);
                 if (json.dl) {
                     updateTrophyReadings(json.dl);
                     setTimeout(requestTrophyData, 2000);
@@ -79,18 +79,20 @@
                 console.log("[DEADLINE] WebSocket closed.");
                 setTimeout(makeDeadlineTrophyWs, 5000);
                 ws = null;
+                refreshButton.display.style = "";
             };
             ws.onopen = e => {
                 console.log("[DEADLINE] WebSocket opened.");
                 requestTrophyData();
+                refreshButton.display.style = "none";
             }
         }
         function updateTrophyReadings(data) {
             gId("dl_readings").style.display = "flex";
-            gId("dl_tempK").innerText = `${data.tempCelsius} °C`;
-            gId("dl_tempK_info").innerText = `[${data.minTemp}, ${data.maxTemp}] °C`;
-            gId("dl_vcc").innerText = `${data.inputVolt} V`;
-            gId("dl_vcc_info").innerText = `[${data.minInputVolt}, ${data.maxInputVolt}] V`;
+            gId("dl_tempK").innerText = `${data.T} °C`;
+            gId("dl_tempK_info").innerText = `[${data.minT}, ${data.maxT}] °C, ADC = ${data.adcT}`;
+            gId("dl_vcc").innerText = `${data.VCC} V`;
+            gId("dl_vcc_info").innerText = `[${data.minVCC}, ${data.maxVCC}] V`; // ADC = ${data.adcV}
         }
 	</script>
 	<style>
@@ -128,6 +130,15 @@
             font-size: smaller;
             opacity: 0.7;
         }
+        #dl_readings button {
+            font-size: smaller;
+            width: fit-content;
+            padding: 1rem;
+            margin-bottom: 2rem;
+        }
+        .dl_hidden {
+            display: none;
+        }
 	</style>
 </head>
 <body onload="S()">
@@ -138,12 +149,11 @@
 <button id="2dbtn" type="submit" onclick="window.location=getURL('/settings/2D')">2D Configuration</button>
 
 <!-- HIDE FOR DEADLINE TROPHY -->
-<div style="display:none">
+<div class="dl_hidden">
     <button type="submit" onclick="window.location=getURL('/settings/ui')">User Interface</button>
     <button id="dmxbtn" style="display:none;" type="submit" onclick="window.location=getURL('/settings/dmx')">DMX Output</button>
     <button type="submit" onclick="window.location=getURL('/settings/sync')">Sync Interfaces</button>
     <button type="submit" onclick="window.location=getURL('/settings/time')">Time & Macros</button>
-    <button type="submit" onclick="window.location=getURL('/settings/sec')">Security & Updates</button>
 </div>
 
 <div id="dl_readings">
@@ -162,8 +172,16 @@
             </tr>
         </tbody>
     </table>
-    <button onclick="requestTrophyData">Refresh Readings</button>
+    <button
+        id="dl_refresh"
+        onclick="requestTrophyData"
+        oncontextmenu="gId('dl_hidden').style.display='';"
+        >
+        Refresh Readings
+    </button>
 </div>
+
+<button type="submit" onclick="window.location=getURL('/settings/sec')">Security & Updates</button>
 
 </body>
 </html>

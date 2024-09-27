@@ -41,6 +41,7 @@ void wsEvent(AsyncWebSocket * server, AsyncWebSocketClient * client, AwsEventTyp
         }
 
         bool verboseResponse = false;
+        bool sendDeadlineValues = false;
         if (!requestJSONBufferLock(11)) return;
 
         DeserializationError error = deserializeJson(doc, data, len);
@@ -55,17 +56,22 @@ void wsEvent(AsyncWebSocket * server, AsyncWebSocketClient * client, AwsEventTyp
         } else if (root.containsKey("lv")) {
           wsLiveClientId = root["lv"] ? client->id() : 0;
         } else if (root.containsKey("dl")) {
+          sendDeadlineValues = true;
+        } else {
+          verboseResponse = deserializeState(root);
+        }
+        releaseJSONBufferLock(); // will clean fileDoc
+
+        if (sendDeadlineValues) {
             auto umDeadline = (DeadlineTrophyUsermod*)usermods.lookup(USERMOD_ID_DEADLINE_TROPHY);
             if (umDeadline != nullptr) {
                 umDeadline->printValueJson(deadlineValues);
                 client->text(deadlineValues);
             } else {
-                client->text(F("{\"error\":\"Usermod not initialized.\"}"));
+                client->text(F("{\"error\":\"DeadlineTrophyUsermod not initialized.\"}"));
             }
-        } else {
-          verboseResponse = deserializeState(root);
+            return;
         }
-        releaseJSONBufferLock(); // will clean fileDoc
 
         if (!interfaceUpdateCallMode) { // individual client response only needed if no WS broadcast soon
           if (verboseResponse) {
