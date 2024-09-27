@@ -46,7 +46,7 @@ public:
         it seems like we can use logf(), the float-valued natural logarithm.
     */
     static constexpr float logoR6_Ohm = 1.5e4;
-    static constexpr float logoR7_Ohm = 1.5e4;
+    static constexpr float logoR7_Ohm = 1e3;
     static constexpr float logoThermistor_R0_Ohm = 1e4;
     static constexpr float logoTherm_OneOverT0 = 1. / (273.15 + 25);
     static constexpr float logoTherm_OneOverB = 1. / 3850.;
