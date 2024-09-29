@@ -615,7 +615,7 @@ function parseInfo(i) {
 	syncTglRecv = i.str;
 	maxSeg      = i.leds.maxseg;
 	pmt         = i.fs.pmt;
-	gId('buttonNodes').style.display = lastinfo.ndc > 0 ? null:"none";
+	gId('buttonNodes').style.display = lastinfo.ndc > 0 ? null : "none";
 	// do we have a matrix set-up
 	mw = i.leds.matrix ? i.leds.matrix.w : 0;
 	mh = i.leds.matrix ? i.leds.matrix.h : 0;
@@ -637,6 +637,7 @@ function parseInfo(i) {
 //		gId("filterVol").classList.add("hide"); hideModes(" ♪"); // hide volume reactive effects
 //		gId("filterFreq").classList.add("hide"); hideModes(" ♫"); // hide frequency reactive effects
 //	}
+
 }
 
 //https://stackoverflow.com/questions/2592092/executing-script-elements-inserted-with-innerhtml
@@ -768,7 +769,7 @@ function populateSegments(s)
 						`<i class="icons g-icon" style="color:${cG};" onclick="this.nextElementSibling.classList.toggle('hide');">&#x278${String.fromCharCode(inst.set+"A".charCodeAt(0))};</i>`+
 						`<div class="pop-c hide"><span style="color:var(--c-f);" onclick="setGrp(${i},0);">&#x278A;</span><span style="color:var(--c-r);" onclick="setGrp(${i},1);">&#x278B;</span><span style="color:var(--c-g);" onclick="setGrp(${i},2);">&#x278C;</span><span style="color:var(--c-l);" onclick="setGrp(${i},3);">&#x278D;</span></div>`+
 					`</div> `+
-					`<i class="icons edit-icon flr" id="seg${i}nedit" onclick="tglSegn(${i})">&#xe2c6;</i>`+
+					`<i class="icons edit-icon flr maybe-fixed" id="seg${i}nedit" onclick="tglSegn(${i})">&#xe2c6;</i>`+
 				`</div>`+
 				`<i class="icons e-icon flr" id="sege${i}" onclick="expand(${i})">&#xe395;</i>`+
 				(cfg.comp.segpwr ? segp : '') +
@@ -1319,6 +1320,7 @@ function makeWS() {
 	ws.onmessage = (e)=>{
 		if (e.data instanceof ArrayBuffer) return; // liveview packet
 		var json = JSON.parse(e.data);
+        if (d.DEBUG) console.info("[DEBUG] WebSocket Message", json);
 		if (json.leds) return; // JSON liveview packet
 		clearTimeout(jsonTimeout);
 		jsonTimeout = null;
@@ -1612,6 +1614,8 @@ function requestJson(command=null)
 		if (req.length >  500 && lastinfo && lastinfo.arch == "esp8266") useWs = false; // esp8266 can only handle 500 bytes
 	};
 
+    console.log("requestJson() called,", command, useWs, type, req);
+
 	if (useWs) {
 		ws.send(req?req:'{"v":true}');
 		return;
@@ -1636,14 +1640,16 @@ function requestJson(command=null)
 		gId('connind').style.backgroundColor = "var(--c-g)";
 		if (!json) { showToast('Empty response', true); return; }
 		if (json.success) return;
-		if (json.info) {
-			let i = json.info;
+        let i = json.info;
+		if (i) {
 			parseInfo(i);
 			populatePalettes(i);
 			if (isInfo) populateInfo(i);
 		}
 		var s = json.state ? json.state : json;
 		readState(s);
+
+        setDeadlineTrophyFeatures(i);
 
         console.log("Got State", s, ", Info", json.info);
 
@@ -1660,7 +1666,20 @@ function requestJson(command=null)
 		showToast(e, true);
 	});
 }
-
+function setDeadlineTrophyFeatures(i) {
+    if (!i) {
+        console.error("setDeadlineTrophyFeatures() needs valid info");
+        return;
+    }
+    // qm210: lel, we have to work around the minifier who just breaks things.
+    i.segFixed && [
+        // specifically marked elements
+        ...d.getElementsByClassName("maybe-fixed"),
+        // Segment/LED input fields
+        ...d.getElementsByClassName("segn"),
+    ].forEach(elem => elem.classList.add("hide"));
+    d.DEBUG = !!i.debug;
+}
 function togglePower()
 {
 	isOn = !isOn;

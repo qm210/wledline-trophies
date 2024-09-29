@@ -682,9 +682,9 @@ void handleSettingsSet(AsyncWebServerRequest *request, byte subPage)
   //2D panels
   if (subPage == SUBPAGE_2D)
   {
-    strip.isMatrix = request->arg(F("SOMP")).toInt();
+    strip.setMatrix(request->arg(F("SOMP")).toInt());
     strip.panel.clear(); // release memory if allocated
-    if (strip.isMatrix) {
+    if (strip.is2dSegment()) {
       strip.panels  = MAX(1,MIN(WLED_MAX_PANELS,request->arg(F("MPC")).toInt()));
       strip.panel.reserve(strip.panels); // pre-allocate memory
       for (uint8_t i=0; i<strip.panels; i++) {

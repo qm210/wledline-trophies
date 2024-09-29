@@ -41,7 +41,7 @@ void WS2812FX::setUpMatrix() {
   customMappingTable = nullptr;
   customMappingSize = 0;
 
-  // isMatrix is set in cfg.cpp or set.cpp
+  // is2dSegment is set in cfg.cpp or set.cpp
   if (isMatrix) {
     // calculate width dynamically because it will have gaps
     Segment::maxWidth = 1;
@@ -59,7 +59,7 @@ void WS2812FX::setUpMatrix() {
     // safety check
     if (Segment::maxWidth * Segment::maxHeight > MAX_LEDS || Segment::maxWidth <= 1 || Segment::maxHeight <= 1) {
       DEBUG_PRINTLN(F("2D Bounds error."));
-      isMatrix = false;
+      setMatrix(false);
       Segment::maxWidth = _length;
       Segment::maxHeight = 1;
       panels = 0;
@@ -142,7 +142,7 @@ void WS2812FX::setUpMatrix() {
       #endif
     } else { // memory allocation error
       DEBUG_PRINTLN(F("Ledmap alloc error."));
-      isMatrix = false;
+      setMatrix(false);
       panels = 0;
       panel.clear();
       Segment::maxWidth = _length;
@@ -151,8 +151,70 @@ void WS2812FX::setUpMatrix() {
     }
   }
 #else
-  isMatrix = false; // no matter what config says
+  setMatrix(false); // no matter what config says
 #endif
+}
+
+// could #ifdef USERMOD_DEADLINE_TROPHY this, but then again, come on, this is a fork.
+void WS2812FX::setUpDeadlineTrophy() {
+    // this is so f'ing tricky, to account for the one-off-interlacing in the logo,
+    // and then empty lines to care for the equidistance - it is now parametrized as:
+    // (at first, it might look like 15 x 14, but then I thought again.)
+    const int logoW = 27;
+    const int logoH = 21;
+
+    if (customMappingTable != nullptr) delete[] customMappingTable;
+    customMappingSize = logoW * logoH;
+    const uint16_t __ = (uint16_t)-1;
+    customMappingTable = new uint16_t[customMappingSize] {
+        __, __, __,  8, __,  7, __,  6, __,  5, __,  4, __,  3, __,  2, __,  1, __,  0, __, __, __, __, __, __, __,
+        __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __,
+        __, __,  9, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __,
+        __, 10, __, 11, __, 12, __, 13, __, 14, __, 15, __, 16, __, 17, __, 18, __, 19, __, 20, __, __, __, __, __,
+        __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __,
+        32, __, 31, __, 30, __, 29, __, 28, __, 27, __, 26, __, 25, __, 24, __, 23, __, 22, __, 21, __, __, __, __,
+        __, 33, __, 34, __, 35, __, 36, __, 37, __, 38, __, 39, __, 40, __, 41, __, 42, __, 43, __, 44, __, __, __,
+        __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __,
+        __, __,105, __,104, __,103, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, 46, __, 45, __, __,
+        __, __, __,100, __,101, __,102, __, __, __, __, __, __, __, __, __, __, __, __, __, 47, __, 48, __, 49, __,
+        __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __,
+        __, __, __, __, 99, __, 98, __, 97, __, __, __, __, __, __, __, __, __, __, __, 52, __, 51, __, 50, __, __,
+        __, __, __, __, __, 94, __, 95, __, 96, __, __, __, __, __, __, __, __, __, 53, __, 54, __, 55, __, __, __,
+        __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __,
+        __, __, __, __, __, __, 93, __, 92, __, 91, __, __, __, __, __, __, __, 58, __, 57, __, 56, __, __, __, __,
+        __, __, __, __, __, __, __, 88, __, 89, __, 90, __, __, __, __, __, __, __, 59, __, 60, __, __, __, __, __,
+        __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __,
+        __, __, __, __, __, __, __, __, 87, __, 86, __, 85, __, 84, __, 83, __, 82, __, 81, __, 80, __, 79, __, __,
+        __, __, __, __, __, __, __, __, __, 70, __, 71, __, 72, __, 73, __, 74, __, 75, __, 76, __, 77, __, 78, __,
+        __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __,
+        __, __, __, __, __, __, __, __, __, __, 69, __, 68, __, 67, __, 66, __, 65, __, 64, __, 63, __, 62, __, 61
+    };
+
+    Segment::maxWidth = 64;  // length of the Base is obviously larger than the width of the Logo
+    Segment::maxHeight = logoH; // height of the Logo
+    _mainSegment = 0; // also the Logo, I have no idea where _mainSegment is used everywhere.
+
+    size_t s = 4;
+    _segments.clear();
+    _segments.reserve(s); // prevent reallocations
+    const char* segName[] = {"Logo", "Base", "Floor White", "Back UV"};
+
+    for (int i=0; i<s; i++) {
+        auto bus = busses.getBus(i);
+        auto seg = i == _mainSegment
+            ? Segment(0, logoW, 0, logoH)
+            : Segment(bus->getStart(), bus->getStart() + bus->getLength());
+        seg.setName(segName[i]);
+        _segments.push_back(seg);
+    }
+
+    // also, the mapping is fixed.
+    // TODO: ... and only applied to the logo segment. let's see how that works.
+    // <-- this is the Deadline "D", pay attention that every second line is shifted a half length!
+
+    // taken from fixInvalidSegments(), which is not called with isDeadlineTrophy.
+    for (segment &seg : _segments)
+        seg.refreshLightCapabilities();
 }
 
 

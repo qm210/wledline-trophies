@@ -718,7 +718,7 @@ void getSettingsJS(byte subPage, char* dest)
 
     #ifdef USERMOD_DEADLINE_TROPHY
         // this is pretty useless for now, maybe might use it later.
-        auto umDeadline = (DeadlineTrophyUsermod*)usermods.lookup(USERMOD_ID_DEADLINE_TROPHY);
+        auto umDeadline = GET_DEADLINE_USERMOD();
         oappend(SET_F("/* USERMOD DEADLINE */ "));
         if (umDeadline != nullptr)
         {
@@ -752,39 +752,44 @@ void getSettingsJS(byte subPage, char* dest)
 
   if (subPage == SUBPAGE_2D) // 2D matrices
   {
-    sappend('v',SET_F("SOMP"),strip.isMatrix);
-    #ifndef WLED_DISABLE_2D
-    oappend(SET_F("maxPanels=")); oappendi(WLED_MAX_PANELS); oappend(SET_F(";"));
-    oappend(SET_F("resetPanels();"));
-    if (strip.isMatrix) {
-      if(strip.panels>0){
-        sappend('v',SET_F("PW"),strip.panel[0].width); //Set generator Width and Height to first panel size for convenience
-        sappend('v',SET_F("PH"),strip.panel[0].height);
-      }
-      sappend('v',SET_F("MPC"),strip.panels);
-      // panels
-      for (uint8_t i=0; i<strip.panels; i++) {
-        char n[5];
-        oappend(SET_F("addPanel("));
-        oappend(itoa(i,n,10));
-        oappend(SET_F(");"));
-        char pO[8] = { '\0' };
-        snprintf_P(pO, 7, PSTR("P%d"), i);       // MAX_PANELS is 64 so pO will always only be 4 characters or less
-        pO[7] = '\0';
-        uint8_t l = strlen(pO);
-        // create P0B, P1B, ..., P63B, etc for other PxxX
-        pO[l] = 'B'; sappend('v',pO,strip.panel[i].bottomStart);
-        pO[l] = 'R'; sappend('v',pO,strip.panel[i].rightStart);
-        pO[l] = 'V'; sappend('v',pO,strip.panel[i].vertical);
-        pO[l] = 'S'; sappend('c',pO,strip.panel[i].serpentine);
-        pO[l] = 'X'; sappend('v',pO,strip.panel[i].xOffset);
-        pO[l] = 'Y'; sappend('v',pO,strip.panel[i].yOffset);
-        pO[l] = 'W'; sappend('v',pO,strip.panel[i].width);
-        pO[l] = 'H'; sappend('v',pO,strip.panel[i].height);
-      }
+    if (strip.isDeadlineTrophy) {
+        oappend(SET_F("showFixedSetupInfo('Deadline Trophy');"));
+    } else {
+
+        sappend('v',SET_F("SOMP"),strip.isMatrix);
+        #ifndef WLED_DISABLE_2D
+        oappend(SET_F("maxPanels=")); oappendi(WLED_MAX_PANELS); oappend(SET_F(";"));
+        oappend(SET_F("resetPanels();"));
+        if (strip.isMatrix) {
+        if(strip.panels>0){
+            sappend('v',SET_F("PW"),strip.panel[0].width); //Set generator Width and Height to first panel size for convenience
+            sappend('v',SET_F("PH"),strip.panel[0].height);
+        }
+        sappend('v',SET_F("MPC"),strip.panels);
+        // panels
+        for (uint8_t i=0; i<strip.panels; i++) {
+            char n[5];
+            oappend(SET_F("addPanel("));
+            oappend(itoa(i,n,10));
+            oappend(SET_F(");"));
+            char pO[8] = { '\0' };
+            snprintf_P(pO, 7, PSTR("P%d"), i);       // MAX_PANELS is 64 so pO will always only be 4 characters or less
+            pO[7] = '\0';
+            uint8_t l = strlen(pO);
+            // create P0B, P1B, ..., P63B, etc for other PxxX
+            pO[l] = 'B'; sappend('v',pO,strip.panel[i].bottomStart);
+            pO[l] = 'R'; sappend('v',pO,strip.panel[i].rightStart);
+            pO[l] = 'V'; sappend('v',pO,strip.panel[i].vertical);
+            pO[l] = 'S'; sappend('c',pO,strip.panel[i].serpentine);
+            pO[l] = 'X'; sappend('v',pO,strip.panel[i].xOffset);
+            pO[l] = 'Y'; sappend('v',pO,strip.panel[i].yOffset);
+            pO[l] = 'W'; sappend('v',pO,strip.panel[i].width);
+            pO[l] = 'H'; sappend('v',pO,strip.panel[i].height);
+        }
+        }
+        #else
+        oappend(SET_F("gId(\"somp\").remove(1);")); // remove 2D option from dropdown
+        #endif
     }
-    #else
-    oappend(SET_F("gId(\"somp\").remove(1);")); // remove 2D option from dropdown
-    #endif
   }
 }

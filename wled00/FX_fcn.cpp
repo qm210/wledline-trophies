@@ -27,6 +27,10 @@
 #include "FX.h"
 #include "palettes.h"
 
+#ifdef USERMOD_DEADLINE_TROPHY
+#include "../usermods/DEADLINE_TROPHY/usermod_deadline_trophy.h"
+#endif
+
 /*
   Custom per-LED mapping has moved!
 
@@ -1102,6 +1106,7 @@ void WS2812FX::finalizeInit(void)
   // if we do it in json.cpp (serializeInfo()) we are getting flashes on LEDs
   // unfortunately this means we do not get updates after uploads
   enumerateLedmaps();
+  // <-- for DEADLINE_TROPHY this is irrelevant
 
   _hasWhiteChannel = _isOffRefreshRequired = false;
 
@@ -1143,7 +1148,8 @@ void WS2812FX::finalizeInit(void)
     #endif
   }
 
-  if (isMatrix) setUpMatrix();
+  if (isDeadlineTrophy) setUpDeadlineTrophy();
+  else if (isMatrix) setUpMatrix();
   else {
     Segment::maxWidth  = _length;
     Segment::maxHeight = 1;
@@ -1469,8 +1475,11 @@ uint8_t WS2812FX::getActiveSegmentsNum(void) {
 }
 
 uint16_t WS2812FX::getLengthTotal(void) {
+  if (isDeadlineTrophy) {
+    return GET_DEADLINE_USERMOD()->getLengthTotal();
+  }
   uint16_t len = Segment::maxWidth * Segment::maxHeight; // will be _length for 1D (see finalizeInit()) but should cover whole matrix for 2D
-  if (isMatrix && _length > len) len = _length; // for 2D with trailing strip
+  if (is2dSegment() && _length > len) len = _length; // for 2D with trailing strip
   return len;
 }
 
@@ -1548,7 +1557,7 @@ void WS2812FX::setSegment(uint8_t segId, uint16_t i1, uint16_t i2, uint8_t group
     DEBUG_PRINT(F("Segment queued: ")); DEBUG_PRINTLN(segId);
     return; // queued changes are applied immediately after effect function returns
   }
-  
+
   _segments[segId].setUp(i1, i2, grouping, spacing, offset, startY, stopY);
   if (segId > 0 && segId == getSegmentsNum()-1 && i2 <= i1) _segments.pop_back(); // if last segment was deleted remove it from vector
 }
@@ -1564,9 +1573,13 @@ void WS2812FX::restartRuntime() {
 }
 
 void WS2812FX::resetSegments() {
+  if (isDeadlineTrophy) {
+    DEBUG_PRINTLN("[DEADLINE_TROPHY] resetSegments() called, but no use - we do our thing.");
+    return;
+  }
   _segments.clear(); // destructs all Segment as part of clearing
   #ifndef WLED_DISABLE_2D
-  segment seg = isMatrix ? Segment(0, Segment::maxWidth, 0, Segment::maxHeight) : Segment(0, _length);
+  segment seg = is2dSegment() ? Segment(0, Segment::maxWidth, 0, Segment::maxHeight) : Segment(0, _length);
   #else
   segment seg = Segment(0, _length);
   #endif
@@ -1575,7 +1588,11 @@ void WS2812FX::resetSegments() {
 }
 
 void WS2812FX::makeAutoSegments(bool forceReset) {
+  if (isDeadlineTrophy) {
+    return;
+  }
   if (autoSegments) { //make one segment per bus
+
     uint16_t segStarts[MAX_NUM_SEGMENTS] = {0};
     uint16_t segStops [MAX_NUM_SEGMENTS] = {0};
     size_t s = 0;
@@ -1776,6 +1793,11 @@ void WS2812FX::loadCustomPalettes() {
 bool WS2812FX::deserializeMap(uint8_t n) {
   // 2D support creates its own ledmap (on the fly) if a ledmap.json exists it will overwrite built one.
 
+  if (isDeadlineTrophy) {
+    // Deadline Trophy has one that is fixed and by now, should be defined.
+    return true;
+  }
+
   char fileName[32];
   strcpy_P(fileName, PSTR("/ledmap"));
   if (n) sprintf(fileName +7, "%d", n);
@@ -1784,7 +1806,7 @@ bool WS2812FX::deserializeMap(uint8_t n) {
 
   if (!isFile) {
     // erase custom mapping if selecting nonexistent ledmap.json (n==0)
-    if (!isMatrix && !n && customMappingTable != nullptr) {
+    if (!is2dSegment() && !n && customMappingTable != nullptr) {
       customMappingSize = 0;
       delete[] customMappingTable;
       customMappingTable = nullptr;

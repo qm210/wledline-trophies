@@ -3,7 +3,7 @@
 <head>
 	<meta charset="utf-8">
 	<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport">
-	<title>2D Set-up</title>
+	<title>2D Setup</title>
 	<script>
 	var d=document;
 	var loc = false, locip, locproto = "http:";
@@ -300,6 +300,14 @@ Y:<input name="P${i}Y" type="number" min="0" max="255" value="0" oninput="UI()">
 		}
 		gId("MD").innerHTML = "Matrix Dimensions (W*H=LC): " + maxWidth + " x " + maxHeight + " = " + maxWidth * maxHeight;
 	}
+
+    function showFixedSetupInfo(title = "Fixed Setup") {
+        d.Sf.remove();
+        gId("fixed_setup").style.display="";
+        gId("fixed_setup_title").innerText = title;
+        d.title = title;
+    }
+
 	</script>
 	<style>@import url("style.css");</style>
 </head>
@@ -310,6 +318,7 @@ Y:<input name="P${i}Y" type="number" min="0" max="255" value="0" oninput="UI()">
 		<button type="button" onclick="B()">Back</button><button type="button" onclick="fS()">Save</button><hr>
 	</div>
 	<h2>2D setup</h2>
+    <select id="container">
 	Strip or panel:
 	<select id="somp" name="SOMP" onchange="resetPanels();addPanels();UI();" >
 		<option value="0">1D Strip</option>
@@ -358,6 +367,14 @@ Y:<input name="P${i}Y" type="number" min="0" max="255" value="0" oninput="UI()">
 	<hr>
 	<button type="button" onclick="B()">Back</button><button type="button" onclick="fS()">Save</button>
 	</form>
+    <div id="fixed_setup" style="display:none;">
+        <button type="button" onclick="B()">Back</button>
+        <p>This setup is a</p>
+        <h2 id="fixed_setup_title"></h2>
+        <p>So you cannot change it here.</p>
+        <p style="margin:1rem; font-size:small;">Heheheheheheheheeeee. n00b</p>
+        <p style="margin:3rem; font-size:x-small;">you'll be fine.</p>
+    </div>
 	<div id="toast"></div>
 </body>
 </html>

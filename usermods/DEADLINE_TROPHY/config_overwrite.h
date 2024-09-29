@@ -20,27 +20,14 @@ void overwriteConfigForTrophy(JsonObject doc)
     auto uv =  outputs.createNestedObject();
     auto white = outputs.createNestedObject();
 
-    // qm210: if you change these, take care that the "start" is continuous...
+    // qm210: if you change these, take care that each "start" is continuous.
     configTrophyLedStripe(logo, 0, 106, PIN_LOGO_DATA, PIN_LOGO_CLOCK);
     configTrophyLedStripe(base, 106, 64, PIN_BASE_DATA, PIN_BASE_CLOCK);
     configTrophySinglePwm(uv, 170, PIN_UV);
     configTrophySinglePwm(white, 171, PIN_WHITE);
+    led[F("total")] = 106 + 64 + 1 + 1;
 
-    // config the deadline "A" matrix
-    auto matrix = led.createNestedObject("matrix");
-    matrix["mpc"] = 1;
-    auto panels = matrix.createNestedArray("panels");
-    auto panelD = panels.createNestedObject();
-    panelD["b"] = false; // bottomStart
-    panelD["r"] = false; // rightStart
-    panelD["v"] = false; // vertical
-    panelD["s"] = true; // serepentine
-    panelD["x"] = 0;
-    panelD["y"] = 0;
-    panelD["h"] = 14;
-    panelD["w"] = 15;
-
-    // Make a segment for each output
+    // The LED setup is completely hardcoded by now,
+    // so probably even the autoSegment is obsolete - but well, why not.
     doc[F("light")][F("aseg")] = true;
-
 }

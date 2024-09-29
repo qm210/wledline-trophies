@@ -22,7 +22,7 @@ public:
         logoTherm goes via voltage divider with R6, Thermistor TH1, R7
 
         R6: 15kOhm (Upper, Above the Division)
-        TH1: ERT-J0EM103J (Thermistor, Below the Division) - R = 10 kOhm @ 25°, B-Value ~ 3850 K
+        TH1: ERT-J0EM103J (Thermistor, Below the Division) - R = 10 kOhm @ 25°, B-Value ~ 3900 K
         R7: 1kOhm (Lower, Below the Division, in Series with the Thermistor)
         Input Voltage V_CC = 5V in an ideal world
 
@@ -199,6 +199,7 @@ public:
             minInputVoltage = currentInputVoltage;
         }
 
+        /*
         if (now - lastDebugOutAt > 20000 || lastDebugOutAt == 0)
         {
             DEBUG_PRINTF("[DEADLINE_TROPHY] logoTemp=%f K (min %f, max %f) [DEBUG %f, %f, %f, %f]\n",
@@ -218,6 +219,7 @@ public:
             );
             lastDebugOutAt = now;
         }
+        */
 
         // just some testing whether we see ANY change
         // --> i.e. update the LED Settings page by F5 and watch it change :)
@@ -288,4 +290,11 @@ public:
             _vccRead
         );
     }
+
+    int getLengthTotal() {
+        // qm210: quick hack, just has to match the definition in overwriteConfigForTrophy.
+        return 172;
+    }
 };
+
+#define GET_DEADLINE_USERMOD() ((DeadlineTrophyUsermod*)usermods.lookup(USERMOD_ID_DEADLINE_TROPHY))

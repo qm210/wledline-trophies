@@ -663,6 +663,13 @@ typedef struct Segment {
     void drawCharacter(unsigned char chr, int16_t x, int16_t y, uint8_t w, uint8_t h, CRGB c, CRGB c2, int8_t rotate = 0) {}
     void wu_pixel(uint32_t x, uint32_t y, CRGB c) {}
   #endif
+
+  void setName(const char* newName) {
+    delete[] name;
+    name = new char[strlen(newName)];
+    strlcpy(name, newName, WLED_MAX_SEGNAME_LEN+1);
+  }
+
 } segment;
 //static int segSize = sizeof(Segment);
 
@@ -843,9 +850,31 @@ class WS2812FX {  // 96 bytes
     inline Segment& getMainSegment(void)      { return _segments[getMainSegmentId()]; }
     inline Segment* getSegments(void)         { return &(_segments[0]); }
 
-  // 2D support (panels)
-    bool
-      isMatrix;
+    // 2D support (panels)
+    bool isMatrix;
+
+    // Deadline Trophy: will have absolute top priority if true - and otherwise, well... not.
+    #ifdef USE_DEADLINE_CONFIG
+        const bool isDeadlineTrophy = false;
+    #else
+        const bool isDeadlineTrophy = false;
+    #endif
+
+    bool is2dSegment() {
+        if (isDeadlineTrophy) {
+            // first segment is the Deadline Logo
+            return getCurrSegmentId() == 0;
+        }
+        return isMatrix;
+    }
+
+    bool has2dSegments() {
+        return isMatrix || isDeadlineTrophy;
+    }
+
+    void setMatrix(bool _isMatrix) {
+        isMatrix = _isMatrix && !isDeadlineTrophy;
+    }
 
 #ifndef WLED_DISABLE_2D
     #define WLED_MAX_PANELS 64
@@ -878,13 +907,16 @@ class WS2812FX {  // 96 bytes
 #endif
 
     void setUpMatrix();
+    void setUpDeadlineTrophy();
 
     // outsmart the compiler :) by correctly overloading
     inline void setPixelColorXY(int x, int y, uint32_t c)   { setPixelColor(y * Segment::maxWidth + x, c); }
     inline void setPixelColorXY(int x, int y, byte r, byte g, byte b, byte w = 0) { setPixelColorXY(x, y, RGBW32(r,g,b,w)); }
     inline void setPixelColorXY(int x, int y, CRGB c)       { setPixelColorXY(x, y, RGBW32(c.r,c.g,c.b,0)); }
 
-    inline uint32_t getPixelColorXY(uint16_t x, uint16_t y) { return getPixelColor(isMatrix ? y * Segment::maxWidth + x : x);}
+    inline uint32_t getPixelColorXY(uint16_t x, uint16_t y) {
+        return getPixelColor(is2dSegment() ? y * Segment::maxWidth + x : x);
+    }
 
   // end 2D support
 

@@ -396,4 +396,6 @@ void registerUsermods()
   #ifdef USERMOD_DEADLINE_TROPHY
   usermods.add(new DeadlineTrophyUsermod());
   #endif
+
+  DEBUG_PRINTF("Registered %d Usermods.\n", usermods.getModCount());
 }

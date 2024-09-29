@@ -47,6 +47,7 @@ void wsEvent(AsyncWebSocket * server, AsyncWebSocketClient * client, AwsEventTyp
         DeserializationError error = deserializeJson(doc, data, len);
         JsonObject root = doc.as<JsonObject>();
         if (error || root.isNull()) {
+          DEBUG_PRINTF("[WEBSOCKET ERROR] %d %s %s\n", root.isNull(), error.c_str(), data);
           releaseJSONBufferLock();
           return;
         }
@@ -62,8 +63,10 @@ void wsEvent(AsyncWebSocket * server, AsyncWebSocketClient * client, AwsEventTyp
         }
         releaseJSONBufferLock(); // will clean fileDoc
 
+        DEBUG_PRINTF("[WEBSOCKET DEBUG] %d %d %d\n", sendDeadlineValues, verboseResponse, interfaceUpdateCallMode);
+
         if (sendDeadlineValues) {
-            auto umDeadline = (DeadlineTrophyUsermod*)usermods.lookup(USERMOD_ID_DEADLINE_TROPHY);
+            auto umDeadline = GET_DEADLINE_USERMOD();
             if (umDeadline != nullptr) {
                 umDeadline->printValueJson(deadlineValues);
                 client->text(deadlineValues);
@@ -183,7 +186,7 @@ bool sendLiveLedsWs(uint32_t wsClient)
   const size_t MAX_LIVE_LEDS_WS = 1024U;
 #endif
   size_t n = ((used -1)/MAX_LIVE_LEDS_WS) +1; //only serve every n'th LED if count over MAX_LIVE_LEDS_WS
-  size_t pos = (strip.isMatrix ? 4 : 2);  // start of data
+  size_t pos = (strip.has2dSegments() ? 4 : 2);  // start of data
   size_t bufSize = pos + (used/n)*3;
 
   AsyncWebSocketMessageBuffer * wsBuf = ws.makeBuffer(bufSize);

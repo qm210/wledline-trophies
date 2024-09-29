@@ -487,7 +487,7 @@ void serializeSegment(JsonObject& root, Segment& seg, byte id, bool forPreset, b
     root["start"] = seg.start;
     root["stop"] = seg.stop;
     #ifndef WLED_DISABLE_2D
-    if (strip.isMatrix) {
+    if (strip.is2dSegment()) {
       root[F("startY")] = seg.startY;
       root[F("stopY")]  = seg.stopY;
     }
@@ -536,7 +536,7 @@ void serializeSegment(JsonObject& root, Segment& seg, byte id, bool forPreset, b
   root["rev"] = seg.reverse;
   root["mi"]  = seg.mirror;
   #ifndef WLED_DISABLE_2D
-  if (strip.isMatrix) {
+  if (strip.is2dSegment()) {
     root["rY"] = seg.reverse_y;
     root["mY"] = seg.mirror_y;
     root[F("tp")] = seg.transpose;
@@ -625,7 +625,7 @@ void serializeInfo(JsonObject root)
   //leds[F("seglock")] = false; //might be used in the future to prevent modifications to segment config
 
   #ifndef WLED_DISABLE_2D
-  if (strip.isMatrix) {
+  if (strip.is2dSegment()) {
     JsonObject matrix = leds.createNestedObject("matrix");
     matrix["w"] = Segment::maxWidth;
     matrix["h"] = Segment::maxHeight;
@@ -647,6 +647,11 @@ void serializeInfo(JsonObject root)
   leds[F("rgbw")] = strip.hasRGBWBus(); // deprecated, use info.leds.lc
   leds[F("wv")]   = totalLC & 0x02;     // deprecated, true if white slider should be displayed for any segment
   leds["cct"]     = totalLC & 0x04;     // deprecated, use info.leds.lc
+
+  if (strip.isDeadlineTrophy) {
+    root[F("segFixed")] = true;
+    root[F("debug")] = true;
+  }
 
   #ifdef WLED_DEBUG
   JsonArray i2c = root.createNestedArray(F("i2c"));
@@ -1030,7 +1035,7 @@ class LockedJsonResponse: public AsyncJsonResponse {
   // if the lock was not acquired (using JSONBufferGuard class) previous implementation still cleared existing buffer
   inline LockedJsonResponse(JsonDocument* doc, bool isArray) : AsyncJsonResponse(doc, isArray), _holding_lock(true) {};
 
-  virtual size_t _fillBuffer(uint8_t *buf, size_t maxLen) { 
+  virtual size_t _fillBuffer(uint8_t *buf, size_t maxLen) {
     size_t result = AsyncJsonResponse::_fillBuffer(buf, maxLen);
     // Release lock as soon as we're done filling content
     if (((result + _sentLength) >= (_contentLength)) && _holding_lock) {

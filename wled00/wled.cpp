@@ -432,8 +432,8 @@ pinManager.allocateMultiplePins(pins, sizeof(pins)/sizeof(managed_pin_type), Pin
   deserializeConfigFromFS();
 
   #ifdef USE_DEADLINE_CONFIG
-    DEBUG_PRINTLN(F("[DEADLINE] Even more hardcode manipulating the config (global vars)."));
-    strip.isMatrix = false;
+    // DEBUG_PRINTLN(F("[DEADLINE] Even more hardcode manipulating the config (global vars)."));
+    // TODO qm210
   #endif
 
 #if defined(STATUSLED) && STATUSLED>=0

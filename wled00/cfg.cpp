@@ -96,42 +96,48 @@ bool deserializeConfig(JsonObject doc, bool fromFS) {
   strip.setTargetFps(hw_led["fps"]); //NOP if 0, default 42 FPS
   CJSON(useGlobalLedBuffer, hw_led[F("ld")]);
 
-  #ifndef WLED_DISABLE_2D
-  // 2D Matrix Settings
-  JsonObject matrix = hw_led[F("matrix")];
-  if (!matrix.isNull()) {
-    strip.isMatrix = true;
-    CJSON(strip.panels, matrix[F("mpc")]);
-    strip.panel.clear();
-    JsonArray panels = matrix[F("panels")];
-    uint8_t s = 0;
-    if (!panels.isNull()) {
-      strip.panel.reserve(max(1U,min((size_t)strip.panels,(size_t)WLED_MAX_PANELS)));  // pre-allocate memory for panels
-      for (JsonObject pnl : panels) {
+  if (strip.isDeadlineTrophy) {
+    // TODO @qm210: do we need anything here?
+    // guess not, for now, do everything hard-coded in-place anyway
+  } else {
+
+    #ifndef WLED_DISABLE_2D
+    // 2D Matrix Settings
+    JsonObject matrix = hw_led[F("matrix")];
+    if (!matrix.isNull()) {
+        strip.setMatrix(true);
+        CJSON(strip.panels, matrix[F("mpc")]);
+        strip.panel.clear();
+        JsonArray panels = matrix[F("panels")];
+        uint8_t s = 0;
+        if (!panels.isNull()) {
+        strip.panel.reserve(max(1U,min((size_t)strip.panels,(size_t)WLED_MAX_PANELS)));  // pre-allocate memory for panels
+        for (JsonObject pnl : panels) {
+            WS2812FX::Panel p;
+            CJSON(p.bottomStart, pnl["b"]);
+            CJSON(p.rightStart,  pnl["r"]);
+            CJSON(p.vertical,    pnl["v"]);
+            CJSON(p.serpentine,  pnl["s"]);
+            CJSON(p.xOffset,     pnl["x"]);
+            CJSON(p.yOffset,     pnl["y"]);
+            CJSON(p.height,      pnl["h"]);
+            CJSON(p.width,       pnl["w"]);
+            strip.panel.push_back(p);
+            if (++s >= WLED_MAX_PANELS || s >= strip.panels) break; // max panels reached
+        }
+        } else {
+        // fallback
         WS2812FX::Panel p;
-        CJSON(p.bottomStart, pnl["b"]);
-        CJSON(p.rightStart,  pnl["r"]);
-        CJSON(p.vertical,    pnl["v"]);
-        CJSON(p.serpentine,  pnl["s"]);
-        CJSON(p.xOffset,     pnl["x"]);
-        CJSON(p.yOffset,     pnl["y"]);
-        CJSON(p.height,      pnl["h"]);
-        CJSON(p.width,       pnl["w"]);
+        strip.panels = 1;
+        p.height = p.width = 8;
+        p.xOffset = p.yOffset = 0;
+        p.options = 0;
         strip.panel.push_back(p);
-        if (++s >= WLED_MAX_PANELS || s >= strip.panels) break; // max panels reached
-      }
-    } else {
-      // fallback
-      WS2812FX::Panel p;
-      strip.panels = 1;
-      p.height = p.width = 8;
-      p.xOffset = p.yOffset = 0;
-      p.options = 0;
-      strip.panel.push_back(p);
+        }
+        // cannot call strip.setUpMatrix() here due to already locked JSON buffer
     }
-    // cannot call strip.setUpMatrix() here due to already locked JSON buffer
+    #endif
   }
-  #endif
 
   JsonArray ins = hw_led["ins"];
 
@@ -746,7 +752,10 @@ void serializeConfig() {
 
   #ifndef WLED_DISABLE_2D
   // 2D Matrix Settings
-  if (strip.isMatrix) {
+  if (strip.isDeadlineTrophy) {
+    hw_led["DL_TROPHY"] = true;
+  }
+  else if (strip.is2dSegment()) {
     JsonObject matrix = hw_led.createNestedObject(F("matrix"));
     matrix[F("mpc")] = strip.panels;
     JsonArray panels = matrix.createNestedArray(F("panels"));
