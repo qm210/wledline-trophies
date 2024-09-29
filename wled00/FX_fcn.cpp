@@ -1146,6 +1146,10 @@ void WS2812FX::finalizeInit(void)
     BusDigital* bd = static_cast<BusDigital*>(bus);
     if (pins[0] == 3) bd->reinit();
     #endif
+
+    DEBUG_PRINTF("[DEBUG_BUS %d] start %d, len %d -> max %d\n",
+        i, bus->getStart(), bus->getLength(), _length
+    );
   }
 
   if (isDeadlineTrophy) setUpDeadlineTrophy();
@@ -1158,8 +1162,23 @@ void WS2812FX::finalizeInit(void)
   //segments are created in makeAutoSegments();
   DEBUG_PRINTLN(F("Loading custom palettes"));
   loadCustomPalettes(); // (re)load all custom palettes
+
+  if (isDeadlineTrophy) {
+    // Deadline Trophy has its map defined already (somewhere above)
+    return;
+  }
   DEBUG_PRINTLN(F("Loading custom ledmaps"));
   deserializeMap();     // (re)load default ledmap
+
+  // qm210: the customMappingTable might have as many holes as it likes, i.e. its maximum is not its size
+  customMappingMax = 0;
+  if (customMappingTable != nullptr) {
+    for (int i = 0; i < customMappingSize; i++) {
+        if (customMappingTable[i] > customMappingMax) {
+            customMappingMax = customMappingTable[i];
+        }
+    }
+  }
 }
 
 void WS2812FX::service() {
@@ -1243,8 +1262,13 @@ void WS2812FX::service() {
 
 void IRAM_ATTR WS2812FX::setPixelColor(int i, uint32_t col)
 {
-  if (i < customMappingSize) i = customMappingTable[i];
-  if (i >= _length) return;
+  if (i < customMappingSize) {
+    i = customMappingTable[i];
+  }
+  if (i >= _length) {
+    // includes the 66536 from the -1 mapping
+    return;
+  }
   busses.setPixelColor(i, col);
 }
 
@@ -1475,11 +1499,8 @@ uint8_t WS2812FX::getActiveSegmentsNum(void) {
 }
 
 uint16_t WS2812FX::getLengthTotal(void) {
-  if (isDeadlineTrophy) {
-    return GET_DEADLINE_USERMOD()->getLengthTotal();
-  }
   uint16_t len = Segment::maxWidth * Segment::maxHeight; // will be _length for 1D (see finalizeInit()) but should cover whole matrix for 2D
-  if (is2dSegment() && _length > len) len = _length; // for 2D with trailing strip
+  if (has2dSegments() && _length > len) len = _length; // for 2D with trailing strip
   return len;
 }
 
@@ -1579,7 +1600,7 @@ void WS2812FX::resetSegments() {
   }
   _segments.clear(); // destructs all Segment as part of clearing
   #ifndef WLED_DISABLE_2D
-  segment seg = is2dSegment() ? Segment(0, Segment::maxWidth, 0, Segment::maxHeight) : Segment(0, _length);
+  segment seg = at2dSegment() ? Segment(0, Segment::maxWidth, 0, Segment::maxHeight) : Segment(0, _length);
   #else
   segment seg = Segment(0, _length);
   #endif
@@ -1793,11 +1814,6 @@ void WS2812FX::loadCustomPalettes() {
 bool WS2812FX::deserializeMap(uint8_t n) {
   // 2D support creates its own ledmap (on the fly) if a ledmap.json exists it will overwrite built one.
 
-  if (isDeadlineTrophy) {
-    // Deadline Trophy has one that is fixed and by now, should be defined.
-    return true;
-  }
-
   char fileName[32];
   strcpy_P(fileName, PSTR("/ledmap"));
   if (n) sprintf(fileName +7, "%d", n);
@@ -1806,7 +1822,7 @@ bool WS2812FX::deserializeMap(uint8_t n) {
 
   if (!isFile) {
     // erase custom mapping if selecting nonexistent ledmap.json (n==0)
-    if (!is2dSegment() && !n && customMappingTable != nullptr) {
+    if (!at2dSegment() && !n && customMappingTable != nullptr) {
       customMappingSize = 0;
       delete[] customMappingTable;
       customMappingTable = nullptr;

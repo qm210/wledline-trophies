@@ -755,7 +755,7 @@ void serializeConfig() {
   if (strip.isDeadlineTrophy) {
     hw_led["DL_TROPHY"] = true;
   }
-  else if (strip.is2dSegment()) {
+  else if (strip.at2dSegment()) {
     JsonObject matrix = hw_led.createNestedObject(F("matrix"));
     matrix[F("mpc")] = strip.panels;
     JsonArray panels = matrix.createNestedArray(F("panels"));

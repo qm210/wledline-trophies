@@ -22,6 +22,7 @@ var pN = "", pI = 0, pNum = 0;
 var pmt = 1, pmtLS = 0, pmtLast = 0;
 var lastinfo = {};
 var isM = false, mw = 0, mh=0;
+var isDeadline = false, hideFixed = false;
 var ws, cpick, ranges, wsRpt=0;
 var cfg = {
 	theme:{base:"dark", bg:{url:""}, alpha:{bg:0.6,tab:0.8}, color:{bg:""}},
@@ -620,7 +621,11 @@ function parseInfo(i) {
 	mw = i.leds.matrix ? i.leds.matrix.w : 0;
 	mh = i.leds.matrix ? i.leds.matrix.h : 0;
 	isM = mw>0 && mh>0;
-	if (!isM) {
+    showMatrixFilters(isM);
+}
+
+function showMatrixFilters(show = true) {
+    if (!show) {
 		gId("filter0D").classList.remove('hide');
 		gId("filter1D").classList.add('hide');
 		gId("filter2D").classList.add('hide');
@@ -629,15 +634,6 @@ function parseInfo(i) {
 		gId("filter1D").classList.remove('hide');
 		gId("filter2D").classList.remove('hide');
 	}
-//	if (i.noaudio) {
-//		gId("filterVol").classList.add("hide");
-//		gId("filterFreq").classList.add("hide");
-//	}
-//	if (!i.u || !i.u.AudioReactive) {
-//		gId("filterVol").classList.add("hide"); hideModes(" ♪"); // hide volume reactive effects
-//		gId("filterFreq").classList.add("hide"); hideModes(" ♫"); // hide frequency reactive effects
-//	}
-
 }
 
 //https://stackoverflow.com/questions/2592092/executing-script-elements-inserted-with-innerhtml
@@ -766,12 +762,12 @@ function populateSegments(s)
 					`<i class="icons e-icon frz" id="seg${i}frz" onclick="event.preventDefault();tglFreeze(${i});">&#x${inst.frz ? (li.live && li.liveseg==i?'e410':'e0e8') : 'e325'};</i>`+
 					(inst.n ? inst.n : "Segment "+i) +
 					`<div class="pop hide" onclick="event.preventDefault();event.stopPropagation();">`+
-						`<i class="icons g-icon" style="color:${cG};" onclick="this.nextElementSibling.classList.toggle('hide');">&#x278${String.fromCharCode(inst.set+"A".charCodeAt(0))};</i>`+
+						`<i class="icons g-icon maybe-fixed" style="color:${cG};" onclick="this.nextElementSibling.classList.toggle('hide');">&#x278${String.fromCharCode(inst.set+"A".charCodeAt(0))};</i>`+
 						`<div class="pop-c hide"><span style="color:var(--c-f);" onclick="setGrp(${i},0);">&#x278A;</span><span style="color:var(--c-r);" onclick="setGrp(${i},1);">&#x278B;</span><span style="color:var(--c-g);" onclick="setGrp(${i},2);">&#x278C;</span><span style="color:var(--c-l);" onclick="setGrp(${i},3);">&#x278D;</span></div>`+
 					`</div> `+
 					`<i class="icons edit-icon flr maybe-fixed" id="seg${i}nedit" onclick="tglSegn(${i})">&#xe2c6;</i>`+
 				`</div>`+
-				`<i class="icons e-icon flr" id="sege${i}" onclick="expand(${i})">&#xe395;</i>`+
+				`<i class="icons e-icon flr maybe-fixed" id="sege${i}" onclick="expand(${i})">&#xe395;</i>`+
 				(cfg.comp.segpwr ? segp : '') +
 				`<div class="segin" id="seg${i}in">`+
 					`<input type="text" class="ptxt" id="seg${i}t" autocomplete="off" maxlength=${li.arch=="esp8266"?32:64} value="${inst.n?inst.n:""}" placeholder="Enter name..."/>`+
@@ -1403,6 +1399,22 @@ function readState(s,command=false)
 		return true;
 	}
 
+    // qm210: lel, we have to work around the minifier who just breaks things.
+    if (hideFixed) {
+        [
+            // specifically marked elements
+            ...d.getElementsByClassName("maybe-fixed"),
+            // Segment/LED input fields
+            ...d.getElementsByClassName("segn"),
+        ].forEach(elem => elem.classList.add("hide"));
+    }
+
+    if (isDeadline) {
+        // deadline allows only one selected, so take the first that matches.
+        console.log("readState()", s);
+        // showMatrixFilters(isM);
+    }
+
 	if (s.seg.length>2) d.querySelectorAll(".pop").forEach((e)=>{e.classList.remove("hide");});
 
 	var cd = gId('csl').children;
@@ -1614,7 +1626,8 @@ function requestJson(command=null)
 		if (req.length >  500 && lastinfo && lastinfo.arch == "esp8266") useWs = false; // esp8266 can only handle 500 bytes
 	};
 
-    console.log("requestJson() called,", command, useWs, type, req);
+    if (d.DEBUG)
+        console.log("requestJson() called,", command, useWs, type, req);
 
 	if (useWs) {
 		ws.send(req?req:'{"v":true}');
@@ -1651,7 +1664,8 @@ function requestJson(command=null)
 
         setDeadlineTrophyFeatures(i);
 
-        console.log("Got State", s, ", Info", json.info);
+        if (d.DEBUG)
+            console.log("[DEBUG] Received State", s, ", Info", i);
 
 		//load presets and open websocket sequentially
 		if (!pJson || isEmpty(pJson)) setTimeout(()=>{
@@ -1671,14 +1685,9 @@ function setDeadlineTrophyFeatures(i) {
         console.error("setDeadlineTrophyFeatures() needs valid info");
         return;
     }
-    // qm210: lel, we have to work around the minifier who just breaks things.
-    i.segFixed && [
-        // specifically marked elements
-        ...d.getElementsByClassName("maybe-fixed"),
-        // Segment/LED input fields
-        ...d.getElementsByClassName("segn"),
-    ].forEach(elem => elem.classList.add("hide"));
-    d.DEBUG = !!i.debug;
+    hideFixed = i.segFixed;
+    isDeadline = !!i.DEADLINE;
+    d.DEBUG = isDeadline; // global flag for debugging that you can interfere with via Console... :)
 }
 function togglePower()
 {
@@ -1803,6 +1812,9 @@ function makeSeg()
 
 function resetUtil(off=false)
 {
+    if (isDeadline) {
+        return;
+    }
 	gId('segutil').innerHTML = `<div class="seg btn btn-s${off?' off':''}" style="padding:0;">`
 	+ '<label class="check schkl"><input type="checkbox" id="selall" onchange="selSegAll(this)"><span class="checkmark"></span></label>'
 	+ `<div class="segname" ${off?'':'onclick="makeSeg()"'}><i class="icons btn-icon">&#xe18a;</i>Add segment</div>`
@@ -2076,6 +2088,8 @@ function tglSegn(s)
 
 function selSegAll(o)
 {
+    if (isDeadline) return selSegEx(0);
+
 	var obj = {"seg":[]};
 	for (let i=0; i<=lSeg; i++) if (gId(`seg${i}`)) obj.seg.push({"id":i,"sel":o.checked});
 	requestJson(obj);
@@ -2091,6 +2105,8 @@ function selSegEx(s)
 
 function selSeg(s)
 {
+    if (isDeadline) return selSegEx(s);
+
 	var sel = gId(`seg${s}sel`).checked;
 	var obj = {"seg": {"id": s, "sel": sel}};
 	requestJson(obj);

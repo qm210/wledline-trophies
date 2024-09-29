@@ -483,11 +483,12 @@ bool deserializeState(JsonObject root, byte callMode, byte presetId)
 void serializeSegment(JsonObject& root, Segment& seg, byte id, bool forPreset, bool segmentBounds)
 {
   root["id"] = id;
+
   if (segmentBounds) {
     root["start"] = seg.start;
     root["stop"] = seg.stop;
     #ifndef WLED_DISABLE_2D
-    if (strip.is2dSegment()) {
+    if (strip.is2dSegment(id)) {
       root[F("startY")] = seg.startY;
       root[F("stopY")]  = seg.stopY;
     }
@@ -536,7 +537,7 @@ void serializeSegment(JsonObject& root, Segment& seg, byte id, bool forPreset, b
   root["rev"] = seg.reverse;
   root["mi"]  = seg.mirror;
   #ifndef WLED_DISABLE_2D
-  if (strip.is2dSegment()) {
+  if (strip.is2dSegment(id)) {
     root["rY"] = seg.reverse_y;
     root["mY"] = seg.mirror_y;
     root[F("tp")] = seg.transpose;
@@ -625,7 +626,7 @@ void serializeInfo(JsonObject root)
   //leds[F("seglock")] = false; //might be used in the future to prevent modifications to segment config
 
   #ifndef WLED_DISABLE_2D
-  if (strip.is2dSegment()) {
+  if (strip.at2dSegment()) {
     JsonObject matrix = leds.createNestedObject("matrix");
     matrix["w"] = Segment::maxWidth;
     matrix["h"] = Segment::maxHeight;
@@ -650,7 +651,7 @@ void serializeInfo(JsonObject root)
 
   if (strip.isDeadlineTrophy) {
     root[F("segFixed")] = true;
-    root[F("debug")] = true;
+    root[F("DEADLINE")] = true;
   }
 
   #ifdef WLED_DEBUG

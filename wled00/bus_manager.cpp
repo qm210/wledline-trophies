@@ -586,7 +586,7 @@ void IRAM_ATTR BusManager::setPixelColor(uint16_t pix, uint32_t c) {
   for (uint8_t i = 0; i < numBusses; i++) {
     Bus* b = busses[i];
     uint16_t bstart = b->getStart();
-    if (pix < bstart || pix >= bstart + b->getLength()) continue;
+    if (pix < bstart || pix >= b->getEnd()) continue;
     busses[i]->setPixelColor(pix - bstart, c);
   }
 }

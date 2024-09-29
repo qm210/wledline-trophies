@@ -135,6 +135,7 @@ class Bus {
     inline  void     setReversed(bool reversed)  { _reversed = reversed; }
     inline  uint16_t getStart()                  { return _start; }
     inline  void     setStart(uint16_t start)    { _start = start; }
+    inline  uint16_t getEnd()                    { return _start + _len; }
     inline  uint8_t  getType()                   { return _type; }
     inline  bool     isOk()                      { return _valid; }
     inline  bool     isReversed()                { return _reversed; }

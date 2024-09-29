@@ -291,10 +291,6 @@ public:
         );
     }
 
-    int getLengthTotal() {
-        // qm210: quick hack, just has to match the definition in overwriteConfigForTrophy.
-        return 172;
-    }
 };
 
 #define GET_DEADLINE_USERMOD() ((DeadlineTrophyUsermod*)usermods.lookup(USERMOD_ID_DEADLINE_TROPHY))

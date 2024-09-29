@@ -664,11 +664,23 @@ typedef struct Segment {
     void wu_pixel(uint32_t x, uint32_t y, CRGB c) {}
   #endif
 
-  void setName(const char* newName) {
+  #ifdef USERMOD_DEADLINE_TROPHY
+    void setName(const char* newName) {
     delete[] name;
     name = new char[strlen(newName)];
     strlcpy(name, newName, WLED_MAX_SEGNAME_LEN+1);
-  }
+    }
+
+    void setDeadlineCapabilities(size_t index) {
+        // no idea whether refreshLightCapabilities() works in our use case, so.. anyway.
+        if (index < 2)
+            _capabilities = SEG_CAPABILITY_RGB;
+        else if (index < 4)
+            _capabilities = SEG_CAPABILITY_W;
+        else
+            _capabilities = 0;
+    }
+  #endif
 
 } segment;
 //static int segSize = sizeof(Segment);
@@ -860,12 +872,16 @@ class WS2812FX {  // 96 bytes
         const bool isDeadlineTrophy = false;
     #endif
 
-    bool is2dSegment() {
+    bool is2dSegment(uint8_t index) {
         if (isDeadlineTrophy) {
-            // first segment is the Deadline Logo
-            return getCurrSegmentId() == 0;
+            // even the single LEDs are implemented as part of the matrix, for $reasons
+            return true;
         }
         return isMatrix;
+    }
+
+    bool at2dSegment() {
+        return is2dSegment(getCurrSegmentId());
     }
 
     bool has2dSegments() {
@@ -915,7 +931,7 @@ class WS2812FX {  // 96 bytes
     inline void setPixelColorXY(int x, int y, CRGB c)       { setPixelColorXY(x, y, RGBW32(c.r,c.g,c.b,0)); }
 
     inline uint32_t getPixelColorXY(uint16_t x, uint16_t y) {
-        return getPixelColor(is2dSegment() ? y * Segment::maxWidth + x : x);
+        return getPixelColor(at2dSegment() ? y * Segment::maxWidth + x : x);
     }
 
   // end 2D support
@@ -956,6 +972,7 @@ class WS2812FX {  // 96 bytes
 
     uint16_t* customMappingTable;
     uint16_t  customMappingSize;
+    uint16_t  customMappingMax;  // qm210: unclear why this was missing (was it..?)
 
     unsigned long _lastShow;
 

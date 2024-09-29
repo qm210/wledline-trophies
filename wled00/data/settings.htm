@@ -65,7 +65,6 @@
                 return;
             }
             let url = loc ? getURL('/ws').replace("http","ws") : "ws://"+window.location.hostname+"/ws";
-            console.log("now make deadline trophy ws:", url);
             ws = new WebSocket(url);
             const refreshButton = gId("dl_refresh");
             ws.onmessage = e => {
@@ -76,15 +75,15 @@
                 }
             };
             ws.onclose = e => {
-                console.log("[DEADLINE] WebSocket closed.");
+                if (d.DEBUG) console.log("[DEBUG] WebSocket closed.");
                 setTimeout(makeDeadlineTrophyWs, 5000);
                 ws = null;
-                refreshButton.display.style = "";
+                refreshButton.style.display = "";
             };
             ws.onopen = e => {
-                console.log("[DEADLINE] WebSocket opened.");
+                if (d.DEBUG) console.log("[DEBUG] WebSocket opened.");
                 requestTrophyData();
-                refreshButton.display.style = "none";
+                refreshButton.style.display = "none";
             }
         }
         function updateTrophyReadings(data) {
