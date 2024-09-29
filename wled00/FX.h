@@ -855,7 +855,7 @@ class WS2812FX {  // 96 bytes
 
     // Deadline Trophy: will have absolute top priority if true - and otherwise, well... not.
     #ifdef USE_DEADLINE_CONFIG
-        const bool isDeadlineTrophy = false;
+        const bool isDeadlineTrophy = true;
     #else
         const bool isDeadlineTrophy = false;
     #endif

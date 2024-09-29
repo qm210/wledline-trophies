@@ -195,17 +195,21 @@ void WS2812FX::setUpDeadlineTrophy() {
     _mainSegment = 0; // also the Logo, I have no idea where _mainSegment is used everywhere.
 
     size_t s = 4;
+    const char* segName[] = {"Logo", "Base", "Floor White", "Back UV"};
     _segments.clear();
     _segments.reserve(s); // prevent reallocations
-    const char* segName[] = {"Logo", "Base", "Floor White", "Back UV"};
 
+    int segStart = 0;
     for (int i=0; i<s; i++) {
         auto bus = busses.getBus(i);
-        auto seg = i == _mainSegment
-            ? Segment(0, logoW, 0, logoH)
-            : Segment(bus->getStart(), bus->getStart() + bus->getLength());
-        seg.setName(segName[i]);
-        _segments.push_back(seg);
+        if (i == _mainSegment) {
+            _segments.push_back(Segment(0, logoW, 0, logoH));
+            segStart += logoW * logoH;
+        } else {
+            _segments.push_back(Segment(segStart, segStart + bus->getLength()));
+            segStart += bus->getLength();
+        }
+        _segments[i].setName(segName[i]);
     }
 
     // also, the mapping is fixed.
