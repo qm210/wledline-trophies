@@ -60,6 +60,13 @@ public:
 
     */
 
+    const float maxCurrent =
+        #ifdef USE_DEADLINE_4A_POWER_SUPPLY
+            4.0;
+        #else
+            1.0;
+        #endif
+
 private:
 
     // analog readings
@@ -75,20 +82,15 @@ private:
     float maxInputVoltage = 0.;
     float minInputVoltage = 9999.;
 
-    float limitFunc_logoThermSlope = 0.0;
-    float limitFunc_logoThermOffset = 0.0;
-    float limitFunc_logoThermCritical = 0.0;
-    float limit_inputVoltageThreshold = 4.6;
-
     int valueForInputCurrentSwitch = 0;
     float inputCurrentSwitch_waitSeconds = 1.;
     float inputCurrentSwitch_riseSeconds = 1.;
 
     long lastDebugOutAt;
-    long startedAt;
     long now;
     float runningSec;
-    int _counter = 0;
+    float elapsedSec;
+    float justBefore;
 
     // logo temp values
     float _logoRead;
@@ -99,22 +101,105 @@ private:
     // current temp values
     float _vccRead;
 
+    // limit maximum current / brightness to avoid damage
+    float maxA = 0.;
+
+    float limit_inputVoltageThreshold = 4.6;
+    bool limit_becauseVoltageDrop = false;
+    bool limit_becauseTooHot = false;
+
+    long inputVoltageThresholdReachedAt;
+    bool inputVoltageWasReachedOnce = false;
+
+    // Limit by Input Voltage, implemented with guessed values
+    float maxA_attackFactorWhenCritical = 0.5;
+    float maxA_releasePerSecond = 0.05;
+
+    // Limit by Temperature, NOT YET IMPLEMENTED!
+    float maxA_limitWhenTooHot = 0.7;
+    float limit_cricitcalTemperature = 60;
+
 public:
 
     void setup()
     {
         DEBUG_PRINTF("[DEADLINE] QM watches you! (non-creepily.) Say Hi at qm@z10.info\n");
 
-        startedAt = millis();
+        DEBUG_PRINTLN("[USERMOD_DEADLINE] TODO: Watch Temperature!");
+
+        justBefore = millis();
+        runningSec = 0;
         lastDebugOutAt = 0;
 
         hasEnoughSamples = false;
+        inputVoltageWasReachedOnce = false;
+        maxA = 0.;
 
-        // 12-bit ADC is the default, but let's go sure
+        // 12-bit ADC is the default, but let's go sure (do we need? no idea.)
         analogSetWidth(12);
 
         // set InputCurrentSwitch to zero.
         dacWrite(DAC1, 0);
+    }
+
+    void loop()
+    {
+        now = millis();
+        elapsedSec = 1e-3 * (now - justBefore);
+        runningSec += elapsedSec;
+
+        maxA = calcMaxCurrentLimiter();
+        // this does the actual limitation:
+        strip.ablMilliampsMax = static_cast<uint16_t>(maxA);
+
+        readAnalogValues();
+        if (!hasEnoughSamples)
+            return;
+
+        calcInputVoltage();
+        calcLogoTherm();
+
+        if (inputVoltageWasReachedOnce) {
+            setInputCurrentSwitch(runningSec);
+        }
+
+        // these are for debugging
+        if (currentLogoTempKelvin > maxLogoTempKelvin) {
+            maxLogoTempKelvin = currentLogoTempKelvin;
+        }
+        if (currentLogoTempKelvin < minLogoTempKelvin) {
+            minLogoTempKelvin = currentLogoTempKelvin;
+        }
+        if (currentInputVoltage > maxInputVoltage) {
+            maxInputVoltage = currentInputVoltage;
+        }
+        if (currentInputVoltage < minInputVoltage) {
+            minInputVoltage = currentInputVoltage;
+        }
+
+        /*
+        if (now - lastDebugOutAt > 20000 || lastDebugOutAt == 0)
+        {
+            DEBUG_PRINTF("[DEADLINE_TROPHY] logoTemp=%f K (min %f, max %f) [DEBUG %f, %f, %f, %f]\n",
+                currentLogoTempKelvin,
+                minLogoTempKelvin,
+                maxLogoTempKelvin,
+                _logoRead,
+                _voltageRatio,
+                _R_TH1,
+                _logRatio
+            );
+            DEBUG_PRINTF("[DEADLINE_TROPHY] inputV=%f (min %f, max %f) [DEBUG %f]\n",
+                currentInputVoltage,
+                maxInputVoltage,
+                minInputVoltage,
+                _vccRead
+            );
+            lastDebugOutAt = now;
+        }
+        */
+
+       justBefore = now;
     }
 
     void setInputCurrentSwitch(float runningSec) {
@@ -171,63 +256,32 @@ public:
         currentLogoTempKelvin = 1. / ( logoTherm_OneOverT0 + logoTherm_OneOverB * _logRatio );
     }
 
-    void loop()
-    {
-        now = millis();
-        runningSec = 1e-3 * (now - startedAt);
-
-        setInputCurrentSwitch(runningSec);
-
-        readAnalogValues();
-        if (!hasEnoughSamples)
-            return;
-
-        calcInputVoltage();
-        calcLogoTherm();
-
-        // these are for debugging
-        if (currentLogoTempKelvin > maxLogoTempKelvin) {
-            maxLogoTempKelvin = currentLogoTempKelvin;
+    float calcMaxCurrentLimiter() {
+        if (!hasEnoughSamples) {
+            return 0;
         }
-        if (currentLogoTempKelvin < minLogoTempKelvin) {
-            minLogoTempKelvin = currentLogoTempKelvin;
-        }
-        if (currentInputVoltage > maxInputVoltage) {
-            maxInputVoltage = currentInputVoltage;
-        }
-        if (currentInputVoltage < minInputVoltage) {
-            minInputVoltage = currentInputVoltage;
+        if (!inputVoltageWasReachedOnce) {
+            if (currentInputVoltage > limit_inputVoltageThreshold) {
+                inputVoltageWasReachedOnce = true;
+                inputVoltageThresholdReachedAt = now;
+                limit_becauseVoltageDrop = false;
+            } else {
+                return 0;
+            }
         }
 
-        /*
-        if (now - lastDebugOutAt > 20000 || lastDebugOutAt == 0)
-        {
-            DEBUG_PRINTF("[DEADLINE_TROPHY] logoTemp=%f K (min %f, max %f) [DEBUG %f, %f, %f, %f]\n",
-                currentLogoTempKelvin,
-                minLogoTempKelvin,
-                maxLogoTempKelvin,
-                _logoRead,
-                _voltageRatio,
-                _R_TH1,
-                _logRatio
-            );
-            DEBUG_PRINTF("[DEADLINE_TROPHY] inputV=%f (min %f, max %f) [DEBUG %f]\n",
-                currentInputVoltage,
-                maxInputVoltage,
-                minInputVoltage,
-                _vccRead
-            );
-            lastDebugOutAt = now;
+        if (currentInputVoltage < limit_inputVoltageThreshold) {
+            if (!limit_becauseVoltageDrop) {
+                limit_becauseVoltageDrop = true;
+                maxA *= maxA_attackFactorWhenCritical;
+            } else {
+                maxA += maxA_releasePerSecond;
+            }
         }
-        */
 
-        // just some testing whether we see ANY change
-        // --> i.e. update the LED Settings page by F5 and watch it change :)
-        // auto testSine = 400. + 50.0 * sin_t(0.01 * static_cast<float>(_counter));
-        // strip.ablMilliampsMax = static_cast<uint16_t>(testSine);
+        // TODO @qm210 implement temperature control
 
-        // was introduced for debugging, keep for debugging ;)
-        _counter++;
+        return MIN(maxA, maxCurrent);
     }
 
     void addToConfig(JsonObject& doc)
@@ -238,11 +292,13 @@ public:
         pins.add(PIN_LOGOTHERM);
         pins.add(PIN_INPUTVOLTAGE);
 
+        // TODO @qm210 make the maxA-limiter parameters configurable.
+
         auto lim = top.createNestedObject("lim");
-        auto lt_lim = lim.createNestedObject("temp");
-        lt_lim["Tstart"] = limitFunc_logoThermOffset;
-        lt_lim["mApK"] = limitFunc_logoThermSlope;
-        lt_lim["Tcrit"] = limitFunc_logoThermCritical;
+        // auto lt_lim = lim.createNestedObject("temp");
+        // lt_lim["Tstart"] = limitFunc_logoThermOffset;
+        // lt_lim["mApK"] = limitFunc_logoThermSlope;
+        // lt_lim["Tcrit"] = limitFunc_logoThermCritical;
         lim["Vlim"] = limit_inputVoltageThreshold;
         // auto a_in = lim.createNestedObject("A_in");
         // a_in["wait"] = 2.;

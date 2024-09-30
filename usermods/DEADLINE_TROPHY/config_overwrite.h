@@ -35,4 +35,10 @@ void overwriteConfigForTrophy(JsonObject doc)
     // The LED setup is completely hardcoded by now,
     // but still, we don't want any further auto-segmentation
     doc[F("light")][F("aseg")] = false;
+
+    auto def = doc[F("def")];
+    // turn on at boot
+    def["on"] = 1;
+    // default brightness at 100%
+    def["bri"] = 25;
 }
