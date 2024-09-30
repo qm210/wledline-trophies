@@ -475,6 +475,10 @@ void getSettingsJS(byte subPage, char* dest)
     sappend('v',SET_F("IR"),irPin);
     sappend('v',SET_F("IT"),irEnabled);
     sappend('c',SET_F("MSO"),!irApplyToAllSelected);
+
+    #ifdef USERMOD_DEADLINE_TROPHY
+    oappend(SET_F("applyDeadlineMod();"));
+    #endif
   }
 
   if (subPage == SUBPAGE_UI)
