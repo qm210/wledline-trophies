@@ -40,5 +40,5 @@ void overwriteConfigForTrophy(JsonObject doc)
     // turn on at boot
     def["on"] = 1;
     // default brightness at 100%
-    def["bri"] = 255;
+    def["bri"] = 25;
 }
