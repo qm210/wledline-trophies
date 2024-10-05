@@ -232,16 +232,7 @@ void WS2812FX::setUpDeadlineTrophy() {
             i == 0
                 ? SEGMENT_ON | SELECTED
                 : SEGMENT_ON;
-
-        DEBUG_PRINTF(
-            "[DEBUG_SEGMENT %d] %d x %d, %d x %d (%d)\n",
-            i,
-            _segments[i].width(),
-            _segments[i].height(),
-            _segments[i].virtualWidth(),
-            _segments[i].virtualHeight(),
-            _segments[i].virtualLength()
-        );
+        _segments[i].mode = FX_MODE_DEADLINE_TROPHY_2024;
     }
 }
 

@@ -1,6 +1,18 @@
 #pragma once
 
-#define DEADLINE_VALUES_STRLEN 200
+
+#define DEADLINE_VALUES_STRLEN 250
+
+// CAUTION: 4A in production -- with the wrong patterns for too long, this might grill it. QM did one already.
+#ifndef USE_DEADLINE_MAX_AMPERE
+  #ifdef WLED_DEBUG
+    #define USE_DEADLINE_MAX_AMPERE 1
+  #else
+    #define USE_DEADLINE_MAX_AMPERE 4
+  #endif
+#endif
+
+#define ABS_ZERO 273.15
 
 class DeadlineTrophyUsermod : public Usermod
 {
@@ -12,8 +24,8 @@ public:
 
     // qm210: these are hacked into the AudioReactive UserMod because we are so loco
     static const int PIN_AR_SD = 12;
-    static const int PIN_AR_WS = 13;
-    static const int PIN_AR_CLK = 14;
+    static const int PIN_AR_WS = 14;
+    static const int PIN_AR_CLK = 13;
 
     // for the analogRead(), average over some samples to smoothen fluctuations.
     static const int AVERAGE_SAMPLES = 10;
@@ -47,7 +59,7 @@ public:
     static constexpr float logoR6_Ohm = 1.5e4;
     static constexpr float logoR7_Ohm = 1e3;
     static constexpr float logoThermistor_R0_Ohm = 1e4;
-    static constexpr float logoTherm_OneOverT0 = 1. / (273.15 + 25);
+    static constexpr float logoTherm_OneOverT0 = 1. / (ABS_ZERO + 25);
     static constexpr float logoTherm_OneOverB = 1. / 3900.;
     static constexpr float voltageAdcCoeff = 3.3 / 4095.; // 12bit ADC
 
@@ -60,12 +72,7 @@ public:
 
     */
 
-    const float maxCurrent =
-        #ifdef USE_DEADLINE_4A_POWER_SUPPLY
-            4.0;
-        #else
-            1.0;
-        #endif
+    const float maxCurrent = USE_DEADLINE_MAX_AMPERE;
 
 private:
 
@@ -102,22 +109,26 @@ private:
     float _vccRead;
 
     // limit maximum current / brightness to avoid damage
-    float maxA = 0.;
+    // this is multiplied on the brightness.
+    // it didn't work with strip.ablMilliampsMax due to estimateCurrentAndLimitBri()
+    float attenuateFactor = 1.;
 
-    float limit_inputVoltageThreshold = 4.6;
     bool limit_becauseVoltageDrop = false;
     bool limit_becauseTooHot = false;
 
     long inputVoltageThresholdReachedAt;
     bool inputVoltageWasReachedOnce = false;
+    float secondsSinceVoltageThresholdReached = 0.;
 
+    float limit_inputVoltageThreshold = 4.6;
     // Limit by Input Voltage, implemented with guessed values
-    float maxA_attackFactorWhenCritical = 0.5;
-    float maxA_releasePerSecond = 0.05;
+    float attenuateByV_attackFactorWhenCritical = 0.5;
+    float attenuateByV_releasePerSecond = 0.05;
 
-    // Limit by Temperature, NOT YET IMPLEMENTED!
-    float maxA_limitWhenTooHot = 0.7;
-    float limit_cricitcalTemperature = 60;
+    float limit_criticalTempDegC = 60;
+    // Limit by Temperature, also guessed values
+    float attenuateByT_attackFactorWhenCritical = 0.7;
+    float attenuateByT_releasePerSecond = 0.02;
 
 public:
 
@@ -125,15 +136,15 @@ public:
     {
         DEBUG_PRINTF("[DEADLINE] QM watches you! (non-creepily.) Say Hi at qm@z10.info\n");
 
-        DEBUG_PRINTLN("[USERMOD_DEADLINE] TODO: Watch Temperature!");
-
         justBefore = millis();
         runningSec = 0;
         lastDebugOutAt = 0;
 
         hasEnoughSamples = false;
         inputVoltageWasReachedOnce = false;
-        maxA = 0.;
+
+        attenuateFactor = 0.;
+        strip.ablMilliampsMax = static_cast<uint8_t>(maxCurrent);
 
         // 12-bit ADC is the default, but let's go sure (do we need? no idea.)
         analogSetWidth(12);
@@ -148,9 +159,7 @@ public:
         elapsedSec = 1e-3 * (now - justBefore);
         runningSec += elapsedSec;
 
-        maxA = calcMaxCurrentLimiter();
-        // this does the actual limitation:
-        strip.ablMilliampsMax = static_cast<uint16_t>(maxA);
+        attenuateFactor = calcMaxCurrentLimiter(elapsedSec);
 
         readAnalogValues();
         if (!hasEnoughSamples)
@@ -202,13 +211,24 @@ public:
        justBefore = now;
     }
 
+    uint8_t getAttenuated(uint8_t brightness) {
+        return static_cast<uint8_t>(static_cast<float>(brightness) * attenuateFactor);
+    }
+
     void setInputCurrentSwitch(float runningSec) {
-        float linearRise = (runningSec - inputCurrentSwitch_waitSeconds) / inputCurrentSwitch_riseSeconds;
-        valueForInputCurrentSwitch = constrain(
-            static_cast<int>(255 * linearRise),
+        if (!inputVoltageWasReachedOnce) {
+            return;
+        }
+        secondsSinceVoltageThresholdReached = runningSec - inputVoltageThresholdReachedAt;
+        if (secondsSinceVoltageThresholdReached > inputCurrentSwitch_waitSeconds + inputCurrentSwitch_riseSeconds) {
+            return;
+        }
+        attenuateFactor = constrain(
+            (secondsSinceVoltageThresholdReached - inputCurrentSwitch_waitSeconds) / inputCurrentSwitch_riseSeconds,
             0,
-            255
+            1.
         );
+        valueForInputCurrentSwitch = static_cast<int>(255 * attenuateFactor);
         dacWrite(DAC1, valueForInputCurrentSwitch);
     }
 
@@ -236,9 +256,6 @@ public:
             hasEnoughSamples = true;
             sampleCursor = 0;
         }
-        if (!hasEnoughSamples) {
-            return;
-        }
     }
 
     void calcInputVoltage()
@@ -256,14 +273,22 @@ public:
         currentLogoTempKelvin = 1. / ( logoTherm_OneOverT0 + logoTherm_OneOverB * _logRatio );
     }
 
-    float calcMaxCurrentLimiter() {
+    float calcMaxCurrentLimiter(float dt) {
+        // DEBUG_PRINTF(
+        //     "[DEBUG_DEADLINE] %d %d %d | %.3f %.3f | %.3f  x%.3f (%d %d)\n",
+        //     hasEnoughSamples, inputVoltageWasReachedOnce, inputVoltageThresholdReachedAt,
+        //     limit_inputVoltageThreshold, currentInputVoltage,
+        //     secondsSinceVoltageThresholdReached, attenuateFactor,
+        //     limit_becauseVoltageDrop, limit_becauseTooHot
+        // );
+
         if (!hasEnoughSamples) {
             return 0;
         }
         if (!inputVoltageWasReachedOnce) {
             if (currentInputVoltage > limit_inputVoltageThreshold) {
                 inputVoltageWasReachedOnce = true;
-                inputVoltageThresholdReachedAt = now;
+                inputVoltageThresholdReachedAt = runningSec;
                 limit_becauseVoltageDrop = false;
             } else {
                 return 0;
@@ -273,15 +298,28 @@ public:
         if (currentInputVoltage < limit_inputVoltageThreshold) {
             if (!limit_becauseVoltageDrop) {
                 limit_becauseVoltageDrop = true;
-                maxA *= maxA_attackFactorWhenCritical;
+                attenuateFactor *= attenuateByV_attackFactorWhenCritical;
             } else {
-                maxA += maxA_releasePerSecond;
+                attenuateFactor += attenuateByV_releasePerSecond * dt;
             }
         }
 
-        // TODO @qm210 implement temperature control
+        if (currentLogoTempKelvin >= limit_criticalTempDegC + ABS_ZERO) {
+            if (!limit_becauseTooHot) {
+                limit_becauseTooHot = true;
+                attenuateFactor *= attenuateByT_attackFactorWhenCritical;
+            } else {
+                attenuateFactor += attenuateByT_releasePerSecond * dt;
+            }
+        }
 
-        return MIN(maxA, maxCurrent);
+        if (attenuateFactor > 1.) {
+            limit_becauseVoltageDrop = false;
+            limit_becauseTooHot = false;
+            attenuateFactor = 1.;
+        }
+
+        return attenuateFactor;
     }
 
     void addToConfig(JsonObject& doc)
@@ -292,31 +330,55 @@ public:
         pins.add(PIN_LOGOTHERM);
         pins.add(PIN_INPUTVOLTAGE);
 
-        // TODO @qm210 make the maxA-limiter parameters configurable.
-
-        auto lim = top.createNestedObject("lim");
-        // auto lt_lim = lim.createNestedObject("temp");
-        // lt_lim["Tstart"] = limitFunc_logoThermOffset;
-        // lt_lim["mApK"] = limitFunc_logoThermSlope;
-        // lt_lim["Tcrit"] = limitFunc_logoThermCritical;
-        lim["Vlim"] = limit_inputVoltageThreshold;
-        // auto a_in = lim.createNestedObject("A_in");
-        // a_in["wait"] = 2.;
-        // a_in["slop"] = 5.;
+        auto limV = top.createNestedObject("minVoltage");
+        limV[F("threshold")] = limit_inputVoltageThreshold;
+        limV[F("attenuate")] = attenuateByV_attackFactorWhenCritical;
+        limV[F("release")] = attenuateByV_releasePerSecond;
+        auto limT = top.createNestedObject("maxTemp");
+        limT[F("critical")] = limit_criticalTempDegC;
+        limT[F("attenuate")] = attenuateByT_attackFactorWhenCritical,
+        limT[F("release")] = attenuateByT_releasePerSecond;
     }
 
     void appendConfigData()
     {
       oappend(SET_F("addInfo('DeadlineTrophy:pin[]',0,'Logo Temperature','LogoTherm');"));
       oappend(SET_F("addInfo('DeadlineTrophy:pin[]',1,'Common Voltage','VCC');"));
-      // TODO:  APPEND CONFIG
+
+      oappend(SET_F("addInfo('DeadlineTrophy:minVoltage:threshold',1,'required minimum V<sub>CC</sub>');"));
+      oappend(SET_F("addInfo('DeadlineTrophy:minVoltage:attenuate',1,'dim by factor when below threshold');"));
+      oappend(SET_F("addInfo('DeadlineTrophy:minVolage:release',1,'slowly go back to 1 (perSec) if safe');"));
+
+      oappend(SET_F("addInfo('DeadlineTrophy:maxTemp:critical',1,'critical Temperature in °C');"));
+      oappend(SET_F("addInfo('DeadlineTrophy:maxTemp:attenuate',1,'dim by factor when above critical');"));
+      oappend(SET_F("addInfo('DeadlineTrophy:maxTemp:release',1,'slowly go back to 1 (perSec) if safe');"));
     }
 
     bool readFromConfig(JsonObject& root)
     {
-        // TODO @qm210: READ CONFIG
+        JsonObject top = root[FPSTR("DeadlineTrophy")];
+        if (top.isNull()) {
+            DEBUG_PRINTLN(F("DeadlineTrophy: No config found. (Using defaults.)"));
+            return false;
+        }
 
-        // JsonObject top = root[FPSTR(_name)];
+        JsonObject limV = top["minVoltage"];
+        if (!limV.isNull()) {
+            limit_inputVoltageThreshold = limV[F("threshold")] | limit_inputVoltageThreshold;
+            attenuateByV_attackFactorWhenCritical = limV[F("attenuate")] | attenuateByV_attackFactorWhenCritical;
+            attenuateByV_releasePerSecond = limV[F("release")] | attenuateByV_releasePerSecond;
+        }
+        JsonObject limT = top["maxTemp"];
+        if (!limT.isNull()) {
+            limit_criticalTempDegC =limT[F("critical")] | limit_criticalTempDegC;
+            attenuateByT_attackFactorWhenCritical = limT[F("attenuate")] | attenuateByT_attackFactorWhenCritical;
+            attenuateByT_releasePerSecond = limT[F("release")] | attenuateByT_releasePerSecond;
+        }
+
+        DEBUG_PRINTLN("READ FROM CONFIG!");
+        serializeJson(top, Serial);
+        DEBUG_PRINTLN();
+
         return true;
     }
 
@@ -335,15 +397,19 @@ public:
         // --> define the DEADLINE_VALUES_STRLEN so this string fits
         sprintf(
             line,
-            "{\"dl\": {\"T\": %.3f, \"minT\": %.3f, \"maxT\": %.3f, \"VCC\": %.3f, \"maxVCC\": %.3f, \"minVCC\": %.3f, \"adcT\": %.1f, \"adcV\": %.1f}}",
-            currentLogoTempKelvin - 273.15,
-            minLogoTempKelvin - 273.15,
-            maxLogoTempKelvin - 273.15,
+            "{\"dl\": {\"T\": %.3f, \"minT\": %.3f, \"maxT\": %.3f, \"VCC\": %.3f, \"maxVCC\": %.3f, \"minVCC\": %.3f, \"adcT\": %.1f, \"adcV\": %.1f, \"att\": %.2f, \"aboveT\":%d, \"belowV\":%d, \"sec\": %.2f}}",
+            currentLogoTempKelvin - ABS_ZERO,
+            minLogoTempKelvin - ABS_ZERO,
+            maxLogoTempKelvin - ABS_ZERO,
             currentInputVoltage,
             maxInputVoltage,
             minInputVoltage,
             _logoRead,
-            _vccRead
+            _vccRead,
+            attenuateFactor,
+            limit_becauseTooHot,
+            limit_becauseVoltageDrop,
+            secondsSinceVoltageThresholdReached
         );
     }
 

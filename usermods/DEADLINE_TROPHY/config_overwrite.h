@@ -9,6 +9,10 @@ const int PIN_BASE_CLOCK = 18;
 const int PIN_BACK_SPOT = 26;
 const int PIN_FLOOR_SPOT = 27;
 
+#ifndef USE_DEADLINE_INIT_BRIGHTNESS
+  #define USE_DEADLINE_INIT_BRIGHTNESS 25
+#endif
+
 void overwriteConfigForTrophy(JsonObject doc)
 {
     // Usermods usually only care about their own stuff, but we go for violating boundaries here.
@@ -40,5 +44,5 @@ void overwriteConfigForTrophy(JsonObject doc)
     // turn on at boot
     def["on"] = 1;
     // default brightness at 100%
-    def["bri"] = 25;
+    def["bri"] = USE_DEADLINE_INIT_BRIGHTNESS;
 }

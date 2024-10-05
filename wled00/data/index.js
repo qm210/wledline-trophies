@@ -732,12 +732,17 @@ function populateSegments(s)
 		let staY = inst.startY;
 		let stoY = inst.stopY;
 		let isMSeg = isM && staX<mw*mh; // 2D matrix segment
+        if (isDeadline) {
+            isMSeg = i < 2;
+        }
+        console.log("[DEBUG]", isMSeg, stoY, staY, stoX, staX);
+
 		let rvXck = `<label class="check revchkl">Reverse ${isM?'':'direction'}<input type="checkbox" id="seg${i}rev" onchange="setRev(${i})" ${inst.rev?"checked":""}><span class="checkmark"></span></label>`;
 		let miXck = `<label class="check revchkl">Mirror<input type="checkbox" id="seg${i}mi" onchange="setMi(${i})" ${inst.mi?"checked":""}><span class="checkmark"></span></label>`;
 		let rvYck = "", miYck ="";
 		if (isMSeg) {
-			rvYck = `<label class="check revchkl">Reverse<input type="checkbox" id="seg${i}rY" onchange="setRevY(${i})" ${inst.rY?"checked":""}><span class="checkmark"></span></label>`;
-			miYck = `<label class="check revchkl">Mirror<input type="checkbox" id="seg${i}mY" onchange="setMiY(${i})" ${inst.mY?"checked":""}><span class="checkmark"></span></label>`;
+			rvYck = `<label class="check revchkl">Reverse<input tpe="checkbox" id="seg${i}rY" onchange="setRevY(${i})" ${inst.rY?"checked":""}><span class="checkmark"></span></label>`;
+			miYck = `<label class="check revchkl">Mirror<input typye="checkbox" id="seg${i}mY" onchange="setMiY(${i})" ${inst.mY?"checked":""}><span class="checkmark"></span></label>`;
 		}
 		let map2D = `<div id="seg${i}map2D" data-map="map2D" class="lbl-s hide">Expand 1D FX<br>`+
 						`<div class="sel-p"><select class="sel-p" id="seg${i}m12" onchange="setM12(${i})">`+
@@ -800,21 +805,25 @@ function populateSegments(s)
 					`</tr>`+
 					`</table>`+
 					`<div class="h bp" id="seg${i}len"></div>`+
-					(!isMSeg ? rvXck : '') +
-					(isMSeg&&stoY-staY>1&&stoX-staX>1 ? map2D : '') +
-					(s.AudioReactive && s.AudioReactive.on ? "" : sndSim) +
-					`<label class="check revchkl" id="seg${i}lbtm">`+
-						(isMSeg?'Transpose':'Mirror effect') + (isMSeg ?
-						'<input type="checkbox" id="seg'+i+'tp" onchange="setTp('+i+')" '+(inst.tp?"checked":"")+'>':
-						'<input type="checkbox" id="seg'+i+'mi" onchange="setMi('+i+')" '+(inst.mi?"checked":"")+'>') +
-						`<span class="checkmark"></span>`+
-					`</label>`+
+                    (s.AudioReactive && s.AudioReactive.on ? "" : sndSim) +
 					`<div class="del">`+
 						`<button class="btn btn-xs" id="segr${i}" title="Repeat until end" onclick="rptSeg(${i})"><i class="icons btn-icon">&#xe22d;</i></button>`+
 						`<button class="btn btn-xs" id="segd${i}" title="Delete" onclick="delSeg(${i})"><i class="icons btn-icon">&#xe037;</i></button>`+
 					`</div>`+
 				`</div>`+
-				(cfg.comp.segpwr ? '' : segp) +
+                `<div style="display:flex; gap:0.5rem; align-items:center; visibility:collapsed;">` +
+                    (!isMSeg ? rvXck : '') +
+                    (isMSeg&&stoY-staY>1&&stoX-staX>1 ? map2D : '') +
+                    (!isMSeg ? '' :
+                    `<label class="check revchkl" id="seg${i}lbtm">`+
+                        (isMSeg?'Transpose':'Mirror effect') + (isMSeg ?
+                        '<input type="checkbox" id="seg'+i+'tp" onchange="setTp('+i+')" '+(inst.tp?"checked":"")+'>':
+                        '<input type="checkbox" id="seg'+i+'mi" onchange="setMi('+i+')" '+(inst.mi?"checked":"")+'>') +
+                        `<span class="checkmark"></span>`+
+                    `</label>`
+                    ) +
+                `</div>`+
+                (cfg.comp.segpwr ? '' : segp) +
 			`</div>`;
 	}
 
@@ -892,6 +901,11 @@ function populateEffects()
 	}
 
 	gId('fxlist').innerHTML=html;
+
+    // if (isDeadline) {
+    //     console.log("[DEADLINE_TROPHY] expect this effect to be it's own:", effects[1]);
+    //     setFX(effects[1].id);
+    // }
 }
 
 function populatePalettes()
@@ -1117,11 +1131,16 @@ function updateLen(s)
 			if (mySH) mySH.classList.remove("hide");
 			if (mySD) mySD.classList.remove("hide");
 			if (of) of.classList.add("hide");
-			let startY = parseInt(sY.value);
-			let stopY = parseInt(eY.value) + (cfg.comp.seglen?startY:0);
-			len *= (stopY-startY);
+            // due to general shittery, sY might be undefined -> this goes into the upcoming "else" clause
+            let height = 1;
+            if (sY) {
+                let startY = parseInt(sY.value);
+                let stopY = parseInt(eY.value) + (cfg.comp.seglen?startY:0);
+                height = startY * stopY;
+            }
+            len *= height;
 			let tPL = gId(`seg${s}lbtm`);
-			if (stop-start>1 && stopY-startY>1) {
+			if (stop-start>1 && height>1) {
 				// 2D segment
 				if (tPL) tPL.classList.remove('hide'); // unhide transpose checkbox
 				let sE = gId('fxlist').querySelector(`.lstI[data-id="${selectedFx}"]`);
@@ -1401,12 +1420,10 @@ function readState(s,command=false)
 
     // qm210: lel, we have to work around the minifier who just breaks things.
     if (hideFixed) {
-        [
-            // specifically marked elements
-            ...d.getElementsByClassName("maybe-fixed"),
-            // Segment/LED input fields
-            ...d.getElementsByClassName("segn"),
-        ].forEach(elem => elem.classList.add("hide"));
+        [...d.getElementsByClassName("maybe-fixed")]
+            .forEach(elem =>
+                elem.classList.add("hide")
+            );
     }
 
     if (isDeadline) {

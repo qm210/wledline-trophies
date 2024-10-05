@@ -296,9 +296,10 @@
 #define FX_MODE_2DSUNRADIATION         166
 #define FX_MODE_2DCOLOREDBURSTS        167
 #define FX_MODE_2DJULIA                168
-// #define FX_MODE_2DPOOLNOISE            169 //have been removed in WLED SR in the past because of low mem but should be added back
-// #define FX_MODE_2DTWISTER              170 //have been removed in WLED SR in the past because of low mem but should be added back
-// #define FX_MODE_2DCAELEMENTATY         171 //have been removed in WLED SR in the past because of low mem but should be added back
+#define FX_MODE_2DPOOLNOISE            169 //have been removed in WLED SR in the past because of low mem but should be added back
+#define FX_MODE_2DTWISTER              170 //have been removed in WLED SR in the past because of low mem but should be added back
+#define FX_MODE_2DCAELEMENTATY         171 //have been removed in WLED SR in the past because of low mem but should be added back
+// <-- qm210, lel, I enabled them again - let's see whether something catches fire
 #define FX_MODE_2DGAMEOFLIFE           172
 #define FX_MODE_2DTARTAN               173
 #define FX_MODE_2DPOLARLIGHTS          174
@@ -314,8 +315,9 @@
 #define FX_MODE_WAVESINS               184
 #define FX_MODE_ROCKTAVES              185
 #define FX_MODE_2DAKEMI                186
+#define FX_MODE_DEADLINE_TROPHY_2024   187
 
-#define MODE_COUNT                     187
+#define MODE_COUNT                     188
 
 typedef enum mapping1D2D {
   M12_Pixels = 0,

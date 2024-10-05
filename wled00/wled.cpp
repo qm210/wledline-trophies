@@ -552,7 +552,6 @@ void WLED::initAP(bool resetAP)
     WLED_SET_AP_SSID();
     strcpy_P(apPass, PSTR(WLED_AP_PASS));
   }
-  DEBUG_PRINT(F("Opening access point "));
   DEBUG_PRINTLN(apSSID);
   DEBUG_PRINTLN(apPass);
   WiFi.softAPConfig(IPAddress(4, 3, 2, 1), IPAddress(4, 3, 2, 1), IPAddress(255, 255, 255, 0));
@@ -686,6 +685,13 @@ bool WLED::initEthernet()
 
 }
 
+const bool forceNoAp =
+  #if defined(FORCE_WIFI_SSID) && defined(FORCE_WIFI_PASS)
+    true;
+  #else
+    false;
+  #endif
+
 void WLED::initConnection()
 {
   #ifdef WLED_ENABLE_WEBSOCKETS
@@ -706,6 +712,29 @@ void WLED::initConnection()
 
   lastReconnectAttempt = millis();
 
+  // qm210 hackyhackackackachack lölölö
+  #ifdef FORCE_AP_BEHAVIOUR_NO_CONN
+    apBehavior = AP_BEHAVIOR_NO_CONN;
+  #endif
+  #ifdef FORCE_AP_BEHAVIOUR_BUTTON_ONLY
+    apBehavior = AP_BEHAVIOR_BUTTON_ONLY;
+  #endif
+  #ifdef FORCE_AP_BEHAVIOR_BOOT_NO_CONN
+    apBehavior = AP_BEHAVIOR_BOOT_NO_CONN;
+  #endif
+
+  // qm210 hack, he is very good at doing such stuff
+  #ifdef FORCE_WIFI_SSID
+    strcpy_P(clientSSID, PSTR(FORCE_WIFI_SSID));
+  #endif
+  #ifdef FORCE_WIFI_PASS
+    strcpy_P(clientPass, PSTR(FORCE_WIFI_PASS));
+  #endif
+
+  if (forceNoAp) {
+    apBehavior = AP_BEHAVIOR_BUTTON_ONLY;
+  }
+
   if (!WLED_WIFI_CONFIGURED) {
     DEBUG_PRINTLN(F("No connection configured."));
     if (!apActive) initAP();        // instantly go to ap mode
@@ -722,9 +751,7 @@ void WLED::initConnection()
   }
   showWelcomePage = false;
 
-  DEBUG_PRINT(F("Connecting to "));
-  DEBUG_PRINT(clientSSID);
-  DEBUG_PRINTLN("...");
+  DEBUG_PRINTF("Connecting to %s:%s\n", clientSSID, clientPass);
 
   // convert the "serverDescription" into a valid DNS hostname (alphanumeric)
   char hostname[25];
@@ -880,9 +907,13 @@ void WLED::handleConnection()
       DEBUG_PRINTLN(F("Last reconnect too old."));
       initConnection();
     }
-    if (!apActive && now - lastReconnectAttempt > 12000 && (!wasConnected || apBehavior == AP_BEHAVIOR_NO_CONN)) {
-      DEBUG_PRINTLN(F("Not connected AP."));
-      initAP();
+    auto shouldOpenAp =
+        (now - lastReconnectAttempt > 12000) &&
+        (!wasConnected || apBehavior == AP_BEHAVIOR_NO_CONN) &&
+        !forceNoAp;
+    if (shouldOpenAp && !apActive) {
+        DEBUG_PRINTLN(F("Not connected AP."));
+        initAP();
     }
   } else if (!interfacesInited) { //newly connected
     DEBUG_PRINTLN("");

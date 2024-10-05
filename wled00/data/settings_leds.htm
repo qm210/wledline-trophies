@@ -683,9 +683,12 @@ Length: <input type="number" name="XC${i}" id="xc${i}" class="l" min="1" max="65
 		}
         function applyDeadlineMod() {
             ["able", "MA", "LAsel", "MS", "+", "-"]
-                .forEach(_id =>
-                    gId(_id).disabled = true
-                );
+                .forEach(_id => {
+                    const element = gId(_id);
+                    if (element) {
+                        element.disabled = true;
+                    }
+                });
             gId("abl_info").innerHTML = `
                 The Deadline Trophy has control over the automatic brightness limit.
                 <br/>

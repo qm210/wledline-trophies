@@ -63,8 +63,6 @@ void wsEvent(AsyncWebSocket * server, AsyncWebSocketClient * client, AwsEventTyp
         }
         releaseJSONBufferLock(); // will clean fileDoc
 
-        DEBUG_PRINTF("[WEBSOCKET DEBUG] %d %d %d\n", sendDeadlineValues, verboseResponse, interfaceUpdateCallMode);
-
         if (sendDeadlineValues) {
             auto umDeadline = GET_DEADLINE_USERMOD();
             if (umDeadline != nullptr) {

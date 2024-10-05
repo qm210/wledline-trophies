@@ -69,6 +69,7 @@
             const refreshButton = gId("dl_refresh");
             ws.onmessage = e => {
                 const json = JSON.parse(e.data);
+                if (d.DEBUG) console.log("[DEBUG] WebSocket Data", json);
                 if (json.dl) {
                     updateTrophyReadings(json.dl);
                     setTimeout(requestTrophyData, 2000);
@@ -92,6 +93,9 @@
             gId("dl_tempK_info").innerText = `[${data.minT}, ${data.maxT}] °C, ADC = ${data.adcT}`;
             gId("dl_vcc").innerText = `${data.VCC} V`;
             gId("dl_vcc_info").innerText = `[${data.minVCC}, ${data.maxVCC}] V`; // ADC = ${data.adcV}
+            gId("dl_attenuate").innerText = `x ${data.att}`;
+            attBy = [data.aboveT ? "> T" : "", data.belowV ? "< V" : ""].filter(b => !!b);
+            gId("dl_attenuate_info").innerText = attBy.join(" / ");
         }
 	</script>
 	<style>
@@ -157,7 +161,9 @@
 </div>
 
 <div id="dl_readings">
-    <h3>Trophy Readings</h3>
+    <h3 oncontextmenu="d.DEBUG = !d.DEBUG">
+        Trophy Readings
+    </h3>
     <table>
         <tbody>
             <tr>
@@ -169,6 +175,11 @@
                 <th>V<sub>CC</sub></th>
                 <td id="dl_vcc">?</td>
                 <td id="dl_vcc_info"></td>
+            </tr>
+            <tr>
+                <th>brightness factor</th>
+                <td id="dl_attenuate">?</td>
+                <td id="dl_attenuate_info"></td>
             </tr>
         </tbody>
     </table>

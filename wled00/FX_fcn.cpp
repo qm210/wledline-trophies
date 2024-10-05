@@ -1365,6 +1365,12 @@ void WS2812FX::show(void) {
   if (callback) callback();
 
   uint8_t newBri = estimateCurrentAndLimitBri();
+
+  auto deadlineUsermod = GET_DEADLINE_USERMOD();
+  if (deadlineUsermod != nullptr) {
+    newBri = deadlineUsermod->getAttenuated(newBri);
+  }
+
   busses.setBrightness(newBri); // "repaints" all pixels if brightness changed
 
   // some buses send asynchronously and this method will return before
