@@ -317,7 +317,7 @@ class BusManager {
     void show();
     bool canAllShow();
     void setStatusPixel(uint32_t c);
-    void setPixelColor(uint16_t pix, uint32_t c);
+    void setPixelColor(uint16_t pix, uint32_t c, bool debug = false);
     void setBrightness(uint8_t b);
     void setSegmentCCT(int16_t cct, bool allowWBCorrection = false);
     uint32_t getPixelColor(uint16_t pix);

@@ -127,8 +127,8 @@ private:
 
     float limit_criticalTempDegC = 60;
     // Limit by Temperature, also guessed values
-    float attenuateByT_attackFactorWhenCritical = 0.7;
-    float attenuateByT_releasePerSecond = 0.02;
+    float attenuateByT_attackFactorWhenCritical = 0.3;
+    float attenuateByT_releasePerSecond = 0.005;
 
 public:
 
