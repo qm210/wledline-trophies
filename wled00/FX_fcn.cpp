@@ -1146,10 +1146,6 @@ void WS2812FX::finalizeInit(void)
     BusDigital* bd = static_cast<BusDigital*>(bus);
     if (pins[0] == 3) bd->reinit();
     #endif
-
-    DEBUG_PRINTF("[DEBUG_BUS %d] start %d, len %d -> max %d\n",
-        i, bus->getStart(), bus->getLength(), _length
-    );
   }
 
   if (isDeadlineTrophy) setUpDeadlineTrophy();

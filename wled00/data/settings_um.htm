@@ -179,6 +179,10 @@
 					if (j === v) opt.selected = true; // this is "our" pin
 					else if (pins.includes(j)) opt.disabled = true; // someone else's pin
 				}
+                if (d.DEADLINE_TROPHY_MOD && sel) {
+                    // AR is fixed hard-code in the DL Usermod anyway.
+                    sel.disabled = true;
+                }
 				let um = i.name.split(":")[0];
 				d.extra.forEach((o)=>{
 					if (o[um] && o[um].pin) o[um].pin.forEach((e)=>{

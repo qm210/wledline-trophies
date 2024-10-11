@@ -350,7 +350,7 @@ public:
 
       oappend(SET_F("addInfo('DeadlineTrophy:minVoltage:threshold',1,'required minimum V<sub>CC</sub>');"));
       oappend(SET_F("addInfo('DeadlineTrophy:minVoltage:attenuate',1,'dim by factor when below threshold');"));
-      oappend(SET_F("addInfo('DeadlineTrophy:minVolage:release',1,'slowly go back to 1 (perSec) if safe');"));
+      oappend(SET_F("addInfo('DeadlineTrophy:minVoltage:release',1,'slowly go back to 1 (perSec) if safe');"));
 
       oappend(SET_F("addInfo('DeadlineTrophy:maxTemp:critical',1,'critical Temperature in °C');"));
       oappend(SET_F("addInfo('DeadlineTrophy:maxTemp:attenuate',1,'dim by factor when above critical');"));
