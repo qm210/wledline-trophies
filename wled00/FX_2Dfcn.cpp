@@ -239,6 +239,7 @@ void WS2812FX::setUpDeadlineTrophy() {
         _segments[i].colors[1] = 0x000000;
         _segments[i].colors[2] = 0x000000;
     }
+    // Segment::modeBlend(true);
 }
 
 

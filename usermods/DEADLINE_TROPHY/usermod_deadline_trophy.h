@@ -122,13 +122,13 @@ private:
 
     float limit_inputVoltageThreshold = 4.6;
     // Limit by Input Voltage, implemented with guessed values
-    float attenuateByV_attackFactorWhenCritical = 0.5;
-    float attenuateByV_releasePerSecond = 0.05;
+    float attenuateByV_attackFactorWhenCritical = 0.4;
+    float attenuateByV_releasePerSecond = 0.005;
 
     float limit_criticalTempDegC = 60;
     // Limit by Temperature, also guessed values
-    float attenuateByT_attackFactorWhenCritical = 0.3;
-    float attenuateByT_releasePerSecond = 0.005;
+    float attenuateByT_attackFactorWhenCritical = 0.2;
+    float attenuateByT_releasePerSecond = 0.002;
 
 public:
 

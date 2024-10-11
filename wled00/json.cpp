@@ -65,8 +65,13 @@ bool deserializeSegment(JsonObject elem, byte it, byte presetId)
     return true;
   }
 
-  if (elem["n"]) {
+
+  if (strip.isDeadlineTrophy) {
+    // deadline trophy has fixed names, this leads to CORRUPT HEAP otherwise
+  }
+  else if (elem["n"]) {
     // name field exists
+
     if (seg.name) { //clear old name
       delete[] seg.name;
       seg.name = nullptr;
@@ -297,6 +302,7 @@ bool deserializeSegment(JsonObject elem, byte it, byte presetId)
     seg.map1D2D = oldMap1D2D; // restore mapping
     strip.trigger(); // force segment update
   }
+
   // send UDP/WS if segment options changed (except selection; will also deselect current preset)
   if (seg.differs(prev) & 0x7F) stateChanged = true;
 
@@ -381,8 +387,6 @@ bool deserializeState(JsonObject root, byte callMode, byte presetId)
     strip.getMainSegment().freeze = !realtimeOverride;
   }
 
-DEBUG_PRINTLN("===== A");
-
   if (root.containsKey("live")) {
     if (root["live"].as<bool>()) {
       jsonTransitionOnce = true;
@@ -392,8 +396,6 @@ DEBUG_PRINTLN("===== A");
       exitRealtime();
     }
   }
-
-DEBUG_PRINTLN("===== B");
 
   int it = 0;
   JsonVariant segVar = root["seg"];
@@ -405,14 +407,8 @@ DEBUG_PRINTLN("===== B");
       //apply all selected segments
       //bool didSet = false;
       for (size_t s = 0; s < strip.getSegmentsNum(); s++) {
-
-DEBUG_PRINTF("===== C %d\n", s);
-
         Segment &sg = strip.getSegment(s);
         if (sg.isSelected()) {
-
-DEBUG_PRINTF("===== D | %d %d\n", s, presetId);
-
           deserializeSegment(segVar, s, presetId);
           //didSet = true;
         }
@@ -420,21 +416,19 @@ DEBUG_PRINTF("===== D | %d %d\n", s, presetId);
       //TODO: not sure if it is good idea to change first active but unselected segment
       //if (!didSet) deserializeSegment(segVar, strip.getMainSegmentId(), presetId);
     } else {
-DEBUG_PRINTF("===== E | %d %d\n", id, presetId);
-
       deserializeSegment(segVar, id, presetId); //apply only the segment with the specified ID
     }
   } else {
     size_t deleted = 0;
     JsonArray segs = segVar.as<JsonArray>();
-DEBUG_PRINTLN("===== F");
+
     for (JsonObject elem : segs) {
+        serializeJson(elem, Serial);
+        DEBUG_PRINTLN("\n");
       if (deserializeSegment(elem, it++, presetId) && !elem["stop"].isNull() && elem["stop"]==0) deleted++;
     }
-DEBUG_PRINTLN("===== Ff");
     if (strip.getSegmentsNum() > 3 && deleted >= strip.getSegmentsNum()/2U) strip.purgeSegments(); // batch deleting more than half segments
   }
-DEBUG_PRINTLN("===== Fff");
 
   usermods.readFromJsonState(root);
 

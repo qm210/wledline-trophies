@@ -676,6 +676,7 @@ typedef struct Segment {
     void setDeadlineCapabilities(size_t index) {
         // no idea whether refreshLightCapabilities() works in our use case, so.. anyway.
         if (index < 2)
+            // we now have two each for Logo and Base, for moar awesomoar effectoarz
             _capabilities = SEG_CAPABILITY_RGB;
         else if (index < 4)
             _capabilities = SEG_CAPABILITY_W;
