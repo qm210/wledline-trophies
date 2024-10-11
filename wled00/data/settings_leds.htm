@@ -692,9 +692,7 @@ Length: <input type="number" name="XC${i}" id="xc${i}" class="l" min="1" max="65
             gId("abl_info").innerHTML = `
                 The Deadline Trophy has control over the automatic brightness limit.
                 <br/>
-                This is just for inof.
-                <br/>
-                <small>I know I hate typos, but "inof" is too funny right now.</small>
+                This is just for info.
             `;
         }
 	</script>
@@ -714,7 +712,7 @@ Length: <input type="number" name="XC${i}" id="xc${i}" class="l" min="1" max="65
 		<br>
 		Enable automatic brightness limiter: <input type="checkbox" name="ABen" onchange="enABL()" id="able"><br>
 		<div id="abl">
-			Maximum Current: <input name="MA" type="number" class="l" min="250" max="65000" oninput="UI()" required> mA<br>
+			Maximum Current: <input name="MA" id="MA" type="number" class="l" min="250" max="65000" oninput="UI()" required> mA<br>
 			<div id="ampwarning" class="warn" style="display: none;">
 				&#9888; Your power supply provides high current.<br>
 				To improve the safety of your setup,<br>

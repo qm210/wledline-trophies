@@ -1269,18 +1269,18 @@ void IRAM_ATTR WS2812FX::setPixelColor(int i, uint32_t col)
     countDebug--;
   }
   if (countDebug > 0) {
-    DEBUG_PRINTF("[SETPIXEL] %d > ", i);
+    // DEBUG_PRINTF("[SETPIXEL] %d > ", i);
   }
 
   if (i < customMappingSize) {
     i = customMappingTable[i];
   }
   if (countDebug > 0) {
-    DEBUG_PRINTF(" %d (%d, %d) | %lu", i, _length, customMappingSize, col);
+    // DEBUG_PRINTF(" %d (%d, %d) | %lu", i, _length, customMappingSize, col);
   }
   if (i >= _length) {
     if (countDebug > 0) {
-        DEBUG_PRINTLN();
+        // DEBUG_PRINTLN();
     }
     // includes the 66536 from the -1 mapping
     return;

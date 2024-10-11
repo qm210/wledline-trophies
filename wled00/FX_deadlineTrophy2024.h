@@ -125,13 +125,6 @@ uint16_t mode_DeadlineTrophy2024(void) {
         SEGMENT.setPixelColor(indexFloor, WHITE);
     }
 
-    // // Update the display:
-    // for (int i = (rows - 1); i > 0; i--) {
-    //   for (int j = (cols - 1); j >= 0; j--) {
-    //     SEGMENT.setPixelColorXY(j, i, SEGMENT.getPixelColorXY(j, i-1));
-    //   }
-    // }
-
   return FRAMETIME;
 } // mode_DeadlineTrophy2024
 

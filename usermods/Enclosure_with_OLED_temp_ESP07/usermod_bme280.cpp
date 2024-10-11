@@ -10,7 +10,7 @@
 
 void UpdateBME280Data();
 
-#define Celsius // Show temperature measurement in Celsius otherwise is in Fahrenheit 
+#define Celsius // Show temperature measurement in Celsius otherwise is in Fahrenheit
 BME280I2C bme;    // Default : forced mode, standby time = 1000 ms
                   // Oversampling = pressure ×1, temperature ×1, humidity ×1, filter off,
 
@@ -101,11 +101,11 @@ bool displayTurnedOff = false;
 void userLoop() {
 
 // BME280 sensor MQTT publishing
-  tempTimer = millis();  
+  tempTimer = millis();
 // Timer to publish new sensor data every 60 seconds
-  if (tempTimer - lastMeasure > 60000) 
+  if (tempTimer - lastMeasure > 60000)
   {
-    lastMeasure = tempTimer;    
+    lastMeasure = tempTimer;
 
 // Check if MQTT Connected, otherwise it will crash the 8266
     if (mqtt != nullptr)
@@ -133,7 +133,7 @@ void userLoop() {
     return;
   }
   lastUpdate = millis();
-  
+
   // Turn off display after 3 minutes with no change.
   if(!displayTurnedOff && millis() - lastRedraw > 3*60*1000) {
     u8x8.setPowerSave(1);
@@ -157,7 +157,7 @@ void userLoop() {
     return;
   }
   needRedraw = false;
-  
+
   if (displayTurnedOff)
   {
     u8x8.setPowerSave(0);

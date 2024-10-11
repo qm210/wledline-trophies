@@ -238,7 +238,7 @@ static bool isValidNtpResponse(byte * ntpPacket) {
   // if((ntpPacket[0] & 0b00111000) >> 3 < 0b100) return false; //reject Version < 4
   if((ntpPacket[0] & 0b00000111) != 0b100)      return false; //reject Mode != Server
   if((ntpPacket[1] < 1) || (ntpPacket[1] > 15)) return false; //reject invalid Stratum
-  if( ntpPacket[16] == 0 && ntpPacket[17] == 0 && 
+  if( ntpPacket[16] == 0 && ntpPacket[17] == 0 &&
       ntpPacket[18] == 0 && ntpPacket[19] == 0 &&
       ntpPacket[20] == 0 && ntpPacket[21] == 0 &&
       ntpPacket[22] == 0 && ntpPacket[23] == 0)               //reject ReferenceTimestamp == 0
@@ -388,6 +388,7 @@ void checkTimers()
     if (!hour(localTime) && minute(localTime)==1) calculateSunriseAndSunset();
 
     DEBUG_PRINTF("Local time: %02d:%02d\n", hour(localTime), minute(localTime));
+
     for (uint8_t i = 0; i < 8; i++)
     {
       if (timerMacro[i] != 0
@@ -488,7 +489,7 @@ static int getSunriseUTC(int year, int month, int day, float lat, float lon, boo
 	return UT*60;
 }
 
-#define SUNSET_MAX (24*60) // 1day = max expected absolute value for sun offset in minutes 
+#define SUNSET_MAX (24*60) // 1day = max expected absolute value for sun offset in minutes
 // calculate sunrise and sunset (if longitude and latitude are set)
 void calculateSunriseAndSunset() {
   if ((int)(longitude*10.) || (int)(latitude*10.)) {

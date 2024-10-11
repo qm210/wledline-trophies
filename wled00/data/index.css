@@ -1579,3 +1579,11 @@ TD .checkmark, TD .radiomark {
 		overflow-x: clip;
 	}
 }
+
+
+.seg-options {
+    padding: 0.5rem;
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+}

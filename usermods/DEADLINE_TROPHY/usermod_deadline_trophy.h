@@ -23,9 +23,9 @@ public:
     // static const int PIN_VCAP = 32; // unused, it seems
 
     // qm210: these are hacked into the AudioReactive UserMod because we are so loco
-    static const int PIN_AR_SD = 12;
-    static const int PIN_AR_WS = 14;
-    static const int PIN_AR_CLK = 13;
+    static const int PIN_AR_SD = 14;
+    static const int PIN_AR_WS = 13;
+    static const int PIN_AR_CLK = 12;
 
     // for the analogRead(), average over some samples to smoothen fluctuations.
     static const int AVERAGE_SAMPLES = 10;
@@ -72,7 +72,7 @@ public:
 
     */
 
-    const float maxCurrent = USE_DEADLINE_MAX_AMPERE;
+    const float maxCurrent = USE_DEADLINE_MAX_AMPERE * 1000;
 
 private:
 
@@ -144,7 +144,9 @@ public:
         inputVoltageWasReachedOnce = false;
 
         attenuateFactor = 0.;
-        strip.ablMilliampsMax = static_cast<uint8_t>(maxCurrent);
+        strip.ablMilliampsMax = static_cast<uint16_t>(maxCurrent);
+
+        DEBUG_PRINTF("[DEADLINE_TROPHY] max %f mA -> %d\n", maxCurrent, strip.ablMilliampsMax);
 
         // 12-bit ADC is the default, but let's go sure (do we need? no idea.)
         analogSetWidth(12);
@@ -287,6 +289,7 @@ public:
         }
         if (!inputVoltageWasReachedOnce) {
             if (currentInputVoltage > limit_inputVoltageThreshold) {
+                DEBUG_PRINTF("[DEADLINE_TROPHY] reached for the first time at %.2f\n", runningSec);
                 inputVoltageWasReachedOnce = true;
                 inputVoltageThresholdReachedAt = runningSec;
                 limit_becauseVoltageDrop = false;

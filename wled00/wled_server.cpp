@@ -191,16 +191,11 @@ void initServer()
     const String& url = request->url();
     isConfig = url.indexOf("cfg") > -1;
     if (!isConfig) {
-      /*
-      #ifdef WLED_DEBUG
-        DEBUG_PRINTLN(F("Serialized HTTP"));
-        serializeJson(root,Serial);
-        DEBUG_PRINTLN();
-      #endif
-      */
+      DEBUG_PRINTLN("-- CHECK -- ...");
       verboseResponse = deserializeState(root);
+      DEBUG_PRINTLN("-- CHECK -- DID CRASH?");
     } else {
-      if (!correctPIN && strlen(settingsPIN)>0) {
+      if (!correctPIN && strlen(settingsPIN) > 0) {
         request->send(401, "application/json", F("{\"error\":1}")); // ERR_DENIED
         releaseJSONBufferLock();
         return;

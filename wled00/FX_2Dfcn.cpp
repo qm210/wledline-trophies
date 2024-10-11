@@ -223,7 +223,7 @@ void WS2812FX::setUpDeadlineTrophy() {
     _segments.push_back(Segment(0, logoW, 0, logoH));
     _segments.push_back(Segment(0, baseEdge, logoH, logoH + baseEdge));
     _segments.push_back(Segment(baseEdge, baseEdge + 1, logoH, logoH + 1));
-    _segments.push_back(Segment(baseEdge, baseEdge + 2, logoH, logoH + 2));
+    _segments.push_back(Segment(baseEdge, baseEdge + 1, logoH + 1, logoH + 2));
 
     for (int i=0; i<s; i++) {
         _segments[i].setName(segName[i]);
@@ -232,7 +232,12 @@ void WS2812FX::setUpDeadlineTrophy() {
             i == 0
                 ? SEGMENT_ON | SELECTED
                 : SEGMENT_ON;
-        _segments[i].mode = FX_MODE_DEADLINE_TROPHY_2024;
+        _segments[i].mode = FX_MODE_STATIC; // FX_MODE_DEADLINE_TROPHY_2024;
+
+        // these are the three colors per segment (the palette is applied onto that, somehow)
+        _segments[i].colors[0] = 0x0000FF;
+        _segments[i].colors[1] = 0x00FF00;
+        _segments[i].colors[2] = 0xFF0000;
     }
 }
 
