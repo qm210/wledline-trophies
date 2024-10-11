@@ -388,7 +388,11 @@ bool deserializeConfig(JsonObject doc, bool fromFS) {
   JsonObject def = doc["def"];
   CJSON(bootPreset, def["ps"]);
   CJSON(turnOnAtBoot, def["on"]); // true
+  DEBUG_PRINTF("[DEBUG BRI] deserializeConfig: %d | %d", briS, def["bri"]);
   CJSON(briS, def["bri"]); // 128
+  DEBUG_PRINTF(" -> %d\n [", briS);
+  serializeJson(def, Serial);
+  DEBUG_PRINTLN("]");
 
   JsonObject interfaces = doc["if"];
 
@@ -644,6 +648,11 @@ void deserializeConfigFromFS() {
   bool needsSave = false;
 
   #ifdef USE_DEADLINE_CONFIG
+
+    DEBUG_PRINT("[DEBUG-CONFIG] ");
+    serializeJson(cfg, Serial);
+    DEBUG_PRINTLN();
+
     DEBUG_PRINTLN(F("[USE_DEADLINE_CONFIG] Overwrite config by hard-coded deadline config"));
     overwriteConfigForTrophy(cfg);
     needsSave = true;

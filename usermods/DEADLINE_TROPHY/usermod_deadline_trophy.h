@@ -378,10 +378,6 @@ public:
             attenuateByT_releasePerSecond = limT[F("release")] | attenuateByT_releasePerSecond;
         }
 
-        DEBUG_PRINTLN("READ FROM CONFIG!");
-        serializeJson(top, Serial);
-        DEBUG_PRINTLN();
-
         return true;
     }
 

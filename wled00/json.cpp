@@ -381,6 +381,8 @@ bool deserializeState(JsonObject root, byte callMode, byte presetId)
     strip.getMainSegment().freeze = !realtimeOverride;
   }
 
+DEBUG_PRINTLN("===== A");
+
   if (root.containsKey("live")) {
     if (root["live"].as<bool>()) {
       jsonTransitionOnce = true;
@@ -390,6 +392,8 @@ bool deserializeState(JsonObject root, byte callMode, byte presetId)
       exitRealtime();
     }
   }
+
+DEBUG_PRINTLN("===== B");
 
   int it = 0;
   JsonVariant segVar = root["seg"];
@@ -401,8 +405,14 @@ bool deserializeState(JsonObject root, byte callMode, byte presetId)
       //apply all selected segments
       //bool didSet = false;
       for (size_t s = 0; s < strip.getSegmentsNum(); s++) {
+
+DEBUG_PRINTF("===== C %d\n", s);
+
         Segment &sg = strip.getSegment(s);
         if (sg.isSelected()) {
+
+DEBUG_PRINTF("===== D | %d %d\n", s, presetId);
+
           deserializeSegment(segVar, s, presetId);
           //didSet = true;
         }
@@ -410,16 +420,21 @@ bool deserializeState(JsonObject root, byte callMode, byte presetId)
       //TODO: not sure if it is good idea to change first active but unselected segment
       //if (!didSet) deserializeSegment(segVar, strip.getMainSegmentId(), presetId);
     } else {
+DEBUG_PRINTF("===== E | %d %d\n", id, presetId);
+
       deserializeSegment(segVar, id, presetId); //apply only the segment with the specified ID
     }
   } else {
     size_t deleted = 0;
     JsonArray segs = segVar.as<JsonArray>();
+DEBUG_PRINTLN("===== F");
     for (JsonObject elem : segs) {
       if (deserializeSegment(elem, it++, presetId) && !elem["stop"].isNull() && elem["stop"]==0) deleted++;
     }
+DEBUG_PRINTLN("===== Ff");
     if (strip.getSegmentsNum() > 3 && deleted >= strip.getSegmentsNum()/2U) strip.purgeSegments(); // batch deleting more than half segments
   }
+DEBUG_PRINTLN("===== Fff");
 
   usermods.readFromJsonState(root);
 
@@ -438,6 +453,8 @@ bool deserializeState(JsonObject root, byte callMode, byte presetId)
     apireq += httpwin;
     handleSet(nullptr, apireq, false);    // may set stateChanged
   }
+
+DEBUG_PRINTLN("===== G");
 
   // applying preset (2 cases: a) API call includes all preset values ("pd"), b) API only specifies preset ID ("ps"))
   byte presetToRestore = 0;
@@ -458,6 +475,8 @@ bool deserializeState(JsonObject root, byte callMode, byte presetId)
     }
   }
 
+DEBUG_PRINTLN("===== H");
+
   JsonObject playlist = root[F("playlist")];
   if (!playlist.isNull() && loadPlaylist(playlist, presetId)) {
     //do not notify here, because the first playlist entry will do
@@ -473,6 +492,8 @@ bool deserializeState(JsonObject root, byte callMode, byte presetId)
       strip.loadCustomPalettes();
     }
   }
+
+DEBUG_PRINTLN("===== I");
 
   stateUpdated(callMode);
   if (presetToRestore) currentPreset = presetToRestore;

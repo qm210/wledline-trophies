@@ -9,10 +9,6 @@ const int PIN_BASE_CLOCK = 18;
 const int PIN_BACK_SPOT = 26;
 const int PIN_FLOOR_SPOT = 27;
 
-#ifndef USE_DEADLINE_INIT_BRIGHTNESS
-  #define USE_DEADLINE_INIT_BRIGHTNESS 25
-#endif
-
 void overwriteConfigForTrophy(JsonObject doc)
 {
     // Usermods usually only care about their own stuff, but we go for violating boundaries here.
@@ -40,9 +36,14 @@ void overwriteConfigForTrophy(JsonObject doc)
     // but still, we don't want any further auto-segmentation
     doc[F("light")][F("aseg")] = false;
 
-    auto def = doc[F("def")];
-    // turn on at boot
-    def["on"] = 1;
-    // default brightness at 100%
-    def["bri"] = USE_DEADLINE_INIT_BRIGHTNESS;
+    #ifdef USE_DEADLINE_INIT_BRIGHTNESS
+      auto def = doc[F("def")];
+
+      DEBUG_PRINTF("[DEBUG-CONFIG] [-D %d] ", USE_DEADLINE_INIT_BRIGHTNESS);
+      serializeJson(def, Serial);
+      DEBUG_PRINTLN();
+
+      def["bri"] = USE_DEADLINE_INIT_BRIGHTNESS;
+      def["on"] = def["bri"] > 0 ? 1 : 0;
+    #endif
 }

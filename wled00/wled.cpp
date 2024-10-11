@@ -533,10 +533,15 @@ void WLED::beginStrip()
     strip.fill(BLACK);
     strip.show();
   }
+
   if (bootPreset > 0) {
     applyPreset(bootPreset, CALL_MODE_INIT);
   }
-  colorUpdated(CALL_MODE_INIT);
+  if (strip.isDeadlineTrophy) {
+    stateUpdated(CALL_MODE_INIT);
+  } else {
+    colorUpdated(CALL_MODE_INIT);
+  }
 
   // init relay pin
   if (rlyPin>=0)

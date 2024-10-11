@@ -161,7 +161,7 @@ void initServer()
   });
 
   server.on(SET_F("/reset"), HTTP_GET, [](AsyncWebServerRequest *request){
-    serveMessage(request, 200,F("Rebooting now..."),F("Please wait ~10 seconds..."),129);
+    serveMessage(request, 200, F("Rebooting now..."), F("Please wait ~10 seconds..."), 129);
     doReboot = true;
   });
 
@@ -191,9 +191,7 @@ void initServer()
     const String& url = request->url();
     isConfig = url.indexOf("cfg") > -1;
     if (!isConfig) {
-      DEBUG_PRINTLN("-- CHECK -- ...");
       verboseResponse = deserializeState(root);
-      DEBUG_PRINTLN("-- CHECK -- DID CRASH?");
     } else {
       if (!correctPIN && strlen(settingsPIN) > 0) {
         request->send(401, "application/json", F("{\"error\":1}")); // ERR_DENIED

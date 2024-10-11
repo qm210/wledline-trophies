@@ -2326,10 +2326,14 @@ function setPalette(paletteId = null)
 	requestJson(obj);
 }
 
+function andSave(obj) {
+    return {...obj, save: true};
+}
+
 function setBri()
 {
 	var obj = {"bri": parseInt(gId('sliderBri').value)};
-	requestJson(obj);
+	requestJson(andSave(obj));
 }
 
 function setSpeed()

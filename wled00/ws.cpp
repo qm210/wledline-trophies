@@ -61,7 +61,19 @@ void wsEvent(AsyncWebSocket * server, AsyncWebSocketClient * client, AwsEventTyp
         } else {
           verboseResponse = deserializeState(root);
         }
+
+        bool doSerialize = root.containsKey("save");
+        bool hasChangedBri = root.containsKey("bri");
+
         releaseJSONBufferLock(); // will clean fileDoc
+
+        if (doSerialize) {
+            if (hasChangedBri) {
+                briS = bri;
+            }
+            serializeConfig();
+        }
+
 
         if (sendDeadlineValues) {
             auto umDeadline = GET_DEADLINE_USERMOD();

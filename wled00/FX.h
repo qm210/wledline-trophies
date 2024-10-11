@@ -974,7 +974,6 @@ class WS2812FX {  // 96 bytes
 
     uint16_t* customMappingTable;
     uint16_t  customMappingSize;
-    uint16_t  customMappingMax;  // qm210: unclear why this was missing (was it..?)
 
     unsigned long _lastShow;
 

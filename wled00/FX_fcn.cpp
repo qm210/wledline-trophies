@@ -1159,7 +1159,6 @@ void WS2812FX::finalizeInit(void)
     Segment::maxHeight = 1;
   }
 
-  //segments are created in makeAutoSegments();
   DEBUG_PRINTLN(F("Loading custom palettes"));
   loadCustomPalettes(); // (re)load all custom palettes
 
@@ -1170,15 +1169,6 @@ void WS2812FX::finalizeInit(void)
   DEBUG_PRINTLN(F("Loading custom ledmaps"));
   deserializeMap();     // (re)load default ledmap
 
-  // qm210: the customMappingTable might have as many holes as it likes, i.e. its maximum is not its size
-  customMappingMax = 0;
-  if (customMappingTable != nullptr) {
-    for (int i = 0; i < customMappingSize; i++) {
-        if (customMappingTable[i] > customMappingMax) {
-            customMappingMax = customMappingTable[i];
-        }
-    }
-  }
 }
 
 void WS2812FX::service() {
