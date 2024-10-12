@@ -156,7 +156,7 @@ uint16_t mode_DeadlineTrophy2024(void) {
 
         float center_x = (0.6 + 0.2 * sin_t(phi)) * logoW;
         float center_y = (0.5 + 0.2 * cos_t(phi)) * logoH;
-        float size = 6.;
+        float size = 13.;
 
         for (x = 0; x < logoW; x++) {
             for (y = 0; y < logoH; y++) {
@@ -168,10 +168,10 @@ uint16_t mode_DeadlineTrophy2024(void) {
                 float dist_y = 0.;
                 float intensity = exp(- (dist_x*dist_x)/size - (dist_y*dist_y)/size);
 
-                intensity = dist_x < 0 ? 0. : exp(-dist_x / size);
+                intensity = dist_x > 0 ? exp(-dist_x / size) : 0.;
 
                 setLogo(
-                    x, y, float_hsv(210. - 50. * intensity, 255., 60. + 180. * intensity * intensity * intensity)
+                    x, y, float_hsv(210. - 50. * intensity, 255., 70. + 170. * intensity * intensity * intensity)
                 );
             }
         }
