@@ -161,7 +161,7 @@ uint16_t mode_DeadlineTrophy2024(void) {
         for (x = 0; x < logoW; x++) {
             for (y = 0; y < logoH; y++) {
                 // OVERWRITE: just a line sweep
-                center_x = fmod_t(0.0005 * (strip.now % 2000), 1.) * (logoW + size);
+                center_x = fmod_t(0.0005 * (strip.now % 2000), 1.) * (logoW + 2. * size) - size;
 
                 // float dist_x = float(x) - center_x;
                 float dist_x = float(x) - center_x;
@@ -171,7 +171,7 @@ uint16_t mode_DeadlineTrophy2024(void) {
                 intensity = dist_x > 0 ? exp(-dist_x / size) : 0.;
 
                 setLogo(
-                    x, y, float_hsv(210. - 50. * intensity, 255., 70. + 170. * intensity * intensity * intensity)
+                    x, y, float_hsv(210. - 90. * intensity, 255., 70. + 170. * intensity * intensity * intensity)
                 );
             }
         }
