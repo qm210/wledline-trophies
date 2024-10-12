@@ -1246,32 +1246,16 @@ void WS2812FX::service() {
   #endif
 }
 
-int countDebug = 2;
-
 void IRAM_ATTR WS2812FX::setPixelColor(int i, uint32_t col)
 {
-  // debug pixels
-  if (countDebug > 0 && i==0) {
-    countDebug--;
-  }
-  if (countDebug > 0) {
-    // DEBUG_PRINTF("[SETPIXEL] %d > ", i);
-  }
-
   if (i < customMappingSize) {
     i = customMappingTable[i];
   }
-  if (countDebug > 0) {
-    // DEBUG_PRINTF(" %d (%d, %d) | %lu", i, _length, customMappingSize, col);
-  }
   if (i >= _length) {
-    if (countDebug > 0) {
-        // DEBUG_PRINTLN();
-    }
     // includes the 66536 from the -1 mapping
     return;
   }
-  busses.setPixelColor(i, col, countDebug > 0);
+  busses.setPixelColor(i, col);
 }
 
 uint32_t WS2812FX::getPixelColor(uint16_t i)

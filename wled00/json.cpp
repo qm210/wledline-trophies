@@ -448,8 +448,6 @@ bool deserializeState(JsonObject root, byte callMode, byte presetId)
     handleSet(nullptr, apireq, false);    // may set stateChanged
   }
 
-DEBUG_PRINTLN("===== G");
-
   // applying preset (2 cases: a) API call includes all preset values ("pd"), b) API only specifies preset ID ("ps"))
   byte presetToRestore = 0;
   // a) already applied preset content (requires "seg" or "win" but will ignore the rest)
@@ -469,8 +467,6 @@ DEBUG_PRINTLN("===== G");
     }
   }
 
-DEBUG_PRINTLN("===== H");
-
   JsonObject playlist = root[F("playlist")];
   if (!playlist.isNull() && loadPlaylist(playlist, presetId)) {
     //do not notify here, because the first playlist entry will do
@@ -486,8 +482,6 @@ DEBUG_PRINTLN("===== H");
       strip.loadCustomPalettes();
     }
   }
-
-DEBUG_PRINTLN("===== I");
 
   stateUpdated(callMode);
   if (presetToRestore) currentPreset = presetToRestore;

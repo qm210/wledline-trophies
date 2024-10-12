@@ -587,23 +587,10 @@ void IRAM_ATTR BusManager::setPixelColor(uint16_t pix, uint32_t c, bool debug) {
     Bus* b = busses[i];
     uint16_t bstart = b->getStart();
 
-    if (debug) {
-      // DEBUG_PRINTF(" | %i | bus %d - %d", pix, i, bstart);
-    }
-
     if (pix < bstart || pix >= b->getEnd()) continue;
-
-    if (debug) {
-      // DEBUG_PRINTF(" > this one :)");
-    }
 
     busses[i]->setPixelColor(pix - bstart, c);
   }
-
-  if (debug) {
-    // DEBUG_PRINTLN();
-  }
-
 }
 
 void BusManager::setBrightness(uint8_t b) {

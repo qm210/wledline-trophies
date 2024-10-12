@@ -7698,10 +7698,6 @@ void WS2812FX::setupEffectData() {
     _mode.push_back(&mode_static);
     _modeData.push_back(_data_RESERVED);
   }
-  #ifdef USERMOD_DEADLINE_TROPHY
-  addEffect(FX_MODE_DEADLINE_TROPHY_2024, &mode_DeadlineTrophy2024, _data_FX_MODE_DEADLINE_TROPHY_2024);
-  #endif
-
   // now replace all pre-allocated effects
   // --- 1D non-audio effects ---
   addEffect(FX_MODE_BLINK, &mode_blink, _data_FX_MODE_BLINK);
@@ -7908,5 +7904,8 @@ void WS2812FX::setupEffectData() {
 
   addEffect(FX_MODE_2DAKEMI, &mode_2DAkemi, _data_FX_MODE_2DAKEMI); // audio
 #endif // WLED_DISABLE_2D
+  #ifdef USERMOD_DEADLINE_TROPHY
+  addEffect(FX_MODE_DEADLINE_TROPHY_2024, &mode_DeadlineTrophy2024, _data_FX_MODE_DEADLINE_TROPHY_2024);
+  #endif
 
 }

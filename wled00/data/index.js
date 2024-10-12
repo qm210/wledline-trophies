@@ -1123,7 +1123,6 @@ function updateLen(s)
 	let of = gId(`seg${s}of`);
 	let mySH = gId("mkSYH");
 	let mySD = gId("mkSYD");
-    console.log("[DEBUG SEGMENT]", s, isM, start, stop, mw, mh, start >= mw*mh);
 
 	if (isM) {
 		// do we have 1D segment *after* the matrix?
