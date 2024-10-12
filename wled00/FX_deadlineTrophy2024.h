@@ -173,7 +173,7 @@ uint16_t mode_DeadlineTrophy2024(void) {
                 intensity = dist_x < 0 ? 0. : exp(-dist_x / 10.);
 
                 setLogo(
-                    x, y, float_hsv(210., 255., 255. * intensity * intensity * intensity)
+                    x, y, float_hsv(210. - 80. * intensity, 255., 45. + 210. * intensity * intensity * intensity)
                 );
             }
         }
