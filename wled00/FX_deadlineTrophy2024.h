@@ -172,12 +172,8 @@ uint16_t mode_DeadlineTrophy2024(void) {
 
                 intensity = dist_x < 0 ? 0. : exp(-dist_x / 10.);
 
-                if (SEGENV.call == 0) {
-                    DEBUG_PRINTF("[DEBUG-LOGO] %f -> (%d, %d) [%.3f, %.3f] %.3f\n", center_y, x, y, dist_x, dist_y, intensity);
-                }
-
                 setLogo(
-                    x, y, float_hsv(210., 255., 255. * intensity * intensity)
+                    x, y, float_hsv(210., 255., 255. * intensity)
                 );
             }
         }
