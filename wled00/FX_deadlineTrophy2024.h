@@ -107,12 +107,10 @@ void setFloor(uint32_t color) {
 
 uint32_t float_hsv(float hue, float sat, float val) {
     // parameters in [0, 255] but as float
-    while (hue < 0)
-        hue += 256.;
     return uint32_t(
         CRGB(
             CHSV(
-                static_cast<uint8_t>(hue) % 256,
+                static_cast<uint8_t>(hue),
                 static_cast<uint8_t>(sat),
                 static_cast<uint8_t>(val)
             )
@@ -158,22 +156,22 @@ uint16_t mode_DeadlineTrophy2024(void) {
 
         float center_x = (0.6 + 0.2 * sin_t(phi)) * logoW;
         float center_y = (0.5 + 0.2 * cos_t(phi)) * logoH;
-        float size = 3.;
-
-        // OVERWRITE: just a line
-        center_x = fmod_t(0.0005 * (strip.now % 2000), 1.) * logoW;
+        float size = 6.;
 
         for (x = 0; x < logoW; x++) {
             for (y = 0; y < logoH; y++) {
+                // OVERWRITE: just a line sweep
+                center_x = fmod_t(0.0005 * (strip.now % 2000), 1.) * (logoW + size);
+
                 // float dist_x = float(x) - center_x;
                 float dist_x = float(x) - center_x;
                 float dist_y = 0.;
                 float intensity = exp(- (dist_x*dist_x)/size - (dist_y*dist_y)/size);
 
-                intensity = dist_x < 0 ? 0. : exp(-dist_x / 10.);
+                intensity = dist_x < 0 ? 0. : exp(-dist_x / size);
 
                 setLogo(
-                    x, y, float_hsv(210. - 80. * intensity, 255., 45. + 210. * intensity * intensity * intensity)
+                    x, y, float_hsv(210. - 50. * intensity, 255., 60. + 180. * intensity * intensity * intensity)
                 );
             }
         }
