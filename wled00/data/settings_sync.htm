@@ -4,6 +4,11 @@
 	<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport">
 	<meta charset="utf-8">
 	<title>Sync Settings</title>
+    <style>
+        input[type='number'] {
+            min-width: 5rem; /* port inputs are ugly otherwise */
+        }
+    </style>
 	<script>var d=document;
 	var loc = false, locip, locproto = "http:";
 	function gId(s){return d.getElementById(s);}
@@ -19,7 +24,7 @@
 		scE.setAttribute("type", "text/javascript");
 		scE.setAttribute("async", async);
 		d.body.appendChild(scE);
-		// success event 
+		// success event
 		scE.addEventListener("load", () => {
 			//console.log("File loaded");
 			GetV();SetVal();

@@ -1234,14 +1234,14 @@ void WS2812FX::service() {
   _isServicing = false;
   _triggered = false;
 
-  #ifdef WLED_DEBUG
+  #if defined(WLED_DEBUG) && !defined(WLED_DEBUG_NO_SLOW_WARNINGS)
   if (millis() - nowUp > _frametime) DEBUG_PRINTLN(F("Slow effects."));
   #endif
   if (doShow) {
     yield();
     show();
   }
-  #ifdef WLED_DEBUG
+  #if defined(WLED_DEBUG) && !defined(WLED_DEBUG_NO_SLOW_WARNINGS)
   if (millis() - nowUp > _frametime) DEBUG_PRINTLN(F("Slow strip."));
   #endif
 }
@@ -1352,10 +1352,12 @@ void WS2812FX::show(void) {
 
   uint8_t newBri = estimateCurrentAndLimitBri();
 
-  auto deadlineUsermod = GET_DEADLINE_USERMOD();
-  if (deadlineUsermod != nullptr) {
-    newBri = deadlineUsermod->getAttenuated(newBri);
-  }
+  #ifdef USERMOD_DEADLINE_TROPHY
+    auto deadlineUsermod = GET_DEADLINE_USERMOD();
+    if (deadlineUsermod != nullptr) {
+      newBri = deadlineUsermod->getAttenuated(newBri);
+    }
+  #endif
 
   busses.setBrightness(newBri); // "repaints" all pixels if brightness changed
 

@@ -583,6 +583,25 @@ void WLED::initAP(bool resetAP)
 
     dnsServer.setErrorReplyCode(DNSReplyCode::NoError);
     dnsServer.start(53, "*", WiFi.softAPIP());
+
+    // qm: some debugging
+      DEBUGOUT.print(F("[UDP] notifierUdp "));
+      if (!udpConnected)
+        DEBUGOUT.print(F("failed "));
+      else
+        DEBUGOUT.print(udpPort);
+      DEBUGOUT.print(F(" - notifier2Udp "));
+      if (!udp2Connected)
+        DEBUGOUT.print(F("failed "));
+      else
+        DEBUGOUT.print(udpPort2);
+      DEBUGOUT.print(F(" - rgbUdp "));
+      if (!udpRgbConnected)
+        DEBUGOUT.print(F("failed "));
+      else
+        DEBUGOUT.print(udpRgbPort);
+      DEBUGOUT.println(".");
+
   }
   apActive = true;
 }

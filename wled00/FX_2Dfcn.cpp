@@ -155,8 +155,11 @@ void WS2812FX::setUpMatrix() {
 #endif
 }
 
-// could #ifdef USERMOD_DEADLINE_TROPHY this, but then again, come on, this will never go back upstream.
 void WS2812FX::setUpDeadlineTrophy() {
+    #ifndef USERMOD_DEADLINE_TROPHY
+        return;
+    #endif
+
     // this is so f'ing tricky, to account for the one-off-interlacing in the logo,
     // and then empty lines to care for the equidistance - it is now parametrized as:
     // (at first, it might look like 15 x 14, but then I thought again.)
@@ -168,6 +171,10 @@ void WS2812FX::setUpDeadlineTrophy() {
     Segment::maxWidth = logoW;
     Segment::maxHeight = logoH + baseEdge;
     _mainSegment = 0; // is the logo, no idea where _mainSegment is used 'n' stuff.
+    DEBUG_PRINT("[DEBUG TROPHY SETUP]" );
+    DEBUG_PRINT(Segment::maxWidth);
+    DEBUG_PRINT("x");
+    DEBUG_PRINTLN(Segment::maxHeight);
 
     if (customMappingTable != nullptr) delete[] customMappingTable;
     customMappingSize = Segment::maxWidth * Segment::maxHeight;

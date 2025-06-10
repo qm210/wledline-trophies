@@ -192,6 +192,8 @@ bool sendLiveLedsWs(uint32_t wsClient)
   size_t used = strip.getLengthTotal();
 #ifdef ESP8266
   const size_t MAX_LIVE_LEDS_WS = 256U;
+#else if USERMOD_DEADLINE_TROPHY
+  const size_t MAX_LIVE_LEDS_WS = 1053U;
 #else
   const size_t MAX_LIVE_LEDS_WS = 1024U;
 #endif
@@ -207,18 +209,18 @@ bool sendLiveLedsWs(uint32_t wsClient)
 
 #ifndef WLED_DISABLE_2D
   size_t skipLines = 0;
-  if (strip.isMatrix) {
+  if (strip.has2dSegments()) { // qm: hacked Deadline Trophy in there
     buffer[1] = 2; //version
     buffer[2] = Segment::maxWidth;
     buffer[3] = Segment::maxHeight;
     if (used > MAX_LIVE_LEDS_WS*4) {
-      buffer[2] = Segment::maxWidth/4;
-      buffer[3] = Segment::maxHeight/4;
-      skipLines = 3;
+        buffer[2] = Segment::maxWidth/4;
+        buffer[3] = Segment::maxHeight/4;
+        skipLines = 3;
     } else if (used > MAX_LIVE_LEDS_WS) {
-      buffer[2] = Segment::maxWidth/2;
-      buffer[3] = Segment::maxHeight/2;
-      skipLines = 1;
+        buffer[2] = Segment::maxWidth/2;
+        buffer[3] = Segment::maxHeight/2;
+        skipLines = 1;
     }
   }
 #endif
@@ -226,7 +228,7 @@ bool sendLiveLedsWs(uint32_t wsClient)
   for (size_t i = 0; pos < bufSize -2; i += n)
   {
 #ifndef WLED_DISABLE_2D
-    if (strip.isMatrix && skipLines) {
+    if (strip.has2dSegments() && skipLines) {
       if ((i/Segment::maxWidth)%(skipLines+1)) i += Segment::maxWidth * skipLines;
     }
 #endif
