@@ -171,10 +171,6 @@ void WS2812FX::setUpDeadlineTrophy() {
     Segment::maxWidth = logoW;
     Segment::maxHeight = logoH + baseEdge;
     _mainSegment = 0; // is the logo, no idea where _mainSegment is used 'n' stuff.
-    DEBUG_PRINT("[DEBUG TROPHY SETUP]" );
-    DEBUG_PRINT(Segment::maxWidth);
-    DEBUG_PRINT("x");
-    DEBUG_PRINTLN(Segment::maxHeight);
 
     if (customMappingTable != nullptr) delete[] customMappingTable;
     customMappingSize = Segment::maxWidth * Segment::maxHeight;

@@ -527,7 +527,7 @@ void handleNotifications()
     if (realtimeOverride && !(realtimeMode && useMainSegmentOnly)) return;
 
     uint16_t totalLen = strip.getLengthTotal();
-    if ((udpIn[0] == 1) && (packetSize > 5)) //warls - avoiding infinite "for" loop (unsigned underflow)    
+    if ((udpIn[0] == 1) && (packetSize > 5)) //warls - avoiding infinite "for" loop (unsigned underflow)
     {
       for (size_t i = 2; i < packetSize -3; i += 4)
       {
@@ -805,7 +805,7 @@ uint8_t realtimeBroadcast(uint8_t type, IPAddress client, uint16_t length, uint8
       const size_t ARTNET_CHANNELS_PER_PACKET = isRGBW?512:510; // 512/4=128 RGBW LEDs, 510/3=170 RGB LEDs
       const size_t packetCount = ((channelCount-1)/ARTNET_CHANNELS_PER_PACKET)+1;
 
-      uint32_t channel = 0; 
+      uint32_t channel = 0;
       size_t bufferOffset = 0;
 
       sequenceNumber++;

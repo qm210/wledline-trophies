@@ -74,7 +74,7 @@ void wsEvent(AsyncWebSocket * server, AsyncWebSocketClient * client, AwsEventTyp
             serializeConfig();
         }
 
-
+        #ifdef USERMOD_DEADLINE_TROPHY
         if (sendDeadlineValues) {
             auto umDeadline = GET_DEADLINE_USERMOD();
             if (umDeadline != nullptr) {
@@ -85,6 +85,7 @@ void wsEvent(AsyncWebSocket * server, AsyncWebSocketClient * client, AwsEventTyp
             }
             return;
         }
+        #endif
 
         if (!interfaceUpdateCallMode) { // individual client response only needed if no WS broadcast soon
           if (verboseResponse) {
@@ -192,7 +193,7 @@ bool sendLiveLedsWs(uint32_t wsClient)
   size_t used = strip.getLengthTotal();
 #ifdef ESP8266
   const size_t MAX_LIVE_LEDS_WS = 256U;
-#else if USERMOD_DEADLINE_TROPHY
+#elifdef USERMOD_DEADLINE_TROPHY
   const size_t MAX_LIVE_LEDS_WS = 1053U;
 #else
   const size_t MAX_LIVE_LEDS_WS = 1024U;

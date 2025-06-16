@@ -578,30 +578,15 @@ void WLED::initAP(bool resetAP)
     if (udpPort2 > 0 && udpPort2 != ntpLocalPort && udpPort2 != udpPort && udpPort2 != udpRgbPort) {
       udp2Connected = notifier2Udp.begin(udpPort2);
     }
+    if (udpSenderPort > 0) { // qm: I guess the checks are nice, but superfluous
+        udpSenderConnected = senderUdp.begin(udpSenderPort);
+    }
+
     e131.begin(false, e131Port, e131Universe, E131_MAX_UNIVERSE_COUNT);
     ddp.begin(false, DDP_DEFAULT_PORT);
 
     dnsServer.setErrorReplyCode(DNSReplyCode::NoError);
     dnsServer.start(53, "*", WiFi.softAPIP());
-
-    // qm: some debugging
-      DEBUGOUT.print(F("[UDP] notifierUdp "));
-      if (!udpConnected)
-        DEBUGOUT.print(F("failed "));
-      else
-        DEBUGOUT.print(udpPort);
-      DEBUGOUT.print(F(" - notifier2Udp "));
-      if (!udp2Connected)
-        DEBUGOUT.print(F("failed "));
-      else
-        DEBUGOUT.print(udpPort2);
-      DEBUGOUT.print(F(" - rgbUdp "));
-      if (!udpRgbConnected)
-        DEBUGOUT.print(F("failed "));
-      else
-        DEBUGOUT.print(udpRgbPort);
-      DEBUGOUT.println(".");
-
   }
   apActive = true;
 }
@@ -842,6 +827,9 @@ void WLED::initInterfaces()
     if (udpConnected && udpPort2 != udpPort && udpPort2 != udpRgbPort)
       udp2Connected = notifier2Udp.begin(udpPort2);
   }
+  if (udpSenderPort > 0)
+    udpSenderConnected = senderUdp.begin(udpSenderPort);
+
   if (ntpEnabled)
     ntpConnected = ntpUdp.begin(ntpLocalPort);
 

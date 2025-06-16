@@ -368,6 +368,8 @@ void getSettingsJS(byte subPage, char* dest)
     sappend('v',SET_F("AW"),Bus::getGlobalAWMode());
     sappend('c',SET_F("LD"),useGlobalLedBuffer);
 
+    DEBUG_PRINTF("[QM-DEBUG-WRITING] %d %d\n", busses.getNumBusses(), busses.getTotalLength());
+
     for (uint8_t s=0; s < busses.getNumBusses(); s++) {
       Bus* bus = busses.getBus(s);
       if (bus == nullptr) continue;

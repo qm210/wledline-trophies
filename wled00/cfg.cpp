@@ -388,7 +388,7 @@ bool deserializeConfig(JsonObject doc, bool fromFS) {
   JsonObject def = doc["def"];
   CJSON(bootPreset, def["ps"]);
   CJSON(turnOnAtBoot, def["on"]); // true
-  DEBUG_PRINTF("[DEBUG BRI] deserializeConfig: %d | %d", briS, def["bri"]);
+  DEBUG_PRINTF("[DEBUG BRI] deserializeConfig: %d", briS);
   CJSON(briS, def["bri"]); // 128
   DEBUG_PRINTF(" -> %d\n [", briS);
   serializeJson(def, Serial);
@@ -625,6 +625,8 @@ void deserializeConfigFromFS() {
     DEBUG_PRINTLN(F("Reading settings from /cfg.json..."));
   #endif
 
+  DEBUG_PRINTLN("------ Wir schauen mal..");
+
   success = readObjectFromFile("/cfg.json", nullptr, &doc);
   if (!success) { // if file does not exist, optionally try reading from EEPROM and then save defaults to FS
     releaseJSONBufferLock();
@@ -635,14 +637,27 @@ void deserializeConfigFromFS() {
     // save default values to /cfg.json
     // call readFromConfig() with an empty object so that usermods can initialize to defaults prior to saving
     JsonObject empty = JsonObject();
+
+DEBUG_PRINTLN("------ Blaues Huhn");
+
     usermods.readFromConfig(empty);
-    serializeConfig();
+
+DEBUG_PRINTLN("------ schmeckt lecker");
+
+serializeConfig();
+DEBUG_PRINTLN("------ auch zu Hackepeter");
+
     // init Ethernet (in case default type is set at compile time)
     #ifdef WLED_USE_ETHERNET
     WLED::instance().initEthernet();
     #endif
+
+#ifndef USE_DEADLINE_CONFIG
     return;
+#endif
   }
+
+  DEBUG_PRINTLN("------ Öhm aber entschuldigen Sie doch mal bitte, ja?");
 
   JsonObject cfg = doc.as<JsonObject>();
   bool needsSave = false;
@@ -1074,8 +1089,10 @@ bool deserializeConfigSec() {
     return false;
   }
 
+#ifndef CLIENT_PASS
   JsonObject nw_ins_0 = doc["nw"]["ins"][0];
   getStringFromJson(clientPass, nw_ins_0["psk"], 65);
+#endif
 
   JsonObject ap = doc["ap"];
   getStringFromJson(apPass, ap["psk"] , 65);

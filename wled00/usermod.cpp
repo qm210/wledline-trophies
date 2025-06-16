@@ -8,6 +8,10 @@
  * Consider the v2 usermod API if you need a more advanced feature set!
  */
 
+#ifdef USERMOD_DEADLINE_TROPHY
+#include "../usermods/DEADLINE_TROPHY/udp_sending.h"
+#endif
+
 //Use userVar0 and userVar1 (API calls &U0=,&U1=, uint16_t)
 
 //gets called once at boot. Do all initialization that doesn't depend on network here
@@ -25,5 +29,7 @@ void userConnected()
 //loop. You can use "if (WLED_CONNECTED)" to check for successful connection
 void userLoop()
 {
-
+    #ifdef USERMOD_DEADLINE_TROPHY
+        sendTrophyUdp();
+    #endif
 }

@@ -380,8 +380,7 @@ WLED_GLOBAL bool irApplyToAllSelected _INIT(true); //apply IR to all selected se
 WLED_GLOBAL uint16_t udpPort    _INIT(21324); // WLED notifier default port
 WLED_GLOBAL uint16_t udpPort2   _INIT(65506); // WLED notifier supplemental port
 WLED_GLOBAL uint16_t udpRgbPort _INIT(19446); // Hyperion port
-WLED_GLOBAL uint16_t udpSenderPort _INIT(3413); // qm: Modification for DL Trophy
-WLED_GLOBAL const char* udpSenderTarget _INIT("localhost");
+WLED_GLOBAL uint16_t udpSenderPort _INIT(3413); // QM-WIP: Modification for DL Trophy
 
 WLED_GLOBAL uint8_t syncGroups    _INIT(0x01);                    // sync groups this instance syncs (bit mapped)
 WLED_GLOBAL uint8_t receiveGroups _INIT(0x01);                    // sync receive groups this instance belongs to (bit mapped)
@@ -580,7 +579,10 @@ WLED_GLOBAL byte effectPalette _INIT(0);
 WLED_GLOBAL bool stateChanged _INIT(false);
 
 // network
-WLED_GLOBAL bool udpConnected _INIT(false), udp2Connected _INIT(false), udpRgbConnected _INIT(false);
+WLED_GLOBAL bool udpConnected _INIT(false),
+                 udp2Connected _INIT(false),
+                 udpRgbConnected _INIT(false),
+                 udpSenderConnected _INIT(false);
 
 // ui style
 WLED_GLOBAL bool showWelcomePage _INIT(false);

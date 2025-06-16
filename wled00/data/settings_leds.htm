@@ -327,6 +327,8 @@
 		}
 		function addLEDs(n,init=true)
 		{
+            console.log("[CALLED] addLeds", n, init);
+
 			var o = d.getElementsByClassName("iST");
 			var i = o.length;
 
@@ -685,8 +687,12 @@ Length: <input type="number" name="XC${i}" id="xc${i}" class="l" min="1" max="65
             ["able", "MA", "LAsel", "MS", "+", "-"]
                 .forEach(_id => {
                     const element = gId(_id);
-                    if (element) {
-                        element.disabled = true;
+                    if (!element) {
+                        return;
+                    }
+                    element.disabled = true;
+                    if (element.tagName === "BUTTON") {
+                        element.style.display = "none";
                     }
                 });
             gId("abl_info").innerHTML = `

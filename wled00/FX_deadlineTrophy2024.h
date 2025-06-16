@@ -75,11 +75,12 @@ const int logoW = 27;
 const int logoH = 21;
 
 void setBase(size_t index, uint32_t color) {
-    if (strip.getCurrSegmentId() != 1) {
+    auto bus = busses.getBus(1);
+    if (strip.getCurrSegmentId() != 1 || !bus) {
         return;
     }
     // directly go for the LED busses, cause at least we understand these...
-    busses.getBus(1)->setPixelColor(index % nBase, color);
+    bus->setPixelColor(index % nBase, color);
 }
 
 void setLogo(size_t x, size_t y, uint32_t color) {
@@ -92,10 +93,11 @@ void setLogo(size_t x, size_t y, uint32_t color) {
 
 void setSingleWhite(bool isFloor, uint32_t color) {
     auto index = isFloor ? 3 : 2;
-    if (strip.getCurrSegmentId() != index) {
+    auto bus = busses.getBus(index);
+    if (strip.getCurrSegmentId() != index || !bus) {
         return;
     }
-    busses.getBus(index)->setPixelColor(0, color);
+    bus->setPixelColor(0, color);
 }
 void setBack(uint32_t color) {
     setSingleWhite(false, color);
