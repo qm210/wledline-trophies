@@ -449,30 +449,7 @@ WLED_GLOBAL bool nodeBroadcastEnabled _INIT(true);
 WLED_GLOBAL int8_t irPin        _INIT(IRPIN);
 WLED_GLOBAL byte irEnabled      _INIT(IRTYPE); // Infrared receiver
 #endif
-<<<<<<< HEAD
-WLED_GLOBAL bool irApplyToAllSelected _INIT(true); //apply IR to all selected segments
-
-WLED_GLOBAL uint16_t udpPort    _INIT(21324); // WLED notifier default port
-WLED_GLOBAL uint16_t udpPort2   _INIT(65506); // WLED notifier supplemental port
-WLED_GLOBAL uint16_t udpRgbPort _INIT(19446); // Hyperion port
-WLED_GLOBAL uint16_t udpSenderPort _INIT(3413); // QM-WIP: Modification for DL Trophy
-
-WLED_GLOBAL uint8_t syncGroups    _INIT(0x01);                    // sync groups this instance syncs (bit mapped)
-WLED_GLOBAL uint8_t receiveGroups _INIT(0x01);                    // sync receive groups this instance belongs to (bit mapped)
-WLED_GLOBAL bool receiveNotificationBrightness _INIT(true);       // apply brightness from incoming notifications
-WLED_GLOBAL bool receiveNotificationColor      _INIT(true);       // apply color
-WLED_GLOBAL bool receiveNotificationEffects    _INIT(true);       // apply effects setup
-WLED_GLOBAL bool receiveSegmentOptions         _INIT(false);      // apply segment options
-WLED_GLOBAL bool receiveSegmentBounds          _INIT(false);      // apply segment bounds (start, stop, offset)
-WLED_GLOBAL bool notifyDirect _INIT(false);                       // send notification if change via UI or HTTP API
-WLED_GLOBAL bool notifyButton _INIT(false);                       // send if updated by button or infrared remote
-WLED_GLOBAL bool notifyAlexa  _INIT(false);                       // send notification if updated via Alexa
-WLED_GLOBAL bool notifyMacro  _INIT(false);                       // send notification for macro
-WLED_GLOBAL bool notifyHue    _INIT(true);                        // send notification if Hue light changes
-WLED_GLOBAL uint8_t udpNumRetries _INIT(0);                       // Number of times a UDP sync message is retransmitted. Increase to increase reliability
-=======
 WLED_GLOBAL bool irApplyToAllSelected _INIT(true); //apply IR or ESP-NOW to all selected segments
->>>>>>> upstream/main
 
 #ifndef WLED_DISABLE_ALEXA
 WLED_GLOBAL bool alexaEnabled _INIT(false);                       // enable device discovery by Amazon Echo
@@ -768,12 +745,6 @@ WLED_GLOBAL byte effectPalette _INIT(0);
 WLED_GLOBAL bool stateChanged _INIT(false);
 
 // network
-<<<<<<< HEAD
-WLED_GLOBAL bool udpConnected _INIT(false),
-                 udp2Connected _INIT(false),
-                 udpRgbConnected _INIT(false),
-                 udpSenderConnected _INIT(false);
-=======
 #ifdef WLED_SAVE_RAM
 // this will save us 2 bytes of RAM while increasing code by ~400 bytes
 typedef class Udp {
@@ -781,13 +752,15 @@ typedef class Udp {
     uint16_t  Port;
     uint16_t  Port2;
     uint16_t  RgbPort;
+    uint16_t  SenderPort;
     struct {
       uint8_t NumRetries : 5;
       bool    Connected : 1;
       bool    Connected2 : 1;
       bool    RgbConnected : 1;
+      bool    SenderConnected: 1;
     };
-    Udp(int p1, int p2, int p3, int r, bool c1, bool c2, bool c3) {
+    Udp(int p1, int p2, int p3, int p4, int r, bool c1, bool c2, bool c3, bool c4) {
       Port = p1;
       Port2 = p2;
       RgbPort = p3;
@@ -795,26 +768,32 @@ typedef class Udp {
       Connected = c1;
       Connected2 = c2;
       RgbConnected = c3;
+      // QM-WIP: see if we can not just reuse one of the above for sending
+      SenderPort = p4;
+      SenderConnected = c4;
     }
 } __attribute__ ((aligned(1), packed)) udp_port_t;
 WLED_GLOBAL udp_port_t udp _INIT_N(({21234, 65506, 19446, 0, false, false, false}));
-#define udpPort         udp.Port
-#define udpPort2        udp.Port2
-#define udpRgbPort      udp.RgbPort
-#define udpNumRetries   udp.NumRetries
-#define udpConnected    udp.Connected
-#define udp2Connected   udp.Connected2
-#define udpRgbConnected udp.RgbConnected
+#define udpPort            udp.Port
+#define udpPort2           udp.Port2
+#define udpRgbPort         udp.RgbPort
+#define udpSenderPort      udp.SenderPort
+#define udpNumRetries      udp.NumRetries
+#define udpConnected       udp.Connected
+#define udp2Connected      udp.Connected2
+#define udpRgbConnected    udp.RgbConnected
+#define udpSenderConnected udp.SenderConnected
 #else
 WLED_GLOBAL uint16_t udpPort    _INIT(21324); // WLED notifier default port
 WLED_GLOBAL uint16_t udpPort2   _INIT(65506); // WLED notifier supplemental port
 WLED_GLOBAL uint16_t udpRgbPort _INIT(19446); // Hyperion port
+WLED_GLOBAL uint16_t udpSenderPort _INIT(3413); // QM: UDP SENDING FOR DEADLINE TROPHY
 WLED_GLOBAL uint8_t  udpNumRetries _INIT(0);  // Number of times a UDP sync message is retransmitted. Increase to increase reliability
 WLED_GLOBAL bool     udpConnected _INIT(false);
 WLED_GLOBAL bool     udp2Connected _INIT(false);
 WLED_GLOBAL bool     udpRgbConnected _INIT(false);
+WLED_GLOBAL bool     udpSenderConnected _INIT(false);  // QM: UDP SENDING FOR DEADLINE TROPHY
 #endif
->>>>>>> upstream/main
 
 // ui style
 WLED_GLOBAL bool showWelcomePage _INIT(false);
