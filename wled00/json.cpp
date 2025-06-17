@@ -143,15 +143,6 @@ static bool deserializeSegment(JsonObject elem, byte it, byte presetId = 0)
   }
   else if (elem["n"]) {
     // name field exists
-<<<<<<< HEAD
-
-    if (seg.name) { //clear old name
-      delete[] seg.name;
-      seg.name = nullptr;
-    }
-
-=======
->>>>>>> upstream/main
     const char * name = elem["n"].as<const char*>();
     seg.setName(name); // will resolve empty and null correctly
   } else if (start != seg.start || stop != seg.stop) {
@@ -495,20 +486,7 @@ bool deserializeState(JsonObject root, byte callMode, byte presetId)
       }
       if (strip.getSegmentsNum() > 3 && deleted >= strip.getSegmentsNum()/2U) strip.purgeSegments(); // batch deleting more than half segments
     }
-<<<<<<< HEAD
-  } else {
-    size_t deleted = 0;
-    JsonArray segs = segVar.as<JsonArray>();
-
-    for (JsonObject elem : segs) {
-        serializeJson(elem, Serial);
-        DEBUG_PRINTLN("\n");
-      if (deserializeSegment(elem, it++, presetId) && !elem["stop"].isNull() && elem["stop"]==0) deleted++;
-    }
-    if (strip.getSegmentsNum() > 3 && deleted >= strip.getSegmentsNum()/2U) strip.purgeSegments(); // batch deleting more than half segments
-=======
     strip.resume();
->>>>>>> upstream/main
   }
 
   UsermodManager::readFromJsonState(root);
@@ -567,7 +545,7 @@ bool deserializeState(JsonObject root, byte callMode, byte presetId)
   }
 
   doAdvancePlaylist = root[F("np")] | doAdvancePlaylist; //advances to next preset in playlist when true
-  
+
   JsonObject wifi = root[F("wifi")];
   if (!wifi.isNull()) {
     bool apMode = getBoolVal(wifi[F("ap")], apActive);
@@ -735,13 +713,8 @@ void serializeInfo(JsonObject root)
   leds[F("bootps")] = bootPreset;
 
   #ifndef WLED_DISABLE_2D
-<<<<<<< HEAD
-  if (strip.at2dSegment()) {
-    JsonObject matrix = leds.createNestedObject("matrix");
-=======
   if (strip.isMatrix) {
     JsonObject matrix = leds.createNestedObject(F("matrix"));
->>>>>>> upstream/main
     matrix["w"] = Segment::maxWidth;
     matrix["h"] = Segment::maxHeight;
   }
@@ -1162,7 +1135,7 @@ void serveJson(AsyncWebServerRequest* request)
   }
 
   if (!requestJSONBufferLock(17)) {
-    request->deferResponse();    
+    request->deferResponse();
     return;
   }
   // releaseJSONBufferLock() will be called when "response" is destroyed (from AsyncWebServer)
@@ -1213,14 +1186,10 @@ void serveJson(AsyncWebServerRequest* request)
 }
 
 #ifdef WLED_ENABLE_JSONLIVE
-<<<<<<< HEAD
 #define MAX_LIVE_LEDS 1053
-// #define MAX_LIVE_LEDS 180
+// #define MAX_LIVE_LEDS 256
 // <-- qm: when we only would send the defined LEDs, the original 180 would be enough
 //         but this is something that first has to be implemented
-=======
-#define MAX_LIVE_LEDS 256
->>>>>>> upstream/main
 
 bool serveLiveLeds(AsyncWebServerRequest* request, uint32_t wsClient)
 {
@@ -1244,7 +1213,7 @@ bool serveLiveLeds(AsyncWebServerRequest* request, uint32_t wsClient)
   }
 #endif
 
-  DynamicBuffer buffer(9 + (9*(1+(used/n))) + 7 + 5 + 6 + 5 + 6 + 5 + 2);  
+  DynamicBuffer buffer(9 + (9*(1+(used/n))) + 7 + 5 + 6 + 5 + 6 + 5 + 2);
   char* buf = buffer.data();      // assign buffer for oappnd() functions
   strncpy_P(buffer.data(), PSTR("{\"leds\":["), buffer.size());
   buf += 9; // sizeof(PSTR()) from last line
@@ -1274,7 +1243,7 @@ bool serveLiveLeds(AsyncWebServerRequest* request, uint32_t wsClient)
 #endif
   (*buf++) = '}';
   (*buf++) = 0;
-  
+
   if (request) {
     request->send(200, FPSTR(CONTENT_TYPE_JSON), toString(std::move(buffer)));
   }
@@ -1282,7 +1251,7 @@ bool serveLiveLeds(AsyncWebServerRequest* request, uint32_t wsClient)
   else {
     wsc->text(toString(std::move(buffer)));
   }
-  #endif  
+  #endif
   return true;
 }
 #endif

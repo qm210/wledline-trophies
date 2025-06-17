@@ -405,8 +405,6 @@ extern byte realtimeMode;           // used in getMappedPixelIndex()
 #define BLEND_STYLE_PUSH_MASK       0x10
 #define BLEND_STYLE_COUNT           18
 
->>>>>>> upstream/main
-
 typedef enum mapping1D2D {
   M12_Pixels = 0,
   M12_pBar = 1,

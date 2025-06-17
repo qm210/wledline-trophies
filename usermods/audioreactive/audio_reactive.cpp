@@ -1045,12 +1045,8 @@ class AudioReactive : public Usermod {
       sampleAvg    = volumeSmth;
       rawSampleAgc = volumeRaw;
       sampleAgc    = volumeSmth;
-<<<<<<< HEAD:usermods/audioreactive/audio_reactive.h
-      multAgc      = 1.0f;
-=======
       multAgc      = 1.0f;
 #endif
->>>>>>> upstream/main:usermods/audioreactive/audio_reactive.cpp
       // Only change samplePeak IF it's currently false.
       // If it's true already, then the animation still needs to respond.
       autoResetPeak();
@@ -1078,10 +1074,7 @@ class AudioReactive : public Usermod {
       sampleAgc    = volumeSmth;
       rawSampleAgc = volumeRaw;
       multAgc      = 1.0f;
-<<<<<<< HEAD:usermods/audioreactive/audio_reactive.h
-=======
 #endif
->>>>>>> upstream/main:usermods/audioreactive/audio_reactive.cpp
       // Only change samplePeak IF it's currently false.
       // If it's true already, then the animation still needs to respond.
       autoResetPeak();
@@ -1253,14 +1246,9 @@ class AudioReactive : public Usermod {
 #endif
       if (enabled) onUpdateBegin(false);                 // create FFT task, and initialize network
 
-<<<<<<< HEAD:usermods/audioreactive/audio_reactive.h
-      if((!audioSource) || (!audioSource->isInitialized())) {  // audio source failed to initialize. Still stay "enabled", as there might be input arriving via UDP Sound Sync
-=======
-
 #ifdef ARDUINO_ARCH_ESP32
       if (FFT_Task == nullptr) enabled = false;          // FFT task creation failed
       if((!audioSource) || (!audioSource->isInitialized())) {  // audio source failed to initialize. Still stay "enabled", as there might be input arriving via UDP Sound Sync
->>>>>>> upstream/main:usermods/audioreactive/audio_reactive.cpp
       #ifdef WLED_DEBUG
         DEBUG_PRINTLN(F("AR: Failed to initialize sound input driver. Please check input PIN settings."));
       #else
@@ -1600,13 +1588,8 @@ class AudioReactive : public Usermod {
           uiDomString += inputLevel;
           uiDomString += F(" /><div class=\"sliderdisplay\"></div></div></div>"); //<output class=\"sliderbubble\"></output>
           infoArr.add(uiDomString);
-<<<<<<< HEAD:usermods/audioreactive/audio_reactive.h
-        }
-
-=======
         }
 #endif
->>>>>>> upstream/main:usermods/audioreactive/audio_reactive.cpp
         // The following can be used for troubleshooting user errors and is so not enclosed in #ifdef WLED_DEBUG
 
         // current Audio input
@@ -1885,22 +1868,16 @@ class AudioReactive : public Usermod {
       configComplete &= getJsonValue(top[FPSTR(_digitalmic)]["pin"][2], i2sckPin);
       configComplete &= getJsonValue(top[FPSTR(_digitalmic)]["pin"][3], mclkPin);
 
-<<<<<<< HEAD:usermods/audioreactive/audio_reactive.h
-    #ifdef USE_DEADLINE_CONFIG
+#ifdef USE_DEADLINE_CONFIG
       enabled = true;
       i2ssdPin = DeadlineTrophyUsermod::PIN_AR_SD;
       i2swsPin = DeadlineTrophyUsermod::PIN_AR_WS;
       i2sckPin = DeadlineTrophyUsermod::PIN_AR_CLK;
-    #endif
+#endif
 
-      configComplete &= getJsonValue(top["config"][F("squelch")], soundSquelch);
-      configComplete &= getJsonValue(top["config"][F("gain")],    sampleGain);
-      configComplete &= getJsonValue(top["config"][F("AGC")],     soundAgc);
-=======
       configComplete &= getJsonValue(top[FPSTR(_config)][F("squelch")], soundSquelch);
       configComplete &= getJsonValue(top[FPSTR(_config)][F("gain")],    sampleGain);
       configComplete &= getJsonValue(top[FPSTR(_config)][F("AGC")],     soundAgc);
->>>>>>> upstream/main:usermods/audioreactive/audio_reactive.cpp
 
       configComplete &= getJsonValue(top[FPSTR(_frequency)][F("scale")], FFTScalingMode);
 
@@ -1936,15 +1913,6 @@ class AudioReactive : public Usermod {
     #if  !defined(CONFIG_IDF_TARGET_ESP32S2) && !defined(CONFIG_IDF_TARGET_ESP32C3)
       uiScript.print(F("addOption(dd,'Generic I2S PDM',5);"));
     #endif
-<<<<<<< HEAD:usermods/audioreactive/audio_reactive.h
-    oappend(SET_F("addOption(dd,'ES8388',6);"));
-
-      oappend(SET_F("dd=addDropdown('AudioReactive','config:AGC');"));
-      oappend(SET_F("addOption(dd,'Off',0);"));
-      oappend(SET_F("addOption(dd,'Normal',1);"));
-      oappend(SET_F("addOption(dd,'Vivid',2);"));
-      oappend(SET_F("addOption(dd,'Lazy',3);"));
-=======
     uiScript.print(F("addOption(dd,'ES8388',6);"));
 
       uiScript.print(F("dd=addDropdown(ux,'config:AGC');"));
@@ -1952,7 +1920,6 @@ class AudioReactive : public Usermod {
       uiScript.print(F("addOption(dd,'Normal',1);"));
       uiScript.print(F("addOption(dd,'Vivid',2);"));
       uiScript.print(F("addOption(dd,'Lazy',3);"));
->>>>>>> upstream/main:usermods/audioreactive/audio_reactive.cpp
 
       uiScript.print(F("dd=addDropdown(ux,'dynamics:limiter');"));
       uiScript.print(F("addOption(dd,'Off',0);"));
