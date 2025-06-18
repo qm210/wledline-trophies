@@ -173,9 +173,9 @@ void getSettingsJS(byte subPage, Print& settingsScript)
   #endif
 
   #ifdef USERMOD_DEADLINE_TROPHY
-    oappend(PSTR("makeDeadlineTrophyWs();"));
+    settingsScript.print(F("makeDeadlineTrophyWs();"));
   #else
-    oappend(PSTR("gId('dl_values').style.display='none';"));
+    settingsScript.print(F("gId('dl_values').style.display='none';"));
   #endif
   }
 
@@ -303,7 +303,10 @@ void getSettingsJS(byte subPage, Print& settingsScript)
     printSetFormValue(settingsScript,PSTR("AW"),Bus::getGlobalAWMode());
     printSetFormCheckbox(settingsScript,PSTR("PR"),BusManager::hasParallelOutput());  // get it from bus manager not global variable
 
-    DEBUG_PRINTF("[QM-DEBUG-WRITING] %d %d\n", busses.getNumBusses(), busses.getTotalLength());
+    DEBUG_PRINTF("[QM-DEBUG-WRITING] %d %d\n",
+                    BusManager::getNumBusses(),
+                    BusManager::getTotalLength()
+                );
 
     unsigned sumMa = 0;
     for (size_t s = 0; s < BusManager::getNumBusses(); s++) {
@@ -408,7 +411,7 @@ void getSettingsJS(byte subPage, Print& settingsScript)
     printSetFormCheckbox(settingsScript,PSTR("MSO"),!irApplyToAllSelected);
 
 #ifdef USERMOD_DEADLINE_TROPHY
-    oappend(SET_F("applyDeadlineMod();"));
+    settingsScript.print(F("applyDeadlineMod();"));
 #endif
   }
 
@@ -667,17 +670,17 @@ void getSettingsJS(byte subPage, Print& settingsScript)
     #ifdef USERMOD_DEADLINE_TROPHY
         // this is pretty useless for now, maybe might use it later.
         auto umDeadline = GET_DEADLINE_USERMOD();
-        oappend(SET_F("/* USERMOD DEADLINE */ "));
+        settingsScript.print(F("/* USERMOD DEADLINE */ "));
         if (umDeadline != nullptr)
         {
-            oappend(SET_F("d.DEADLINE_TROPHY_MOD = true;"));
-            oappend(SET_F("d.DEADLINE_VALUES = "));
+            settingsScript.print(F("d.DEADLINE_TROPHY_MOD = true;"));
+            settingsScript.print(F("d.DEADLINE_VALUES = "));
             char line[DEADLINE_VALUES_STRLEN];
             umDeadline->printValueJson(line);
-            oappend(line);
-            oappend(SET_F(";"));
+            settingsScript.print(F(line));
+            settingsScript.print(F(";"));
         }
-        oappend(SET_F("/* END USERMOD DEADLINE */ "));
+        settingsScript.print(F("/* END USERMOD DEADLINE */ "));
     #endif
 
   }

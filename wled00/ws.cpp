@@ -65,17 +65,7 @@ void wsEvent(AsyncWebSocket * server, AsyncWebSocketClient * client, AwsEventTyp
           verboseResponse = deserializeState(root);
         }
 
-        bool doSerialize = root.containsKey("save");
-        bool hasChangedBri = root.containsKey("bri");
-
         releaseJSONBufferLock();
-
-        if (doSerialize) {
-            if (hasChangedBri) {
-                briS = bri;
-            }
-            serializeConfig();
-        }
 
         #ifdef USERMOD_DEADLINE_TROPHY
         if (sendDeadlineValues) {

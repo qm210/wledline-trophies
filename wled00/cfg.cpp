@@ -817,11 +817,11 @@ void deserializeConfigFromFS() {
   #ifdef USE_DEADLINE_CONFIG
 
     DEBUG_PRINT("[DEBUG-CONFIG] ");
-    serializeJson(cfg, Serial);
+    serializeJson(root, Serial);
     DEBUG_PRINTLN();
 
     DEBUG_PRINTLN(F("[USE_DEADLINE_CONFIG] Overwrite config by hard-coded deadline config"));
-    overwriteConfigForTrophy(cfg);
+    overwriteConfigForTrophy(root);
     // needsSave = true; // QM-TODO: why would we need this?
   #endif
 
@@ -961,7 +961,7 @@ void serializeConfig(JsonObject root) {
   if (strip.isDeadlineTrophy) {
     hw_led["DL_TROPHY"] = true;
   }
-  else if (strip.at2dSegment()) {
+  if (strip.isMatrix) {
     JsonObject matrix = hw_led.createNestedObject(F("matrix"));
     matrix[F("mpc")] = strip.panel.size();
     JsonArray panels = matrix.createNestedArray(F("panels"));

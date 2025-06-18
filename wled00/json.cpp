@@ -573,7 +573,7 @@ static void serializeSegment(JsonObject& root, const Segment& seg, byte id, bool
     root["start"] = seg.start;
     root["stop"] = seg.stop;
     #ifndef WLED_DISABLE_2D
-    if (strip.is2dSegment(id)) {
+    if (strip.isMatrix) {
       root[F("startY")] = seg.startY;
       root[F("stopY")]  = seg.stopY;
     }
@@ -623,7 +623,7 @@ static void serializeSegment(JsonObject& root, const Segment& seg, byte id, bool
   root["rev"] = seg.reverse;
   root["mi"]  = seg.mirror;
   #ifndef WLED_DISABLE_2D
-  if (strip.is2dSegment(id)) {
+  if (strip.isMatrix) {
     root["rY"] = seg.reverse_y;
     root["mY"] = seg.mirror_y;
     root[F("tp")] = seg.transpose;

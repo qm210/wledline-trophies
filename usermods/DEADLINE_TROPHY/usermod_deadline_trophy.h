@@ -144,9 +144,9 @@ public:
         inputVoltageWasReachedOnce = false;
 
         attenuateFactor = 0.;
-        strip.ablMilliampsMax = static_cast<uint16_t>(maxCurrent);
+        BusManager::setMilliampsMax(static_cast<uint16_t>(maxCurrent));
 
-        DEBUG_PRINTF("[DEADLINE_TROPHY] max %f mA -> %d\n", maxCurrent, strip.ablMilliampsMax);
+        DEBUG_PRINTF("[DEADLINE_TROPHY] max %f mA -> %d\n", maxCurrent, BusManager::ablMilliampsMax());
 
         // 12-bit ADC is the default, but let's go sure (do we need? no idea.)
         analogSetWidth(12);
@@ -414,4 +414,8 @@ public:
 
 };
 
-#define GET_DEADLINE_USERMOD() ((DeadlineTrophyUsermod*)usermods.lookup(USERMOD_ID_DEADLINE_TROPHY))
+static DeadlineTrophyUsermod deadlineUsermod;
+REGISTER_USERMOD(deadlineUsermod);
+
+#define GET_DEADLINE_USERMOD() ((DeadlineTrophyUsermod*)UsermodManager::lookup(USERMOD_ID_DEADLINE_TROPHY))
+

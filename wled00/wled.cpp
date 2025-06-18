@@ -46,8 +46,6 @@ void WLED::loop()
   if (loopDelay > 2) DEBUG_PRINTF_P(PSTR("Loop delayed more than %ums.\n"), loopDelay);
   static unsigned long maxLoopMillis = 0;
   static size_t        avgLoopMillis = 0;
-  #endif
-
   static unsigned long maxUsermodMillis = 0;
   static size_t        avgUsermodMillis = 0;
   static unsigned long maxStripMillis = 0;

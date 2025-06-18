@@ -5521,7 +5521,10 @@ static const char _data_FX_MODE_2DNOISE[] PROGMEM = "Noise2D@!,Scale;;!;2";
 //////////////////////////////
 uint16_t mode_2DPlasmaball(void) {                   // By: Stepko https://editor.soulmatelights.com/gallery/659-plasm-ball , Modified by: Andrew Tuline
   if (!strip.isMatrix || !SEGMENT.is2D()) return mode_static(); // not a 2D set-up
+
+  const int cols = SEG_W;
   const int rows = SEG_H;
+
   SEGMENT.fadeToBlackBy(SEGMENT.custom1>>2);
   uint_fast32_t t = (strip.now * 8) / (256 - SEGMENT.speed);  // optimized to avoid float
   for (int i = 0; i < cols; i++) {
@@ -5643,6 +5646,8 @@ static const char _data_FX_MODE_2DSINDOTS[] PROGMEM = "Sindots@!,Dot distance,Fa
 uint16_t mode_2Dsquaredswirl(void) {            // By: Mark Kriegsman. https://gist.github.com/kriegsman/368b316c55221134b160
                                                           // Modifed by: Andrew Tuline
   if (!strip.isMatrix || !SEGMENT.is2D()) return mode_static(); // not a 2D set-up
+
+  const int cols = SEG_W;
   const int rows = SEG_H;
   const uint8_t kBorderWidth = 2;
 

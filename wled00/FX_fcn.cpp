@@ -669,6 +669,21 @@ bool IRAM_ATTR_YN Segment::isPixelClipped(int i) const {
   return false;
 }
 
+/*
+QM-WIP TODO: check what the modern equivalent of this function is / or whether never needed again
+void IRAM_ATTR_YN Segment::setPixelColor(int i, uint32_t col)
+{
+  if (i < customMappingSize) {
+    i = customMappingTable[i];
+  }
+  if (i >= _length) {
+    // includes the 66536 from the -1 mapping
+    return;
+  }
+  BusManager::setPixelColor(i, col);
+}
+*/
+
 void IRAM_ATTR_YN Segment::setPixelColor(int i, uint32_t col) const
 {
   if (!isActive() || i < 0) return; // not active or invalid index
@@ -1291,19 +1306,6 @@ void WS2812FX::service() {
 
   _triggered = false;
   _isServicing = false;
-}
-
-void IRAM_ATTR WS2812FX::setPixelColor(int i, uint32_t col)
-{
-    // QM-WIP TODO CHECK WHETHER IN USE
-  if (i < customMappingSize) {
-    i = customMappingTable[i];
-  }
-  if (i >= _length) {
-    // includes the 66536 from the -1 mapping
-    return;
-  }
-  busses.setPixelColor(i, col);
 }
 
 // https://en.wikipedia.org/wiki/Blend_modes but using a for top layer & b for bottom layer

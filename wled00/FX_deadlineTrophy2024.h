@@ -75,7 +75,7 @@ const int logoW = 27;
 const int logoH = 21;
 
 void setBase(size_t index, uint32_t color) {
-    auto bus = busses.getBus(1);
+    auto bus = BusManager::getBus(1);
     if (strip.getCurrSegmentId() != 1 || !bus) {
         return;
     }
@@ -93,7 +93,7 @@ void setLogo(size_t x, size_t y, uint32_t color) {
 
 void setSingleWhite(bool isFloor, uint32_t color) {
     auto index = isFloor ? 3 : 2;
-    auto bus = busses.getBus(index);
+    auto bus = BusManager::getBus(index);
     if (strip.getCurrSegmentId() != index || !bus) {
         return;
     }
@@ -129,7 +129,7 @@ uint16_t mode_DeadlineTrophy2024(void) {
   auto isLogo = strip.getCurrSegmentId() == 0;
 
   um_data_t *um_data;
-  if (!usermods.getUMData(&um_data, USERMOD_ID_AUDIOREACTIVE)) {
+  if (!UsermodManager::getUMData(&um_data, USERMOD_ID_AUDIOREACTIVE)) {
     // add support for no audio
     um_data = simulateSound(SEGMENT.soundSim);
   }
