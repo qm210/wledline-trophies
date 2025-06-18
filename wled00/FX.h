@@ -801,12 +801,6 @@ class Segment {
   #endif
 
   #ifdef USERMOD_DEADLINE_TROPHY
-    void setName(const char* newName) {
-    delete[] name;
-    name = new char[strlen(newName)];
-    strlcpy(name, newName, WLED_MAX_SEGNAME_LEN+1);
-    }
-
     void setDeadlineCapabilities(size_t index) {
         // no idea whether refreshLightCapabilities() works in our use case, so.. anyway.
         if (index < 2)
@@ -1020,7 +1014,7 @@ class WS2812FX {
 
 #ifdef USERMOD_DEADLINE_TROPHY
     void setUpDeadlineTrophy();
-#endif USERMOD_DEADLINE_TROPHY
+#endif
 
     inline void     setPixelColorXY(unsigned x, unsigned y, uint32_t c) const { setPixelColor(y * Segment::maxWidth + x, c); }
     inline void     setPixelColorXY(unsigned x, unsigned y, byte r, byte g, byte b, byte w = 0) const { setPixelColorXY(x, y, RGBW32(r,g,b,w)); }
@@ -1029,7 +1023,6 @@ class WS2812FX {
 
   // end 2D support
 
-    bool isMatrix;
     struct {
       bool autoSegments : 1;
       bool correctWB    : 1;

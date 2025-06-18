@@ -203,6 +203,7 @@ bool deserializeConfig(JsonObject doc, bool fromFS) {
     // cannot call strip.deserializeLedmap()/strip.setUpMatrix() here due to already locked JSON buffer
     //if (!fromFS) doInit2D = true; // if called at boot (fromFS==true), WLED::beginStrip() will take care of setting up matrix
   }
+  #endif
 
   DEBUG_PRINTF_P(PSTR("Heap before buses: %d\n"), ESP.getFreeHeap());
   JsonArray ins = hw_led["ins"];
