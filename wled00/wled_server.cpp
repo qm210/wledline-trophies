@@ -22,6 +22,7 @@ static const char _common_js[]       PROGMEM = "/common.js";
 
 //Is this an IP?
 static bool isIp(const String &str) {
+    DEBUG_PRINTLN("QMDEBUG__isIP");
   for (size_t i = 0; i < str.length(); i++) {
     int c = str.charAt(i);
     if (c != '.' && (c < '0' || c > '9')) {
@@ -40,6 +41,7 @@ static void generateEtag(char *etag, uint16_t eTagSuffix) {
 }
 
 static void setStaticContentCacheHeaders(AsyncWebServerResponse *response, int code, uint16_t eTagSuffix = 0) {
+    DEBUG_PRINTLN("QMDEBUG__setStaticContentCacheHeaders");
   // Only send ETag for 200 (OK) responses
   if (code != 200) return;
 
@@ -57,7 +59,8 @@ static void setStaticContentCacheHeaders(AsyncWebServerResponse *response, int c
 }
 
 static bool handleIfNoneMatchCacheHeader(AsyncWebServerRequest *request, int code, uint16_t eTagSuffix = 0) {
-  // Only send 304 (Not Modified) if response code is 200 (OK)
+    DEBUG_PRINTLN("QMDEBUG__handleIfNoneMatchCahcheHeader");
+    // Only send 304 (Not Modified) if response code is 200 (OK)
   if (code != 200) return false;
 
   AsyncWebHeader *header = request->getHeader(F("If-None-Match"));
@@ -88,6 +91,8 @@ static bool handleIfNoneMatchCacheHeader(AsyncWebServerRequest *request, int cod
  * @param eTagSuffix Optional. Defaults to 0. A suffix that will be added to the ETag header. This can be used to invalidate the cache for a specific page.
  */
 static void handleStaticContent(AsyncWebServerRequest *request, const String &path, int code, const String &contentType, const uint8_t *content, size_t len, bool gzip = true, uint16_t eTagSuffix = 0) {
+  DEBUG_PRINTLN("QMDEBUG__handleStaticShit");
+
   if (path != "" && handleFileRead(request, path)) return;
   if (handleIfNoneMatchCacheHeader(request, code, eTagSuffix)) return;
   AsyncWebServerResponse *response = request->beginResponse_P(code, contentType, content, len);
@@ -121,6 +126,7 @@ static String dmxProcessor(const String& var)
 
 static String msgProcessor(const String& var)
 {
+    DEBUG_PRINTLN("QMDEBUG__msgProcessor");
   if (var == "MSG") {
     String messageBody = messageHead;
     messageBody += F("</h2>");
@@ -153,7 +159,8 @@ static String msgProcessor(const String& var)
 }
 
 static void handleUpload(AsyncWebServerRequest *request, const String& filename, size_t index, uint8_t *data, size_t len, bool isFinal) {
-  if (!correctPIN) {
+  DEBUG_PRINTLN("QMDEBUG__handleUpload");
+    if (!correctPIN) {
     if (isFinal) request->send(401, FPSTR(CONTENT_TYPE_PLAIN), FPSTR(s_unlock_cfg));
     return;
   }
@@ -184,6 +191,7 @@ static void handleUpload(AsyncWebServerRequest *request, const String& filename,
 }
 
 void createEditHandler(bool enable) {
+    DEBUG_PRINTLN("QMDEBUG__createEditHandler");
   if (editHandler != nullptr) server.removeHandler(editHandler);
   if (enable) {
     #ifdef WLED_ENABLE_FS_EDITOR
@@ -206,6 +214,7 @@ void createEditHandler(bool enable) {
 
 static bool captivePortal(AsyncWebServerRequest *request)
 {
+    DEBUG_PRINTLN("QMDEBUG__captivePortal");
   if (!apActive) return false; //only serve captive in AP mode
   if (!request->hasHeader(F("Host"))) return false;
 
@@ -222,6 +231,8 @@ static bool captivePortal(AsyncWebServerRequest *request)
 
 void initServer()
 {
+  DEBUG_PRINTLN("QMDEBUG__initServer");
+
   //CORS compatiblity
   DefaultHeaders::Instance().addHeader(F("Access-Control-Allow-Origin"), "*");
   DefaultHeaders::Instance().addHeader(F("Access-Control-Allow-Methods"), "*");
@@ -239,22 +250,26 @@ void initServer()
   });
 
   server.on(_common_js, HTTP_GET, [](AsyncWebServerRequest *request) {
+    DEBUG_PRINTLN("HANDLE COMMON JS");
     handleStaticContent(request, FPSTR(_common_js), 200, FPSTR(CONTENT_TYPE_JAVASCRIPT), JS_common, JS_common_length);
   });
 
   //settings page
   server.on(F("/settings"), HTTP_GET, [](AsyncWebServerRequest *request){
+    DEBUG_PRINTLN("HANDLE SETTINGS");
     serveSettings(request);
   });
 
   // "/settings/settings.js&p=x" request also handled by serveSettings()
   static const char _style_css[] PROGMEM = "/style.css";
   server.on(_style_css, HTTP_GET, [](AsyncWebServerRequest *request) {
+    DEBUG_PRINTLN("HANDLE COMMON CSS");
     handleStaticContent(request, FPSTR(_style_css), 200, FPSTR(CONTENT_TYPE_CSS), PAGE_settingsCss, PAGE_settingsCss_length);
   });
 
   static const char _favicon_ico[] PROGMEM = "/favicon.ico";
   server.on(_favicon_ico, HTTP_GET, [](AsyncWebServerRequest *request) {
+    DEBUG_PRINTLN("HANDLE COMMON ICO");
     handleStaticContent(request, FPSTR(_favicon_ico), 200, F("image/x-icon"), favicon, favicon_length, false);
   });
 
@@ -266,6 +281,7 @@ void initServer()
   });
 
   server.on(F("/welcome"), HTTP_GET, [](AsyncWebServerRequest *request){
+    DEBUG_PRINTLN("HANDLE WELCOME");
     serveSettings(request);
   });
 
@@ -280,10 +296,12 @@ void initServer()
 
   const static char _json[] PROGMEM = "/json";
   server.on(FPSTR(_json), HTTP_GET, [](AsyncWebServerRequest *request){
+    DEBUG_PRINTLN("HANDLE JSON");
     serveJson(request);
   });
 
   AsyncCallbackJsonWebHandler* handler = new AsyncCallbackJsonWebHandler(FPSTR(_json), [](AsyncWebServerRequest *request) {
+    DEBUG_PRINTLN("HANDLE HANDLER");
     bool verboseResponse = false;
     bool isConfig = false;
 
@@ -367,6 +385,7 @@ void initServer()
   static const char _update[] PROGMEM = "/update";
   //init ota page
   server.on(_update, HTTP_GET, [](AsyncWebServerRequest *request){
+    DEBUG_PRINTLN("HANDLE /update");
     if (otaLock) {
       serveMessage(request, 401, FPSTR(s_accessdenied), FPSTR(s_unlock_ota), 254);
     } else
@@ -374,6 +393,7 @@ void initServer()
   });
 
   server.on(_update, HTTP_POST, [](AsyncWebServerRequest *request){
+    DEBUG_PRINTLN("HANDLE /update");
     if (!correctPIN) {
       serveSettings(request, true); // handle PIN page POST request
       return;
@@ -389,6 +409,7 @@ void initServer()
       doReboot = true;
     }
   },[](AsyncWebServerRequest *request, String filename, size_t index, uint8_t *data, size_t len, bool isFinal){
+    DEBUG_PRINTLN("HANDLE .. what is this??");
     if (!correctPIN || otaLock) return;
     if(!index){
       DEBUG_PRINTLN(F("OTA Update Start"));
@@ -430,10 +451,14 @@ void initServer()
 #endif
 
   server.on("/", HTTP_GET, [](AsyncWebServerRequest *request) {
+    DEBUG_PRINTLN("HANDLE ROOT!");
     if (captivePortal(request)) return;
+    DEBUG_PRINTLN("HANDLE ROOT! A");
     if (!showWelcomePage || request->hasArg(F("sliders"))) {
+    DEBUG_PRINTLN("HANDLE ROOT! B");
       handleStaticContent(request, F("/index.htm"), 200, FPSTR(CONTENT_TYPE_HTML), PAGE_index, PAGE_index_L);
     } else {
+    DEBUG_PRINTLN("HANDLE ROOT! C");
       serveSettings(request);
     }
   });
@@ -458,7 +483,9 @@ void initServer()
   });
 
 #ifdef WLED_ENABLE_WEBSOCKETS
+  DEBUG_PRINTLN("HANDLE addHandler!");
   server.addHandler(&ws);
+  DEBUG_PRINTLN("HANDLE addHandler! did so.");
 #endif
 
   //called when the url is not defined here, ajax-in; get-settings
@@ -486,6 +513,7 @@ void initServer()
 
 void serveMessage(AsyncWebServerRequest* request, uint16_t code, const String& headl, const String& subl, byte optionT)
 {
+    DEBUG_PRINTLN("QMDEBUG__serveMessage");
   messageHead = headl;
   messageSub = subl;
   optionType = optionT;
@@ -496,6 +524,7 @@ void serveMessage(AsyncWebServerRequest* request, uint16_t code, const String& h
 
 void serveJsonError(AsyncWebServerRequest* request, uint16_t code, uint16_t error)
 {
+    DEBUG_PRINTLN("QMDEBUG__serveJsonError");
     AsyncJsonResponse *response = new AsyncJsonResponse(64);
     if (error < ERR_NOT_IMPL) response->addHeader(F("Retry-After"), F("1"));
     response->setContentType(CONTENT_TYPE_JSON);
@@ -509,6 +538,7 @@ void serveJsonError(AsyncWebServerRequest* request, uint16_t code, uint16_t erro
 
 void serveSettingsJS(AsyncWebServerRequest* request)
 {
+    DEBUG_PRINTLN("QMDEBUG__serveSettingJS");
   if (request->url().indexOf(FPSTR(_common_js)) > 0) {
     handleStaticContent(request, FPSTR(_common_js), 200, FPSTR(CONTENT_TYPE_JAVASCRIPT), JS_common, JS_common_length);
     return;
@@ -535,6 +565,7 @@ void serveSettingsJS(AsyncWebServerRequest* request)
 
 
 void serveSettings(AsyncWebServerRequest* request, bool post) {
+    DEBUG_PRINTLN("QMDEBUG__serveSettings");
   byte subPage = 0, originalSubPage = 0;
   const String& url = request->url();
 

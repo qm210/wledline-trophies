@@ -227,7 +227,7 @@ void WLED::loop()
     reset();
 
 // DEBUG serial logging (every 30s)
-#if defined(WLED_DEBUG) && !defined(WLED_DEBUG_HIDE_INFO)
+#if defined(WLED_DEBUG) && !defined(WLED_DEBUG_NO_VERBOSE_LOGGING)
   loopMillis = millis() - loopMillis;
   if (loopMillis > 30) {
     DEBUG_PRINTF_P(PSTR("Loop took %lums.\n"), loopMillis);

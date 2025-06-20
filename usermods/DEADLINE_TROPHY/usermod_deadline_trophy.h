@@ -1,6 +1,5 @@
 #pragma once
 
-
 #define DEADLINE_VALUES_STRLEN 250
 
 // CAUTION: 4A in production -- with the wrong patterns for too long, this might grill it. QM did one already.

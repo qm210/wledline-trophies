@@ -1208,12 +1208,10 @@ void WS2812FX::finalizeInit() {
   DEBUG_PRINTLN(F("Loading custom palettes"));
   loadCustomPalettes(); // (re)load all custom palettes
 
-  if (isDeadlineTrophy) {
-    // Deadline Trophy has its map defined already (somewhere above)
-    return;
-  }
+#ifndef USE_DEADLINE_CONFIG
   DEBUG_PRINTLN(F("Loading custom ledmaps"));
   deserializeMap();     // (re)load default ledmap (will also setUpMatrix() if ledmap does not exist)
+#endif
 
   // allocate frame buffer after matrix has been set up (gaps!)
   if (_pixels) _pixels = static_cast<uint32_t*>(d_realloc(_pixels, getLengthTotal() * sizeof(uint32_t)));
@@ -1254,6 +1252,7 @@ void WS2812FX::service() {
       unsigned frameDelay = FRAMETIME;
 
       if (!seg.freeze) { //only run effect function if not frozen
+
         int oldCCT = BusManager::getSegmentCCT(); // store original CCT value (actually it is not Segment based)
         // when correctWB is true we need to correct/adjust RGB value according to desired CCT value, but it will also affect actual WW/CW ratio
         // when cctFromRgb is true we implicitly calculate WW and CW from RGB values
@@ -1627,7 +1626,7 @@ void WS2812FX::show() {
     for (size_t i = 0; i < totalLen; i++) _pixels[i] = BLACK; // memset(_pixels, 0, sizeof(uint32_t) * getLengthTotal());
     // blend all segments into (cleared) buffer
     for (Segment &seg : _segments) if (seg.isActive() && (seg.on || seg.isInTransition())) {
-      blendSegment(seg);              // blend segment's buffer into frame buffer
+        blendSegment(seg);              // blend segment's buffer into frame buffer
     }
   }
 
@@ -1640,6 +1639,7 @@ void WS2812FX::show() {
 
   #ifdef USERMOD_DEADLINE_TROPHY
     auto deadlineUsermod = GET_DEADLINE_USERMOD();
+
     if (deadlineUsermod != nullptr) {
       newBri = deadlineUsermod->getAttenuated(newBri);
     }
@@ -1770,6 +1770,9 @@ uint8_t WS2812FX::getActiveSegmentsNum() const {
 }
 
 uint16_t WS2812FX::getLengthTotal() const {
+  if (isDeadlineTrophy) {
+    return _length;
+  }
   unsigned len = Segment::maxWidth * Segment::maxHeight; // will be _length for 1D (see finalizeInit()) but should cover whole matrix for 2D
   if (isMatrix && _length > len) len = _length; // for 2D with trailing strip
   return len;

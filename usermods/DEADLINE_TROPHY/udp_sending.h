@@ -4,6 +4,9 @@ unsigned long loggedAt = 0;
 
 inline void sendTrophyUdp()
 {
+    // QM WIP doe sthis fguck the shit upo?
+    return; // QM-WIP TODO REMOVE
+
   // QM-WIP: Send all RGB info per UDP for the Trophy Simulator
   // TODO: make this universal, not DL-trophy-specfici
 
@@ -14,7 +17,7 @@ inline void sendTrophyUdp()
   auto now = millis();
   bool logDebug = loggedAt == 0 || (now - loggedAt) > 20000;
 
-  int nLeds = strip.getLengthPhysical();
+  int nLeds = strip.getLengthTotal();
   // Caution: Using DRGB protocol, i.e. limited to 490
   // This is enough for the DL Trophy (172 LEDs).
   // If this is decoupled and more are needed -> use DNRGB
