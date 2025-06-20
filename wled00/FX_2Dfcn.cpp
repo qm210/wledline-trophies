@@ -140,13 +140,13 @@ void WS2812FX::setUpMatrix() {
 
 #ifdef USERMOD_DEADLINE_TROPHY
 void WS2812FX::setUpDeadlineTrophy() {
+    // QM TODO: I have _two_ flags, USE_DEADLINE_CONFIG (=isDeadlineTrophy)
+    // and USERMOD_DEADLINE_TROPHY for the UserMod; it somehow could be _one_.
     if (!isDeadlineTrophy) {
         return;
     }
 
-    // this is so f'ing tricky, to account for the one-off-interlacing in the logo,
-    // and then empty lines to care for the equidistance - it is now parametrized as:
-    // (at first, it might look like 15 x 14, but then I thought again.)
+    // the empty lines are due to the actual non-equidistant lines in the logo
     const int logoW = 27;
     const int logoH = 21;
     const int baseEdge = 18; // edge length 16 + 2 of the adjacent edges
@@ -200,6 +200,8 @@ void WS2812FX::setUpDeadlineTrophy() {
         152, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __,153, __, __, __, __, __, __, __, __, __,
          __,154,155,156,157,158,159,160,161,162,163,164,165,166,167,168,169, __, __, __, __, __, __, __, __, __, __,
     };
+
+    _length = 172; // hard code the total number of LEDs, while we're at it
 
     size_t s = 4;
     const char* segName[] = {"Logo", "Base", "Back Spot", "Floor Spot"};

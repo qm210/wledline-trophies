@@ -52,7 +52,7 @@ void screenClearCallback(void) {
 void updateScreenCallback(void) {}
 
 void drawPixelCallback(int16_t x, int16_t y, uint8_t red, uint8_t green, uint8_t blue) {
-  // simple nearest-neighbor scaling 
+  // simple nearest-neighbor scaling
   int16_t outY = y * activeSeg->height() / gifHeight;
   int16_t outX = x * activeSeg->width()  / gifWidth;
   // set multiple pixels if upscaling
@@ -133,6 +133,7 @@ byte renderImageToSegment(Segment &seg) {
 void endImagePlayback(Segment *seg) {
   DEBUG_PRINTLN(F("Image playback end called"));
   if (!activeSeg || activeSeg != seg) return;
+  DEBUG_PRINTLN("DEUBG ___ HERE?");
   if (file) file.close();
   decoder.dealloc();
   gifDecodeFailed = false;
