@@ -41,7 +41,7 @@ void WLED::loop()
   if (lastRun == 0) loopDelay=0; // startup - don't have valid data from last run.
   if (loopDelay > 2) DEBUG_PRINTF("Loop delayed more than %ums.\n", loopDelay);
 
-  #ifndef WLED_DEBUG_HIDE_INFO
+  #ifndef WLED_DEBUG_NO_VERBOSE_LOGGING
   static unsigned long maxLoopMillis = 0;
   static size_t        avgLoopMillis = 0;
   #endif
@@ -214,7 +214,7 @@ void WLED::loop()
     reset();
 
 // DEBUG serial logging (every 30s)
-#if defined(WLED_DEBUG) && !defined(WLED_DEBUG_HIDE_INFO)
+#if defined(WLED_DEBUG) && !defined(WLED_DEBUG_NO_VERBOSE_LOGGING)
   loopMillis = millis() - loopMillis;
   if (loopMillis > 30) {
     DEBUG_PRINTF("Loop took %lums.\n", loopMillis);
