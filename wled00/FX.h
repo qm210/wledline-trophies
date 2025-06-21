@@ -973,15 +973,8 @@ class WS2812FX {
     // 2D support (panels)
     bool isMatrix;
 
-    // Deadline Trophy: needed to overwrite stuff
-    #ifdef USE_DEADLINE_CONFIG
-        const bool isDeadlineTrophy = true;
-    #else
-        const bool isDeadlineTrophy = false;
-    #endif
-
     void setMatrix(bool _isMatrix) {
-        isMatrix = isDeadlineTrophy || _isMatrix;
+        isMatrix = _isMatrix;
     }
 
 #ifndef WLED_DISABLE_2D
@@ -1012,7 +1005,7 @@ class WS2812FX {
 
     void setUpMatrix();     // sets up automatic matrix ledmap from panel configuration
 
-#ifdef USERMOD_DEADLINE_TROPHY
+#ifdef USE_DEADLINE_CONFIG
     void setUpDeadlineTrophy();
 #endif
 

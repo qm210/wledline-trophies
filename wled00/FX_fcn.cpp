@@ -1198,8 +1198,7 @@ void WS2812FX::finalizeInit() {
   }
   DEBUG_PRINTF_P(PSTR("Heap after buses: %d\n"), ESP.getFreeHeap());
 
-  if (isDeadlineTrophy) setUpDeadlineTrophy();
-  else if (isMatrix) setUpMatrix();
+  if (isMatrix) setUpMatrix();
   else {
     Segment::maxWidth  = _length;
     Segment::maxHeight = 1;
@@ -1770,9 +1769,10 @@ uint8_t WS2812FX::getActiveSegmentsNum() const {
 }
 
 uint16_t WS2812FX::getLengthTotal() const {
-  if (isDeadlineTrophy) {
+#ifdef USE_DEADLINE_CONFIG
     return _length;
-  }
+#endif
+
   unsigned len = Segment::maxWidth * Segment::maxHeight; // will be _length for 1D (see finalizeInit()) but should cover whole matrix for 2D
   if (isMatrix && _length > len) len = _length; // for 2D with trailing strip
   return len;
@@ -1831,9 +1831,6 @@ void WS2812FX::resetSegments() {
 }
 
 void WS2812FX::makeAutoSegments(bool forceReset) {
-  if (isDeadlineTrophy) {
-    return;
-  }
   if (autoSegments) { //make one segment per bus
     unsigned segStarts[MAX_NUM_SEGMENTS] = {0};
     unsigned segStops [MAX_NUM_SEGMENTS] = {0};

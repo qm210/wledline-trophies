@@ -19,6 +19,11 @@
 // but ledmap takes care of that. ledmap is constructed upon initialization
 // so matrix should disable regular ledmap processing
 void WS2812FX::setUpMatrix() {
+#ifdef USE_DEADLINE_CONFIG
+  setUpDeadlineTrophy();
+  return;
+#endif
+
 #ifndef WLED_DISABLE_2D
   // isMatrix is set in cfg.cpp or set.cpp
   if (isMatrix) {
@@ -138,13 +143,9 @@ void WS2812FX::setUpMatrix() {
 #endif
 }
 
-#ifdef USERMOD_DEADLINE_TROPHY
+#ifdef USE_DEADLINE_CONFIG
 void WS2812FX::setUpDeadlineTrophy() {
-    // QM TODO: I have _two_ flags, USE_DEADLINE_CONFIG (=isDeadlineTrophy)
-    // and USERMOD_DEADLINE_TROPHY for the UserMod; it somehow could be _one_.
-    if (!isDeadlineTrophy) {
-        return;
-    }
+    setMatrix(true);
 
     // the empty lines are due to the actual non-equidistant lines in the logo
     const int logoW = 27;

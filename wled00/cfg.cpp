@@ -176,7 +176,7 @@ bool deserializeConfig(JsonObject doc, bool fromFS) {
   #ifndef WLED_DISABLE_2D
   // 2D Matrix Settings
   JsonObject matrix = hw_led[F("matrix")];
-  if (!matrix.isNull() && !strip.isDeadlineTrophy) {
+  if (!matrix.isNull()) {
     strip.isMatrix = true;
     unsigned numPanels = matrix[F("mpc")] | 1;
     numPanels = constrain(numPanels, 1, WLED_MAX_PANELS);
@@ -958,9 +958,6 @@ void serializeConfig(JsonObject root) {
 
   #ifndef WLED_DISABLE_2D
   // 2D Matrix Settings
-  if (strip.isDeadlineTrophy) {
-    hw_led["DL_TROPHY"] = true;
-  }
   if (strip.isMatrix) {
     JsonObject matrix = hw_led.createNestedObject(F("matrix"));
     matrix[F("mpc")] = strip.panel.size();
@@ -978,6 +975,10 @@ void serializeConfig(JsonObject root) {
     }
   }
   #endif
+#ifdef USE_DEADLINE_CONFIG
+    hw_led["DL_TROPHY"] = true;
+#endif
+
 
   JsonArray hw_led_ins = hw_led.createNestedArray("ins");
 

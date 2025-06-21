@@ -137,11 +137,12 @@ static bool deserializeSegment(JsonObject elem, byte it, byte presetId = 0)
     return true;
   }
 
-
-  if (strip.isDeadlineTrophy) {
-    // deadline trophy has fixed names, this leads to CORRUPT HEAP otherwise
-  }
-  else if (elem["n"]) {
+#ifdef USE_DEADLINE_CONFIG
+  // deadline trophy has fixed names, this leads to CORRUPT HEAP otherwise
+  if (true) {}
+  else
+#endif
+  if (elem["n"]) {
     // name field exists
     const char * name = elem["n"].as<const char*>();
     seg.setName(name); // will resolve empty and null correctly
@@ -736,10 +737,10 @@ void serializeInfo(JsonObject root)
   leds[F("wv")]   = totalLC & 0x02;     // deprecated, true if white slider should be displayed for any segment
   leds["cct"]     = totalLC & 0x04;     // deprecated, use info.leds.lc
 
-  if (strip.isDeadlineTrophy) {
+  #ifdef USE_DEADLINE_CONFIG
     root[F("segFixed")] = true;
     root[F("DEADLINE")] = true;
-  }
+  #endif
 
   #ifdef WLED_DEBUG
   JsonArray i2c = root.createNestedArray(F("i2c"));

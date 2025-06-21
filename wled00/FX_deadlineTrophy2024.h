@@ -124,8 +124,6 @@ const int DEBUG_STEPS = 5;
 int DEBUG_COUNTER = 0;
 
 uint16_t mode_DeadlineTrophy2024(void) {
-  if (!strip.isDeadlineTrophy) return mode_static();
-
   auto isLogo = strip.getCurrSegmentId() == 0;
 
   um_data_t *um_data;

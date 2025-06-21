@@ -567,10 +567,10 @@ void WLED::beginStrip()
     applyPreset(bootPreset, CALL_MODE_INIT);
   }
 
-  if (strip.isDeadlineTrophy) {
+#ifdef USE_DEADLINE_CONFIG
     // QM: I forgot why I added that last October, so maybe evaluate whether still relevant
     stateUpdated(CALL_MODE_INIT);
-  }
+#endif
 
   strip.setTransition(transitionDelayDefault);  // restore transitions
 
