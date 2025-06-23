@@ -803,11 +803,7 @@ void deserializeConfigFromFS() {
     DEBUG_PRINTLN(F("Reading settings from /cfg.json..."));
   #endif
 
-  DEBUG_PRINTLN("------ Sind wir denn hier?");
-
   success = readObjectFromFile(s_cfg_json, nullptr, pDoc);
-
-  DEBUG_PRINTLN("------ Öhm entschuldigen Sie mal...");
 
   // NOTE: This routine deserializes *and* applies the configuration
   //       Therefore, must also initialize ethernet from this function
@@ -822,7 +818,7 @@ void deserializeConfigFromFS() {
 
     DEBUG_PRINTLN(F("[USE_DEADLINE_CONFIG] Overwrite config by hard-coded deadline config"));
     overwriteConfigForTrophy(root);
-    // needsSave = true; // QM-TODO: why would we need this?
+    needsSave = true;
   #endif
 
   releaseJSONBufferLock();
@@ -1290,13 +1286,11 @@ bool deserializeConfigSec() {
     return false;
   }
 
-#ifndef CLIENT_PASS
-  JsonObject nw_ins_0 = doc["nw"]["ins"][0];
-  getStringFromJson(clientPass, nw_ins_0["psk"], 65);
-#endif
-
   JsonObject root = pDoc->as<JsonObject>();
 
+#ifndef CLIENT_PASS
+  //qm210: pretty sure the official wled code is not particularly smart here
+  //       in associating the index n <-> the password field "psk" and not any SSID
   size_t n = 0;
   JsonArray nw_ins = root["nw"]["ins"];
   if (!nw_ins.isNull()) {
@@ -1308,6 +1302,7 @@ bool deserializeConfigSec() {
       if (++n >= WLED_MAX_WIFI_COUNT) break;
     }
   }
+#endif
 
   JsonObject ap = root["ap"];
   getStringFromJson(apPass, ap["psk"] , 65);
