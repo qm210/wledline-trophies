@@ -1,12 +1,8 @@
 byte udpPacket[1024];
-bool logDebug = false;
 unsigned long loggedAt = 0;
 
 inline void sendTrophyUdp()
 {
-    // QM WIP doe sthis fguck the shit upo?
-    return; // QM-WIP TODO REMOVE
-
   // QM-WIP: Send all RGB info per UDP for the Trophy Simulator
   // TODO: make this universal, not DL-trophy-specfici
 
@@ -15,7 +11,7 @@ inline void sendTrophyUdp()
   }
 
   auto now = millis();
-  bool logDebug = loggedAt == 0 || (now - loggedAt) > 20000;
+  bool logDebug = loggedAt == 0; // || (now - loggedAt) > 20000;
 
   int nLeds = strip.getLengthTotal();
   // Caution: Using DRGB protocol, i.e. limited to 490
@@ -54,5 +50,6 @@ inline void sendTrophyUdp()
   if (logDebug) {
     DEBUG_PRINTF("[SENT UDP PACKAGE] Size %d\n", packetSize);
     loggedAt = now;
+    logDebug = false;
   }
 }

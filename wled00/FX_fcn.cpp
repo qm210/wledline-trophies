@@ -14,7 +14,7 @@
 #include "palettes.h"
 
 #ifdef USERMOD_DEADLINE_TROPHY
-#include "../usermods/DEADLINE_TROPHY/usermod_deadline_trophy.h"
+#include "../usermods/DEADLINE_TROPHY/DeadlineTrophy.h"
 #endif
 
 /*
@@ -1197,6 +1197,8 @@ void WS2812FX::finalizeInit() {
     bus->setBrightness(bri);
   }
   DEBUG_PRINTF_P(PSTR("Heap after buses: %d\n"), ESP.getFreeHeap());
+
+  DEBUG_PRINTF("[QM-DEBUG] Matrix %d\n", isMatrix);
 
   if (isMatrix) setUpMatrix();
   else {

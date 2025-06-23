@@ -2,7 +2,7 @@
 #include "wled_ethernet.h"
 
 #ifdef USERMOD_DEADLINE_TROPHY
-#include "../usermods/DEADLINE_TROPHY/usermod_deadline_trophy.h"
+#include "../usermods/DEADLINE_TROPHY/DeadlineTrophy.h"
 #endif
 
 /*

@@ -6,6 +6,7 @@
 	<title>WLED Settings</title>
 	<script src="common.js" async type="text/javascript"></script>
 	<script>
+        let ws;
 		function S() {
 			getLoc();
 			loadJS(getURL('/settings/s.js?p=0'), false);	// If we set async false, file is loaded and executed, then next statement is processed

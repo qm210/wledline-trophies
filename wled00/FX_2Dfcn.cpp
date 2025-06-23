@@ -21,6 +21,7 @@
 void WS2812FX::setUpMatrix() {
 #ifdef USE_DEADLINE_CONFIG
   setUpDeadlineTrophy();
+  DEBUG_PRINTF("CHECK LENGTH %d", _length);
   return;
 #endif
 

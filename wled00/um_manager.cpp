@@ -13,7 +13,7 @@
 static Usermod * const _usermod_table_begin[0] __attribute__((__section__(".dtors.tbl.usermods.0"), unused)) = {};
 static Usermod * const _usermod_table_end[0] __attribute__((__section__(".dtors.tbl.usermods.99"), unused)) = {};
 
-static size_t getCount() {  
+static size_t getCount() {
   return &_usermod_table_end[0] - &_usermod_table_begin[0];
 }
 
@@ -40,7 +40,7 @@ bool UsermodManager::getUMData(um_data_t **data, uint8_t mod_id) {
 }
 void UsermodManager::addToJsonState(JsonObject& obj)    { for (auto mod = _usermod_table_begin; mod < _usermod_table_end; ++mod) (*mod)->addToJsonState(obj); }
 void UsermodManager::addToJsonInfo(JsonObject& obj)     {
-  auto um_id_list = obj.createNestedArray("um");  
+  auto um_id_list = obj.createNestedArray("um");
   for (auto mod = _usermod_table_begin; mod < _usermod_table_end; ++mod) {
     um_id_list.add((*mod)->getId());
     (*mod)->addToJsonInfo(obj);

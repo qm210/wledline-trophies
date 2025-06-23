@@ -12,7 +12,7 @@ unsigned long wsLastLiveTime = 0;
 #define WS_LIVE_INTERVAL 40
 
 #ifdef USERMOD_DEADLINE_TROPHY
-#include "../usermods/DEADLINE_TROPHY/usermod_deadline_trophy.h"
+#include "../usermods/DEADLINE_TROPHY/DeadlineTrophy.h"
 char deadlineValues[DEADLINE_VALUES_STRLEN];
 #endif
 

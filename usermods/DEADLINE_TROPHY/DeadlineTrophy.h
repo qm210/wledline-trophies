@@ -13,8 +13,7 @@
 
 #define ABS_ZERO 273.15
 
-class DeadlineTrophyUsermod : public Usermod
-{
+class DeadlineTrophyUsermod : public Usermod {
 public:
 
     static const int PIN_LOGOTHERM = 35;
@@ -187,29 +186,7 @@ public:
             minInputVoltage = currentInputVoltage;
         }
 
-        /*
-        if (now - lastDebugOutAt > 20000 || lastDebugOutAt == 0)
-        {
-            DEBUG_PRINTF("[DEADLINE_TROPHY] logoTemp=%f K (min %f, max %f) [DEBUG %f, %f, %f, %f]\n",
-                currentLogoTempKelvin,
-                minLogoTempKelvin,
-                maxLogoTempKelvin,
-                _logoRead,
-                _voltageRatio,
-                _R_TH1,
-                _logRatio
-            );
-            DEBUG_PRINTF("[DEADLINE_TROPHY] inputV=%f (min %f, max %f) [DEBUG %f]\n",
-                currentInputVoltage,
-                maxInputVoltage,
-                minInputVoltage,
-                _vccRead
-            );
-            lastDebugOutAt = now;
-        }
-        */
-
-       justBefore = now;
+        justBefore = now;
     }
 
     uint8_t getAttenuated(uint8_t brightness) {
@@ -275,13 +252,6 @@ public:
     }
 
     float calcMaxCurrentLimiter(float dt) {
-        // DEBUG_PRINTF(
-        //     "[DEBUG_DEADLINE] %d %d %d | %.3f %.3f | %.3f  x%.3f (%d %d)\n",
-        //     hasEnoughSamples, inputVoltageWasReachedOnce, inputVoltageThresholdReachedAt,
-        //     limit_inputVoltageThreshold, currentInputVoltage,
-        //     secondsSinceVoltageThresholdReached, attenuateFactor,
-        //     limit_becauseVoltageDrop, limit_becauseTooHot
-        // );
 
         if (!hasEnoughSamples) {
             return 0;
@@ -344,23 +314,23 @@ public:
 
     void appendConfigData()
     {
-      oappend(SET_F("addInfo('DeadlineTrophy:pin[]',0,'Logo Temperature','LogoTherm');"));
-      oappend(SET_F("addInfo('DeadlineTrophy:pin[]',1,'Common Voltage','VCC');"));
+        oappend(SET_F("addInfo('DeadlineTrophyUsermod:pin[]',0,'Logo Temperature','LogoTherm');"));
+        oappend(SET_F("addInfo('DeadlineTrophyUsermod:pin[]',1,'Common Voltage','VCC');"));
 
-      oappend(SET_F("addInfo('DeadlineTrophy:minVoltage:threshold',1,'required minimum V<sub>CC</sub>');"));
-      oappend(SET_F("addInfo('DeadlineTrophy:minVoltage:attenuate',1,'dim by factor when below threshold');"));
-      oappend(SET_F("addInfo('DeadlineTrophy:minVoltage:release',1,'slowly go back to 1 (perSec) if safe');"));
+        oappend(SET_F("addInfo('DeadlineTrophyUsermod:minVoltage:threshold',1,'required minimum V<sub>CC</sub>');"));
+        oappend(SET_F("addInfo('DeadlineTrophyUsermod:minVoltage:attenuate',1,'dim by factor when below threshold');"));
+        oappend(SET_F("addInfo('DeadlineTrophyUsermod:minVoltage:release',1,'slowly go back to 1 (perSec) if safe');"));
 
-      oappend(SET_F("addInfo('DeadlineTrophy:maxTemp:critical',1,'critical Temperature in °C');"));
-      oappend(SET_F("addInfo('DeadlineTrophy:maxTemp:attenuate',1,'dim by factor when above critical');"));
-      oappend(SET_F("addInfo('DeadlineTrophy:maxTemp:release',1,'slowly go back to 1 (perSec) if safe');"));
+        oappend(SET_F("addInfo('DeadlineTrophyUsermod:maxTemp:critical',1,'critical Temperature in °C');"));
+        oappend(SET_F("addInfo('DeadlineTrophyUsermod:maxTemp:attenuate',1,'dim by factor when above critical');"));
+        oappend(SET_F("addInfo('DeadlineTrophyUsermod:maxTemp:release',1,'slowly go back to 1 (perSec) if safe');"));
     }
 
     bool readFromConfig(JsonObject& root)
     {
         JsonObject top = root[FPSTR("DeadlineTrophy")];
         if (top.isNull()) {
-            DEBUG_PRINTLN(F("DeadlineTrophy: No config found. (Using defaults.)"));
+            DEBUG_PRINTLN(F("DeadlineTrophyUsermod: No config found. (Using defaults.)"));
             return false;
         }
 
@@ -413,8 +383,4 @@ public:
 
 };
 
-static DeadlineTrophyUsermod deadlineUsermod;
-REGISTER_USERMOD(deadlineUsermod);
-
 #define GET_DEADLINE_USERMOD() ((DeadlineTrophyUsermod*)UsermodManager::lookup(USERMOD_ID_DEADLINE_TROPHY))
-
