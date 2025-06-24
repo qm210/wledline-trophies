@@ -19,12 +19,6 @@
 // but ledmap takes care of that. ledmap is constructed upon initialization
 // so matrix should disable regular ledmap processing
 void WS2812FX::setUpMatrix() {
-#ifdef USE_DEADLINE_CONFIG
-  setUpDeadlineTrophy();
-  DEBUG_PRINTF("CHECK LENGTH %d", _length);
-  return;
-#endif
-
 #ifndef WLED_DISABLE_2D
   // isMatrix is set in cfg.cpp or set.cpp
   if (isMatrix) {

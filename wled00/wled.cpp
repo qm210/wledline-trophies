@@ -183,9 +183,6 @@ void WLED::loop()
     heapTime = millis();
   }
 
-  DEBUG_PRINTLN("[QM-DEBUG] -- we are in the loop() with doInitBusses:");
-  DEBUG_PRINTLN(doInitBusses);
-
   //LED settings have been saved, re-init busses
   //This code block causes severe FPS drop on ESP32 with the original "if (busConfigs[0] != nullptr)" conditional. Investigate!
   if (doInitBusses) {
@@ -428,18 +425,9 @@ void WLED::setup()
   WLED_SET_AP_SSID(); // otherwise it is empty on first boot until config is saved
   multiWiFi.push_back(WiFiConfig(CLIENT_SSID,CLIENT_PASS)); // initialise vector with default WiFi
 
-  DEBUG_PRINTF("--------------- DEBUG: |%s|%s|%d|\n", CLIENT_SSID, CLIENT_PASS, multiWiFi.size());
-
   DEBUG_PRINTLN(F("Reading config"));
   deserializeConfigFromFS();
   DEBUG_PRINTF_P(PSTR("heap %u\n"), ESP.getFreeHeap());
-
-  DEBUG_PRINTF("--------------- DEBUG: |%s|%s|%d|\n", multiWiFi[0].clientSSID, multiWiFi[0].clientPass, multiWiFi.size());
-
-  #ifdef USE_DEADLINE_CONFIG
-    // DEBUG_PRINTLN(F("[DEADLINE] Even more hardcode manipulating the config (global vars)."));
-    // TODO qm210
-  #endif
 
 #if defined(STATUSLED) && STATUSLED>=0
   if (!PinManager::isPinAllocated(STATUSLED)) {

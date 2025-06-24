@@ -11,7 +11,8 @@ const int PIN_FLOOR_SPOT = 27;
 
 void overwriteConfigForTrophy(JsonObject doc)
 {
-    // Usermods usually only care about their own stuff, but we go for violating boundaries here.
+    // Usermods usually only care about their own stuff, but:
+    // "You're remembered for the rules you break" - Stockton Rush
     JsonObject led = doc[F("hw")][F("led")];
     auto outputs = led[F("ins")];
     outputs.clear();

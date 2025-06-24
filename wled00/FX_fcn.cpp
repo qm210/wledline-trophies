@@ -1198,8 +1198,11 @@ void WS2812FX::finalizeInit() {
   }
   DEBUG_PRINTF_P(PSTR("Heap after buses: %d\n"), ESP.getFreeHeap());
 
-  DEBUG_PRINTF("[QM-DEBUG] Matrix %d\n", isMatrix);
-
+#ifdef USE_DEADLINE_CONFIG
+  setUpDeadlineTrophy();
+  DEBUG_PRINTF("CHECK LENGTH %d", _length);
+  if (true) {} else // <-- ...admire my awesome genius!
+#endif
   if (isMatrix) setUpMatrix();
   else {
     Segment::maxWidth  = _length;
@@ -1832,7 +1835,13 @@ void WS2812FX::resetSegments() {
   _mainSegment = 0;
 }
 
+bool printDebug = true;
+
 void WS2812FX::makeAutoSegments(bool forceReset) {
+#ifdef USE_DEADLINE_CONFIG
+  autoSegments = true;
+#endif
+
   if (autoSegments) { //make one segment per bus
     unsigned segStarts[MAX_NUM_SEGMENTS] = {0};
     unsigned segStops [MAX_NUM_SEGMENTS] = {0};
@@ -1901,6 +1910,17 @@ void WS2812FX::makeAutoSegments(bool forceReset) {
   _mainSegment = 0;
 
   fixInvalidSegments();
+
+  if (printDebug) {
+    DEBUG_PRINTF("[QM-DEBUG] beginStrip, autoSegments? %d\n", autoSegments);
+    for (int s = 0; s < _segments.size(); s++) {
+        DEBUG_PRINTF("           Segments(%d, %d, %d, %d)\n", _segments[s].start,
+                                                              _segments[s].stop,
+                                                              _segments[s].startY,
+                                                              _segments[s].stopY);
+    }
+    printDebug = false;
+  }
 }
 
 void WS2812FX::fixInvalidSegments() {
