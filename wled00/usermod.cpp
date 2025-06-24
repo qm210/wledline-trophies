@@ -10,10 +10,6 @@
 
 #ifdef USERMOD_DEADLINE_TROPHY
   #include "../usermods/DEADLINE_TROPHY/udp_sending.h"
-  // we put the following here because that is the easiest for now.
-  #include "../usermods/DEADLINE_TROPHY/DeadlineTrophy.h"
-  static DeadlineTrophyUsermod deadlineUsermod;
-  REGISTER_USERMOD(deadlineUsermod);
 #endif
 
 //Use userVar0 and userVar1 (API calls &U0=,&U1=, uint16_t)

@@ -13,7 +13,8 @@
 
 #define ABS_ZERO 273.15
 
-class DeadlineTrophyUsermod : public Usermod {
+class DeadlineTrophyUsermod : public Usermod
+{
 public:
 
     static const int PIN_LOGOTHERM = 35;
