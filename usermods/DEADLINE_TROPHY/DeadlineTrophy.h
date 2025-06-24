@@ -21,11 +21,6 @@ public:
     static const int PIN_INPUTVOLTAGE = 33;
     // static const int PIN_VCAP = 32; // unused, it seems
 
-    // qm210: these are hacked into the AudioReactive UserMod because we are so loco
-    static const int PIN_AR_SD = 14;
-    static const int PIN_AR_WS = 13;
-    static const int PIN_AR_CLK = 12;
-
     // for the analogRead(), average over some samples to smoothen fluctuations.
     static const int AVERAGE_SAMPLES = 10;
 
