@@ -14,7 +14,7 @@
 #include "palettes.h"
 
 #ifdef USERMOD_DEADLINE_TROPHY
-#include "../usermods/DEADLINE_TROPHY/DeadlineTrophy.h"
+#include "../usermods/DEADLINE_TROPHY/DeadlineUsermod.h"
 #endif
 
 /*
@@ -1198,11 +1198,6 @@ void WS2812FX::finalizeInit() {
   }
   DEBUG_PRINTF_P(PSTR("Heap after buses: %d\n"), ESP.getFreeHeap());
 
-#ifdef USE_DEADLINE_CONFIG
-  setUpDeadlineTrophy();
-  DEBUG_PRINTF("CHECK LENGTH %d", _length);
-  if (true) {} else // <-- ...admire my awesome genius!
-#endif
   if (isMatrix) setUpMatrix();
   else {
     Segment::maxWidth  = _length;
@@ -1643,7 +1638,6 @@ void WS2812FX::show() {
 
   #ifdef USERMOD_DEADLINE_TROPHY
     auto deadlineUsermod = GET_DEADLINE_USERMOD();
-
     if (deadlineUsermod != nullptr) {
       newBri = deadlineUsermod->getAttenuated(newBri);
     }
@@ -1774,10 +1768,6 @@ uint8_t WS2812FX::getActiveSegmentsNum() const {
 }
 
 uint16_t WS2812FX::getLengthTotal() const {
-#ifdef USE_DEADLINE_CONFIG
-    return _length;
-#endif
-
   unsigned len = Segment::maxWidth * Segment::maxHeight; // will be _length for 1D (see finalizeInit()) but should cover whole matrix for 2D
   if (isMatrix && _length > len) len = _length; // for 2D with trailing strip
   return len;
@@ -1839,7 +1829,18 @@ bool printDebug = true;
 
 void WS2812FX::makeAutoSegments(bool forceReset) {
 #ifdef USE_DEADLINE_CONFIG
-  autoSegments = true;
+  // QM-WIP JUST OUTPUT DEBUG  -- REMOVE LATER
+  if (printDebug) {
+    DEBUG_PRINTF("[QM-DEBUG] beginStrip, autoSegments? %d\n", autoSegments);
+    for (int s = 0; s < _segments.size(); s++) {
+        DEBUG_PRINTF("           Segments(%d, %d, %d, %d)\n", _segments[s].start,
+                                                              _segments[s].stop,
+                                                              _segments[s].startY,
+                                                              _segments[s].stopY);
+    }
+    printDebug = false;
+  }
+  return;
 #endif
 
   if (autoSegments) { //make one segment per bus
@@ -1910,17 +1911,6 @@ void WS2812FX::makeAutoSegments(bool forceReset) {
   _mainSegment = 0;
 
   fixInvalidSegments();
-
-  if (printDebug) {
-    DEBUG_PRINTF("[QM-DEBUG] beginStrip, autoSegments? %d\n", autoSegments);
-    for (int s = 0; s < _segments.size(); s++) {
-        DEBUG_PRINTF("           Segments(%d, %d, %d, %d)\n", _segments[s].start,
-                                                              _segments[s].stop,
-                                                              _segments[s].startY,
-                                                              _segments[s].stopY);
-    }
-    printDebug = false;
-  }
 }
 
 void WS2812FX::fixInvalidSegments() {

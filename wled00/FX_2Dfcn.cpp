@@ -10,6 +10,10 @@
 #include "wled.h"
 #include "palettes.h"
 
+#ifdef USE_DEADLINE_CONFIG
+#include "../usermods/DEADLINE_TROPHY/DeadlineTrophy.h"
+#endif
+
 // setUpMatrix() - constructs ledmap array from matrix of panels with WxH pixels
 // this converts physical (possibly irregular) LED arrangement into well defined
 // array of logical pixels: fist entry corresponds to left-topmost logical pixel
@@ -19,6 +23,10 @@
 // but ledmap takes care of that. ledmap is constructed upon initialization
 // so matrix should disable regular ledmap processing
 void WS2812FX::setUpMatrix() {
+#ifdef USE_DEADLINE_CONFIG
+    setUpDeadlineTrophy();
+#endif
+
 #ifndef WLED_DISABLE_2D
   // isMatrix is set in cfg.cpp or set.cpp
   if (isMatrix) {
@@ -48,6 +56,17 @@ void WS2812FX::setUpMatrix() {
 
     suspend();
     waitForIt();
+
+#ifdef USE_DEADLINE_CONFIG
+    d_free(customMappingTable);
+    customMappingSize = DeadlineTrophy::mappingSize;
+    customMappingTable = static_cast<uint16_t*>(d_malloc(sizeof(uint16_t)*customMappingSize));
+
+    for (unsigned i = 0; i < customMappingSize; i++) {
+        customMappingTable[i] = DeadlineTrophy::mappingTable[i];
+    }
+    return;
+#endif
 
     customMappingSize = 0; // prevent use of mapping if anything goes wrong
 
@@ -140,91 +159,48 @@ void WS2812FX::setUpMatrix() {
 
 #ifdef USE_DEADLINE_CONFIG
 void WS2812FX::setUpDeadlineTrophy() {
-    setMatrix(true);
+    panel.clear();
 
-    // the empty lines are due to the actual non-equidistant lines in the logo
-    const int logoW = 27;
-    const int logoH = 21;
-    const int baseEdge = 18; // edge length 16 + 2 of the adjacent edges
+    _length = DeadlineTrophy::N_LEDS_TOTAL;
 
-    // current Matrix implementation is named irresponsibly, but let's live with that. for now.
-    Segment::maxWidth = logoW;
-    Segment::maxHeight = logoH + baseEdge;
-    _mainSegment = 0; // is the logo, no idea where _mainSegment is used 'n' stuff.
+    Segment::maxWidth = DeadlineTrophy::logoW;
+    Segment::maxHeight = DeadlineTrophy::logoH + DeadlineTrophy::baseEdge;
+    _mainSegment = 0; // is the logo, no idea where this is used (so far)
 
-    if (customMappingTable != nullptr) delete[] customMappingTable;
-    customMappingSize = Segment::maxWidth * Segment::maxHeight;
-    const uint16_t __ = (uint16_t)-1;
-    customMappingTable = new uint16_t[customMappingSize] {
-         __, __, __, 97, __, 98, __, 99, __,100, __,101, __,102, __,103, __,104, __,105, __, __, __, __, __, __, __,
-         __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __,
-         __, __, 96, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __,
-         __, 95, __, 94, __, 93, __, 92, __, 91, __, 90, __, 89, __, 88, __, 87, __, 86, __, 85, __, __, __, __, __,
-         __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __,
-         73, __, 74, __, 75, __, 76, __, 77, __, 78, __, 79, __, 80, __, 81, __, 82, __, 83, __, 84, __, __, __, __,
-         __, 72, __, 71, __, 70, __, 69, __, 68, __, 67, __, 66, __, 65, __, 64, __, 63, __, 62, __, 61, __, __, __,
-         __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __,
-         __, __,  0, __,  1, __,  2, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, 59, __, 60, __, __,
-         __, __, __,  5, __,  4, __,  3, __, __, __, __, __, __, __, __, __, __, __, __, __, 58, __, 57, __, 56, __,
-         __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __,
-         __, __, __, __,  6, __,  7, __,  8, __, __, __, __, __, __, __, __, __, __, __, 53, __, 54, __, 55, __, __,
-         __, __, __, __, __, 11, __, 10, __,  9, __, __, __, __, __, __, __, __, __, 52, __, 51, __, 50, __, __, __,
-         __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __,
-         __, __, __, __, __, __, 12, __, 13, __, 14, __, __, __, __, __, __, __, 47, __, 48, __, 49, __, __, __, __,
-         __, __, __, __, __, __, __, 17, __, 16, __, 15, __, __, __, __, __, __, __, 46, __, 45, __, __, __, __, __,
-         __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __,
-         __, __, __, __, __, __, __, __, 18, __, 19, __, 20, __, 21, __, 22, __, 23, __, 24, __, 25, __, 26, __, __,
-         __, __, __, __, __, __, __, __, __, 35, __, 34, __, 33, __, 32, __, 31, __, 30, __, 29, __, 28, __, 27, __,
-         __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __,
-         __, __, __, __, __, __, __, __, __, __, 36, __, 37, __, 38, __, 39, __, 40, __, 41, __, 42, __, 43, __, 44,
-         __,106,107,108,109,110,111,112,113,114,115,116,117,118,119,120,121, __,170, __, __, __, __, __, __, __, __,
-        122, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __,123,171, __, __, __, __, __, __, __, __,
-        124, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __,125, __, __, __, __, __, __, __, __, __,
-        126, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __,127, __, __, __, __, __, __, __, __, __,
-        128, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __,129, __, __, __, __, __, __, __, __, __,
-        130, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __,131, __, __, __, __, __, __, __, __, __,
-        132, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __,133, __, __, __, __, __, __, __, __, __,
-        134, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __,135, __, __, __, __, __, __, __, __, __,
-        136, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __,137, __, __, __, __, __, __, __, __, __,
-        138, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __,139, __, __, __, __, __, __, __, __, __,
-        140, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __,141, __, __, __, __, __, __, __, __, __,
-        142, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __,143, __, __, __, __, __, __, __, __, __,
-        144, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __,145, __, __, __, __, __, __, __, __, __,
-        146, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __,147, __, __, __, __, __, __, __, __, __,
-        148, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __,149, __, __, __, __, __, __, __, __, __,
-        150, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __,151, __, __, __, __, __, __, __, __, __,
-        152, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __,153, __, __, __, __, __, __, __, __, __,
-         __,154,155,156,157,158,159,160,161,162,163,164,165,166,167,168,169, __, __, __, __, __, __, __, __, __, __,
-    };
-
-    _length = 172; // hard code the total number of LEDs, while we're at it
-
-    size_t s = 4;
-    const char* segName[] = {"Logo", "Base", "Back Spot", "Floor Spot"};
     _segments.clear();
-    _segments.reserve(s); // prevent reallocations
+    _segments.reserve(DeadlineTrophy::N_SEGMENTS);
 
-    // this Matrix-Linear-Hybrid thing is not great, just shoehorn the single LEDs in there as 2D segments.
-    _segments.push_back(Segment(0, logoW, 0, logoH));
-    _segments.push_back(Segment(0, baseEdge, logoH, logoH + baseEdge));
-    _segments.push_back(Segment(baseEdge, baseEdge + 1, logoH, logoH + 1));
-    _segments.push_back(Segment(baseEdge, baseEdge + 1, logoH + 1, logoH + 2));
+    for (size_t i = 0; i < DeadlineTrophy::N_SEGMENTS; i++) {
 
-    for (size_t i=0; i<s; i++) {
-        _segments[i].setName(segName[i]);
-        _segments[i].setDeadlineCapabilities(i);
-        _segments[i].options =
+        Segment seg = DeadlineTrophy::segment[i];
+        seg.setName(DeadlineTrophy::segmentName[i]);
+        // no idea whether refreshLightCapabilities() works in our use case, so... directly:
+        seg._capabilities = DeadlineTrophy::segmentCapabilities[i];
+
+        seg.options =
             i == 0
                 ? SEGMENT_ON | SELECTED
                 : SEGMENT_ON;
-        _segments[i].mode = FX_MODE_DEADLINE_TROPHY_2024;
+        seg.mode = FX_MODE_DEADLINE_TROPHY_2024;
 
         // these are the three colors per segment (the palette is applied onto that, somehow)
-        _segments[i].colors[0] = 0xFFFFFF;
-        _segments[i].colors[1] = 0xFFFFFF;
-        _segments[i].colors[2] = 0xFFFFFF;
+        seg.colors[0] = 0x40FFFF;
+        seg.colors[1] = 0xFF80FF;
+        seg.colors[2] = 0xFFFF60;
+        // <-- QM-WIP - these are debug colors
+
+        _segments.push_back(seg);
+
+        Panel p;
+        p.xOffset = seg.start;
+        p.width = seg.stop - p.xOffset;
+        p.yOffset = seg.startY;
+        p.height = seg.stopY - p.yOffset;
+        panel.push_back(p);
+
     }
-    // one could use multiple segments over the same LEDs and then blend, but... who knows
+
+    // one could use multiple segments over the same LEDs and then blend, but... postpone.
     // Segment::modeBlend(true);
 }
 #endif

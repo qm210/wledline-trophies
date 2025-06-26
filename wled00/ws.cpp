@@ -12,8 +12,7 @@ unsigned long wsLastLiveTime = 0;
 #define WS_LIVE_INTERVAL 40
 
 #ifdef USERMOD_DEADLINE_TROPHY
-#include "../usermods/DEADLINE_TROPHY/DeadlineTrophy.h"
-char deadlineValues[DEADLINE_VALUES_STRLEN];
+#include "../usermods/DEADLINE_TROPHY/DeadlineUsermod.h"
 #endif
 
 void wsEvent(AsyncWebSocket * server, AsyncWebSocketClient * client, AwsEventType type, void * arg, uint8_t *data, size_t len)
@@ -69,12 +68,14 @@ void wsEvent(AsyncWebSocket * server, AsyncWebSocketClient * client, AwsEventTyp
 
         #ifdef USERMOD_DEADLINE_TROPHY
         if (sendDeadlineValues) {
+            // WebSocket sending of the temperature values etc
+            // (NOT the RGB values, we do that via UDP now)
             auto umDeadline = GET_DEADLINE_USERMOD();
             if (umDeadline != nullptr) {
-                umDeadline->printValueJson(deadlineValues);
-                client->text(deadlineValues);
+                auto deadlineMessage = umDeadline->buildControlLoopValues();
+                client->text(deadlineMessage);
             } else {
-                client->text(F("{\"error\":\"DeadlineTrophyUsermod not initialized.\"}"));
+                client->text(F("{\"error\":\"DeadlineUsermod not initialized.\"}"));
             }
             return;
         }

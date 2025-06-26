@@ -2,7 +2,7 @@
 #include "wled_ethernet.h"
 
 #ifdef USERMOD_DEADLINE_TROPHY
-#include "../usermods/DEADLINE_TROPHY/DeadlineTrophy.h"
+#include "../usermods/DEADLINE_TROPHY/DeadlineUsermod.h"
 #endif
 
 /*
@@ -665,24 +665,6 @@ void getSettingsJS(byte subPage, Print& settingsScript)
       HW_PIN_SDA, HW_PIN_SCL, HW_PIN_DATASPI, HW_PIN_MISOSPI, HW_PIN_CLOCKSPI
     );
     UsermodManager::appendConfigData(settingsScript);
-
-    // QM-WIP: integrate this into UsermodManager::appendConfigData, I guess!!
-    #ifdef USERMOD_DEADLINE_TROPHY
-        // this is pretty useless for now, maybe might use it later.
-        auto umDeadline = GET_DEADLINE_USERMOD();
-        settingsScript.print(F("/* USERMOD DEADLINE */ "));
-        if (umDeadline != nullptr)
-        {
-            settingsScript.print(F("d.DEADLINE_TROPHY_MOD = true;"));
-            settingsScript.print(F("d.DEADLINE_VALUES = "));
-            char line[DEADLINE_VALUES_STRLEN];
-            umDeadline->printValueJson(line);
-            settingsScript.print(F(line));
-            settingsScript.print(F(";"));
-        }
-        settingsScript.print(F("/* END USERMOD DEADLINE */ "));
-    #endif
-
   }
 
   if (subPage == SUBPAGE_UPDATE) // update

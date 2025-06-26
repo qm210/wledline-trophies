@@ -1,382 +1,85 @@
 #pragma once
 
-#define DEADLINE_VALUES_STRLEN 250
-
-// CAUTION: 4A in production -- with the wrong patterns for too long, this might grill it. QM did one already.
-#ifndef USE_DEADLINE_MAX_AMPERE
-  #ifdef WLED_DEBUG
-    #define USE_DEADLINE_MAX_AMPERE 1
-  #else
-    #define USE_DEADLINE_MAX_AMPERE 4
-  #endif
-#endif
-
-#define ABS_ZERO 273.15
-
-class DeadlineTrophyUsermod : public Usermod
-{
-public:
-
-    static const int PIN_LOGOTHERM = 35;
-    static const int PIN_INPUTVOLTAGE = 33;
-    // static const int PIN_VCAP = 32; // unused, it seems
-
-    // for the analogRead(), average over some samples to smoothen fluctuations.
-    static const int AVERAGE_SAMPLES = 10;
-
-    /*
-        logoTherm goes via voltage divider with R6, Thermistor TH1, R7
-
-        R6: 15kOhm (Upper, Above the Division)
-        TH1: ERT-J0EM103J (Thermistor, Below the Division) - R = 10 kOhm @ 25°, B-Value ~ 3900 K
-        R7: 1kOhm (Lower, Below the Division, in Series with the Thermistor)
-        Input Voltage V_CC = 5V in an ideal world
-
-        Voltage Division:
-        V_Therm = V_CC * (TH1 + R7) / (R6 + TH1 + R7) = V_CC * R6 / R_ges
-        -> TH1 = 1 / (V_CC / V_Therm - 1) * R6 - R7
-
-        12-bit ADC: (is somewhat non-linear, but who the shit cares.)
-        V_Therm = 3.3V * AnalogReadResult / 4095 = AnalogReadResult * voltageAdcCoeff;
-
-        -> TH1 = 1 / (V_CC / voltageAdcCoeff / AnalogReadResult - 1) * R6 - R7
-
-        Steinhart-Hart (first-order, we are not THAT hart).
-        1/T = 1/T0 + 1/B * ln(TH1 / R0)
-        T0 = 298.15 K (nominal temperature where R(TH1) = R0)
-        R0 = 1e4 Ohm (nominal resistance at T = T0)
-
-        -> T = 1. / ( invT0 + invB * ln(TH1 / R0) ) in Kelvin
-
-        it seems like we can use logf(), the float-valued natural logarithm.
-    */
-    static constexpr float logoR6_Ohm = 1.5e4;
-    static constexpr float logoR7_Ohm = 1e3;
-    static constexpr float logoThermistor_R0_Ohm = 1e4;
-    static constexpr float logoTherm_OneOverT0 = 1. / (ABS_ZERO + 25);
-    static constexpr float logoTherm_OneOverB = 1. / 3900.;
-    static constexpr float voltageAdcCoeff = 3.3 / 4095.; // 12bit ADC
-
-    /*
-        input voltage V_CC goes via voltage divider with R23 = R24, i.e.
-        V_pin33 = V_CC * (R23) / (R23 + R24)
-        -> V_CC = 2. * V_pin33
-                = 2. * (AnalogRead33Result) / 4095 * 3.3V
-                = 2. * (AnalogRead33Result) * voltageAdcCoeff
-
-    */
-
-    const float maxCurrent = USE_DEADLINE_MAX_AMPERE * 1000;
-
-private:
-
-    // analog readings
-    uint16_t val_logoTherm[AVERAGE_SAMPLES];
-    bool hasEnoughSamples = false;
-    int sampleCursor = 0;
-    float currentLogoTempKelvin = 0.;
-    float maxLogoTempKelvin = 0.;
-    float minLogoTempKelvin = 9999.;
-
-    uint16_t val_inputVolt[AVERAGE_SAMPLES];
-    float currentInputVoltage = 0.;
-    float maxInputVoltage = 0.;
-    float minInputVoltage = 9999.;
-
-    int valueForInputCurrentSwitch = 0;
-    float inputCurrentSwitch_waitSeconds = 1.;
-    float inputCurrentSwitch_riseSeconds = 1.;
-
-    long lastDebugOutAt;
-    long now;
-    float runningSec;
-    float elapsedSec;
-    float justBefore;
-
-    // logo temp values
-    float _logoRead;
-    float _voltageRatio;
-    float _R_TH1;
-    float _logRatio;
-
-    // current temp values
-    float _vccRead;
-
-    // limit maximum current / brightness to avoid damage
-    // this is multiplied on the brightness.
-    // it didn't work with strip.ablMilliampsMax due to estimateCurrentAndLimitBri()
-    float attenuateFactor = 1.;
-
-    bool limit_becauseVoltageDrop = false;
-    bool limit_becauseTooHot = false;
-
-    long inputVoltageThresholdReachedAt;
-    bool inputVoltageWasReachedOnce = false;
-    float secondsSinceVoltageThresholdReached = 0.;
-
-    float limit_inputVoltageThreshold = 4.6;
-    // Limit by Input Voltage, implemented with guessed values
-    float attenuateByV_attackFactorWhenCritical = 0.4;
-    float attenuateByV_releasePerSecond = 0.005;
-
-    float limit_criticalTempDegC = 60;
-    // Limit by Temperature, also guessed values
-    float attenuateByT_attackFactorWhenCritical = 0.2;
-    float attenuateByT_releasePerSecond = 0.002;
-
-public:
-
-    void setup()
-    {
-        DEBUG_PRINTF("[DEADLINE] QM watches you! (non-creepily.) Say Hi at qm@z10.info\n");
-
-        justBefore = millis();
-        runningSec = 0;
-        lastDebugOutAt = 0;
-
-        hasEnoughSamples = false;
-        inputVoltageWasReachedOnce = false;
-
-        attenuateFactor = 0.;
-        BusManager::setMilliampsMax(static_cast<uint16_t>(maxCurrent));
-
-        DEBUG_PRINTF("[DEADLINE_TROPHY] max %f mA -> %d\n", maxCurrent, BusManager::ablMilliampsMax());
-
-        // 12-bit ADC is the default, but let's go sure (do we need? no idea.)
-        analogSetWidth(12);
-
-        // set InputCurrentSwitch to zero.
-        dacWrite(DAC1, 0);
-    }
-
-    void loop()
-    {
-        now = millis();
-        elapsedSec = 1e-3 * (now - justBefore);
-        runningSec += elapsedSec;
-
-        attenuateFactor = calcMaxCurrentLimiter(elapsedSec);
-
-        readAnalogValues();
-        if (!hasEnoughSamples)
-            return;
-
-        calcInputVoltage();
-        calcLogoTherm();
-
-        if (inputVoltageWasReachedOnce) {
-            setInputCurrentSwitch(runningSec);
-        }
-
-        // these are for debugging
-        if (currentLogoTempKelvin > maxLogoTempKelvin) {
-            maxLogoTempKelvin = currentLogoTempKelvin;
-        }
-        if (currentLogoTempKelvin < minLogoTempKelvin) {
-            minLogoTempKelvin = currentLogoTempKelvin;
-        }
-        if (currentInputVoltage > maxInputVoltage) {
-            maxInputVoltage = currentInputVoltage;
-        }
-        if (currentInputVoltage < minInputVoltage) {
-            minInputVoltage = currentInputVoltage;
-        }
-
-        justBefore = now;
-    }
-
-    uint8_t getAttenuated(uint8_t brightness) {
-        return static_cast<uint8_t>(static_cast<float>(brightness) * attenuateFactor);
-    }
-
-    void setInputCurrentSwitch(float runningSec) {
-        if (!inputVoltageWasReachedOnce) {
-            return;
-        }
-        secondsSinceVoltageThresholdReached = runningSec - inputVoltageThresholdReachedAt;
-        if (secondsSinceVoltageThresholdReached > inputCurrentSwitch_waitSeconds + inputCurrentSwitch_riseSeconds) {
-            return;
-        }
-        attenuateFactor = constrain(
-            (secondsSinceVoltageThresholdReached - inputCurrentSwitch_waitSeconds) / inputCurrentSwitch_riseSeconds,
-            0,
-            1.
-        );
-        valueForInputCurrentSwitch = static_cast<int>(255 * attenuateFactor);
-        dacWrite(DAC1, valueForInputCurrentSwitch);
-    }
-
-    float getAverage(uint16_t samples[])
-    {
-        float avg = 0;
-        for (int s = 0; s < AVERAGE_SAMPLES; s++) {
-            avg += samples[s];
-        }
-        return avg / AVERAGE_SAMPLES;
-    }
-
-    void readAnalogValues()
-    {
-        // read with a delay, as ppl on se internet do it - they must know =P
-        val_logoTherm[sampleCursor] = analogRead(PIN_LOGOTHERM);
-        delay(10);
-        val_inputVolt[sampleCursor] = analogRead(PIN_INPUTVOLTAGE);
-        delay(10);
-
-        sampleCursor++;
-
-        if (sampleCursor >= AVERAGE_SAMPLES)
-        {
-            hasEnoughSamples = true;
-            sampleCursor = 0;
-        }
-    }
-
-    void calcInputVoltage()
-    {
-        _vccRead = getAverage(val_inputVolt);
-        currentInputVoltage = 2. * voltageAdcCoeff * _vccRead;
-    }
-
-    void calcLogoTherm()
-    {
-        _logoRead = getAverage(val_logoTherm);
-        _voltageRatio = currentInputVoltage / (voltageAdcCoeff * _logoRead);
-        _R_TH1 = 1. / (_voltageRatio - 1) * logoR6_Ohm - logoR7_Ohm;
-        _logRatio = logf(_R_TH1 / logoThermistor_R0_Ohm);
-        currentLogoTempKelvin = 1. / ( logoTherm_OneOverT0 + logoTherm_OneOverB * _logRatio );
-    }
-
-    float calcMaxCurrentLimiter(float dt) {
-
-        if (!hasEnoughSamples) {
-            return 0;
-        }
-        if (!inputVoltageWasReachedOnce) {
-            if (currentInputVoltage > limit_inputVoltageThreshold) {
-                DEBUG_PRINTF("[DEADLINE_TROPHY] reached for the first time at %.2f\n", runningSec);
-                inputVoltageWasReachedOnce = true;
-                inputVoltageThresholdReachedAt = runningSec;
-                limit_becauseVoltageDrop = false;
-            } else {
-                return 0;
-            }
-        }
-
-        if (currentInputVoltage < limit_inputVoltageThreshold) {
-            if (!limit_becauseVoltageDrop) {
-                limit_becauseVoltageDrop = true;
-                attenuateFactor *= attenuateByV_attackFactorWhenCritical;
-            } else {
-                attenuateFactor += attenuateByV_releasePerSecond * dt;
-            }
-        }
-
-        if (currentLogoTempKelvin >= limit_criticalTempDegC + ABS_ZERO) {
-            if (!limit_becauseTooHot) {
-                limit_becauseTooHot = true;
-                attenuateFactor *= attenuateByT_attackFactorWhenCritical;
-            } else {
-                attenuateFactor += attenuateByT_releasePerSecond * dt;
-            }
-        }
-
-        if (attenuateFactor > 1.) {
-            limit_becauseVoltageDrop = false;
-            limit_becauseTooHot = false;
-            attenuateFactor = 1.;
-        }
-
-        return attenuateFactor;
-    }
-
-    void addToConfig(JsonObject& doc)
-    {
-        JsonObject top = doc.createNestedObject(F("DeadlineTrophy"));
-        // fun thing, fillUMPins() will look for entries in these "pin" arrays. deal with it.
-        auto pins = top.createNestedArray("pin");
-        pins.add(PIN_LOGOTHERM);
-        pins.add(PIN_INPUTVOLTAGE);
-
-        auto limV = top.createNestedObject("minVoltage");
-        limV[F("threshold")] = limit_inputVoltageThreshold;
-        limV[F("attenuate")] = attenuateByV_attackFactorWhenCritical;
-        limV[F("release")] = attenuateByV_releasePerSecond;
-        auto limT = top.createNestedObject("maxTemp");
-        limT[F("critical")] = limit_criticalTempDegC;
-        limT[F("attenuate")] = attenuateByT_attackFactorWhenCritical,
-        limT[F("release")] = attenuateByT_releasePerSecond;
-    }
-
-    void appendConfigData()
-    {
-        oappend(SET_F("addInfo('DeadlineTrophyUsermod:pin[]',0,'Logo Temperature','LogoTherm');"));
-        oappend(SET_F("addInfo('DeadlineTrophyUsermod:pin[]',1,'Common Voltage','VCC');"));
-
-        oappend(SET_F("addInfo('DeadlineTrophyUsermod:minVoltage:threshold',1,'required minimum V<sub>CC</sub>');"));
-        oappend(SET_F("addInfo('DeadlineTrophyUsermod:minVoltage:attenuate',1,'dim by factor when below threshold');"));
-        oappend(SET_F("addInfo('DeadlineTrophyUsermod:minVoltage:release',1,'slowly go back to 1 (perSec) if safe');"));
-
-        oappend(SET_F("addInfo('DeadlineTrophyUsermod:maxTemp:critical',1,'critical Temperature in °C');"));
-        oappend(SET_F("addInfo('DeadlineTrophyUsermod:maxTemp:attenuate',1,'dim by factor when above critical');"));
-        oappend(SET_F("addInfo('DeadlineTrophyUsermod:maxTemp:release',1,'slowly go back to 1 (perSec) if safe');"));
-    }
-
-    bool readFromConfig(JsonObject& root)
-    {
-        JsonObject top = root[FPSTR("DeadlineTrophy")];
-        if (top.isNull()) {
-            DEBUG_PRINTLN(F("DeadlineTrophyUsermod: No config found. (Using defaults.)"));
-            return false;
-        }
-
-        JsonObject limV = top["minVoltage"];
-        if (!limV.isNull()) {
-            limit_inputVoltageThreshold = limV[F("threshold")] | limit_inputVoltageThreshold;
-            attenuateByV_attackFactorWhenCritical = limV[F("attenuate")] | attenuateByV_attackFactorWhenCritical;
-            attenuateByV_releasePerSecond = limV[F("release")] | attenuateByV_releasePerSecond;
-        }
-        JsonObject limT = top["maxTemp"];
-        if (!limT.isNull()) {
-            limit_criticalTempDegC =limT[F("critical")] | limit_criticalTempDegC;
-            attenuateByT_attackFactorWhenCritical = limT[F("attenuate")] | attenuateByT_attackFactorWhenCritical;
-            attenuateByT_releasePerSecond = limT[F("release")] | attenuateByT_releasePerSecond;
-        }
-
-        return true;
-    }
-
-    uint16_t getId()
-    {
-        return USERMOD_ID_DEADLINE_TROPHY;
-    }
-
-    void printValueJson(char line[])
-    {
-        if (!hasEnoughSamples) {
-            sprintf(line, "{\"error\": \"not enough samples taken yet.\"}");
-            return;
-        }
-        // needs about 200 characters or something, I haven't counted.
-        // --> define the DEADLINE_VALUES_STRLEN so this string fits
-        sprintf(
-            line,
-            "{\"dl\": {\"T\": %.3f, \"minT\": %.3f, \"maxT\": %.3f, \"VCC\": %.3f, \"maxVCC\": %.3f, \"minVCC\": %.3f, \"adcT\": %.1f, \"adcV\": %.1f, \"att\": %.2f, \"aboveT\":%d, \"belowV\":%d, \"sec\": %.2f}}",
-            currentLogoTempKelvin - ABS_ZERO,
-            minLogoTempKelvin - ABS_ZERO,
-            maxLogoTempKelvin - ABS_ZERO,
-            currentInputVoltage,
-            maxInputVoltage,
-            minInputVoltage,
-            _logoRead,
-            _vccRead,
-            attenuateFactor,
-            limit_becauseTooHot,
-            limit_becauseVoltageDrop,
-            secondsSinceVoltageThresholdReached
-        );
-    }
-
-};
-
-#define GET_DEADLINE_USERMOD() ((DeadlineTrophyUsermod*)UsermodManager::lookup(USERMOD_ID_DEADLINE_TROPHY))
+#include "wled.h"
+
+const int PIN_LOGO_DATA = 21;
+const int PIN_LOGO_CLOCK = 3;
+const int PIN_BASE_DATA = 19;
+const int PIN_BASE_CLOCK = 18;
+const int PIN_BACK_SPOT = 26;
+const int PIN_FLOOR_SPOT = 27;
+
+const int LED_TYPE_HD107S = TYPE_APA102;
+const int LED_SINGLE_WHITE = TYPE_ANALOG_MIN;
+
+namespace DeadlineTrophy {
+
+    const int N_LEDS_LOGO = 106;
+    const int N_LEDS_BASE = 64;
+    const int N_LEDS_TOTAL = N_LEDS_LOGO + N_LEDS_BASE + 2;
+
+    uint16_t maxMilliAmps(uint16_t nLeds);
+    BusConfig createBus(uint8_t type, uint16_t count, uint16_t start, uint8_t pin1, uint8_t pin2 = 255);
+
+    // Usermods usually only care about their own stuff, but:
+    // "You're remembered for the rules you break" - Stockton Rush (OceanGate CEO)
+    void overwriteConfig();
+
+    const int logoW = 27;
+    const int logoH = 21;
+    const int baseEdge = 18; // edge length 16 + 2 of the adjacent edges
+
+    const int mappingSize = (logoW) * (logoH + baseEdge);
+    const uint16_t __ = (uint16_t)-1;
+    // <-- this masks the gaps for easier debugging / reading the code below
+
+    // this Matrix-Linear-Hybrid thing is not great, with the single LEDs shoe-horned in there, but that's what we have.
+    // (the empty lines are due to the actual non-equidistant lines in the logo)
+    const uint16_t mappingTable[mappingSize] = {
+        __, __, __, 97, __, 98, __, 99, __,100, __,101, __,102, __,103, __,104, __,105, __, __, __, __, __, __, __,
+        __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __,
+        __, __, 96, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __,
+        __, 95, __, 94, __, 93, __, 92, __, 91, __, 90, __, 89, __, 88, __, 87, __, 86, __, 85, __, __, __, __, __,
+        __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __,
+        73, __, 74, __, 75, __, 76, __, 77, __, 78, __, 79, __, 80, __, 81, __, 82, __, 83, __, 84, __, __, __, __,
+        __, 72, __, 71, __, 70, __, 69, __, 68, __, 67, __, 66, __, 65, __, 64, __, 63, __, 62, __, 61, __, __, __,
+        __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __,
+        __, __,  0, __,  1, __,  2, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, 59, __, 60, __, __,
+        __, __, __,  5, __,  4, __,  3, __, __, __, __, __, __, __, __, __, __, __, __, __, 58, __, 57, __, 56, __,
+        __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __,
+        __, __, __, __,  6, __,  7, __,  8, __, __, __, __, __, __, __, __, __, __, __, 53, __, 54, __, 55, __, __,
+        __, __, __, __, __, 11, __, 10, __,  9, __, __, __, __, __, __, __, __, __, 52, __, 51, __, 50, __, __, __,
+        __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __,
+        __, __, __, __, __, __, 12, __, 13, __, 14, __, __, __, __, __, __, __, 47, __, 48, __, 49, __, __, __, __,
+        __, __, __, __, __, __, __, 17, __, 16, __, 15, __, __, __, __, __, __, __, 46, __, 45, __, __, __, __, __,
+        __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __,
+        __, __, __, __, __, __, __, __, 18, __, 19, __, 20, __, 21, __, 22, __, 23, __, 24, __, 25, __, 26, __, __,
+        __, __, __, __, __, __, __, __, __, 35, __, 34, __, 33, __, 32, __, 31, __, 30, __, 29, __, 28, __, 27, __,
+        __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __,
+        __, __, __, __, __, __, __, __, __, __, 36, __, 37, __, 38, __, 39, __, 40, __, 41, __, 42, __, 43, __, 44,
+        __,106,107,108,109,110,111,112,113,114,115,116,117,118,119,120,121, __,170, __, __, __, __, __, __, __, __,
+        122, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __,123,171, __, __, __, __, __, __, __, __,
+        124, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __,125, __, __, __, __, __, __, __, __, __,
+        126, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __,127, __, __, __, __, __, __, __, __, __,
+        128, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __,129, __, __, __, __, __, __, __, __, __,
+        130, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __,131, __, __, __, __, __, __, __, __, __,
+        132, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __,133, __, __, __, __, __, __, __, __, __,
+        134, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __,135, __, __, __, __, __, __, __, __, __,
+        136, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __,137, __, __, __, __, __, __, __, __, __,
+        138, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __,139, __, __, __, __, __, __, __, __, __,
+        140, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __,141, __, __, __, __, __, __, __, __, __,
+        142, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __,143, __, __, __, __, __, __, __, __, __,
+        144, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __,145, __, __, __, __, __, __, __, __, __,
+        146, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __,147, __, __, __, __, __, __, __, __, __,
+        148, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __,149, __, __, __, __, __, __, __, __, __,
+        150, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __,151, __, __, __, __, __, __, __, __, __,
+        152, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __,153, __, __, __, __, __, __, __, __, __,
+            __,154,155,156,157,158,159,160,161,162,163,164,165,166,167,168,169, __, __, __, __, __, __, __, __, __, __,
+    };
+
+    static const size_t N_SEGMENTS = 4;
+    extern const char* segmentName[N_SEGMENTS];
+    extern const Segment segment[N_SEGMENTS];
+    extern const uint8_t segmentCapabilities[N_SEGMENTS];
+
+}

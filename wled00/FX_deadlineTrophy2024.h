@@ -70,7 +70,7 @@ const int valSpread = 2.;
 const float satDecay = 0.5;
 const float satSpawnChance = 0.001;
 
-// copy&paste from setupDeadlineTrophy(), is ok for now.
+// copy&paste from setUpDeadlineTrophy(), is ok for now.
 const int logoW = 27;
 const int logoH = 21;
 

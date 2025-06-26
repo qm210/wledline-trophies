@@ -1,19 +1,23 @@
-byte udpPacket[1024];
-unsigned long loggedAt = 0;
+#include "wled.h"
 
-inline void sendTrophyUdp()
+#include "DeadlineUsermod.h"
+#include "DeadlineTrophy.h"
+
+static DeadlineUsermod deadlineUsermod;
+REGISTER_USERMOD(deadlineUsermod);
+
+
+void DeadlineUsermod::sendTrophyUdp(bool log)
 {
   // QM-WIP: Send all RGB info per UDP for the Trophy Simulator
-  // TODO: make this universal, not DL-trophy-specfici
-
+  // TODO: make this universal, not DL-trophy-specific
+  // or move the udpSender inside the Usermod here.
   if (!udpSenderConnected) {
     return;
   }
 
-  auto now = millis();
-  bool logDebug = loggedAt == 0; // || (now - loggedAt) > 20000;
+  int nLeds = DeadlineTrophy::N_LEDS_TOTAL;
 
-  int nLeds = strip.getLengthTotal();
   // Caution: Using DRGB protocol, i.e. limited to 490
   // This is enough for the DL Trophy (172 LEDs).
   // If this is decoupled and more are needed -> use DNRGB
@@ -36,7 +40,7 @@ inline void sendTrophyUdp()
         break;
     }
 
-    if (logDebug) {
+    if (log) {
         DEBUG_PRINTF("[DEBUG UDP] Pixel %d = %d (%u, %u, %u)\n", i, color, r, g, b);
     }
   }
@@ -47,9 +51,7 @@ inline void sendTrophyUdp()
   senderUdp.write(udpPacket, packetSize);
   senderUdp.endPacket();
 
-  if (logDebug) {
+  if (log) {
     DEBUG_PRINTF("[SENT UDP PACKAGE] Size %d\n", packetSize);
-    loggedAt = now;
-    logDebug = false;
   }
 }

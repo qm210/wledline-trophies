@@ -2,7 +2,7 @@
 #include "wled_ethernet.h"
 
 #ifdef USE_DEADLINE_CONFIG
-#include "../usermods/DEADLINE_TROPHY/config_overwrite.h"
+#include "../usermods/DEADLINE_TROPHY/DeadlineTrophy.h"
 #endif
 
 /*
@@ -809,17 +809,6 @@ void deserializeConfigFromFS() {
   //       Therefore, must also initialize ethernet from this function
   JsonObject root = pDoc->as<JsonObject>();
   bool needsSave = deserializeConfig(root, true);
-
-  #ifdef USE_DEADLINE_CONFIG
-
-    DEBUG_PRINT("[DEBUG-CONFIG] ");
-    serializeJson(root, Serial);
-    DEBUG_PRINTLN();
-
-    DEBUG_PRINTLN(F("[USE_DEADLINE_CONFIG] Overwrite config by hard-coded deadline config"));
-    overwriteConfigForTrophy(root);
-    needsSave = true;
-  #endif
 
   releaseJSONBufferLock();
 
