@@ -10804,9 +10804,10 @@ void WS2812FX::setupEffectData() {
   addEffect(FX_MODE_PARTICLEGALAXY, &mode_particlegalaxy, _data_FX_MODE_PARTICLEGALAXY);
 #endif // WLED_DISABLE_PARTICLESYSTEM2D
 #endif // WLED_DISABLE_2D
-  #ifdef USERMOD_DEADLINE_TROPHY
-  addEffect(FX_MODE_DEADLINE_TROPHY_2024, &mode_DeadlineTrophy2024, _data_FX_MODE_DEADLINE_TROPHY_2024);
-  #endif
+
+#ifdef USERMOD_DEADLINE_TROPHY
+  addEffect(FX_MODE_DEADLINE_TROPHY, &mode_DeadlineTrophy, _data_FX_MODE_DEADLINE_TROPHY);
+#endif
 
 #ifndef WLED_DISABLE_PARTICLESYSTEM1D
 addEffect(FX_MODE_PSDRIP, &mode_particleDrip, _data_FX_MODE_PARTICLEDRIP);

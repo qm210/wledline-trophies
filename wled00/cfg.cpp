@@ -557,11 +557,8 @@ bool deserializeConfig(JsonObject doc, bool fromFS) {
   JsonObject def = doc["def"];
   CJSON(bootPreset, def["ps"]);
   CJSON(turnOnAtBoot, def["on"]); // true
-  DEBUG_PRINTF("[DEBUG BRI] deserializeConfig: %d", briS);
   CJSON(briS, def["bri"]); // 128
-  DEBUG_PRINTF(" -> %d\n [", briS);
   serializeJson(def, Serial);
-  DEBUG_PRINTLN("]");
 
   JsonObject interfaces = doc["if"];
 

@@ -166,7 +166,8 @@ public:
         elapsedSec = 1e-3 * (now - justBefore);
         runningSec += elapsedSec;
 
-        bool logUdp = lastLoggedUdpAt == 0 || (now - lastLoggedUdpAt) > 30000;
+        // Useful for debugging, but way too slow, of course.
+        bool logUdp = false; // lastLoggedUdpAt == 0; || (now - lastLoggedUdpAt) > 30000;
 
         sendTrophyUdp(logUdp);
 
@@ -379,6 +380,8 @@ public:
 
     const char* buildControlLoopValues()
     {
+        DEBUG_PRINTLN("[QM-DEBUG] CALLED buildControlLoopValues");
+
         if (!hasEnoughSamples) {
             sprintf(controlLoopValues, "{\"error\": \"not enough samples taken yet.\"}");
             return controlLoopValues;

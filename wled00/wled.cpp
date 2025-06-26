@@ -82,17 +82,16 @@ void WLED::loop()
   #endif
   userLoop();
   UsermodManager::loop();
-  DEBUG_PRINTLN("[QM-DEBUG] after UsermodManager::loop();");
+
   #ifdef WLED_DEBUG
   usermodMillis = millis() - usermodMillis;
   avgUsermodMillis += usermodMillis;
   if (usermodMillis > maxUsermodMillis) maxUsermodMillis = usermodMillis;
   #endif
 
-  yield();
-  DEBUG_PRINTLN("[QM-DEBUG] after yield();");
+
   handleIO();
-  DEBUG_PRINTLN("[QM-DEBUG] after handleIO();");
+
   #ifndef WLED_DISABLE_INFRARED
   handleIR();
   #endif
@@ -103,7 +102,6 @@ void WLED::loop()
   handleAlexa();
   #endif
 
-  DEBUG_PRINTF("[QM-DEBUG] doCloseFile = %d; %d %d %d\n", doCloseFile, realtimeMode, realtimeOverride, useMainSegmentOnly);
   if (doCloseFile) {
     closeFile();
     yield();
@@ -114,7 +112,6 @@ void WLED::loop()
   #endif
   if (!realtimeMode || realtimeOverride || (realtimeMode && useMainSegmentOnly))  // block stuff if WARLS/Adalight is enabled
   {
-    DEBUG_PRINTLN("[QM-DEBUG] inside");
     if (apActive) dnsServer.processNextRequest();
     #ifndef WLED_DISABLE_OTA
     if (WLED_CONNECTED && aOtaEnabled && !otaLock && correctPIN) ArduinoOTA.handle();
@@ -122,14 +119,10 @@ void WLED::loop()
     handleNightlight();
     yield();
 
-    DEBUG_PRINTLN("[QM-DEBUG] ... and ...");
-
     #ifndef WLED_DISABLE_HUESYNC
     handleHue();
     yield();
     #endif
-
-    DEBUG_PRINTLN("[QM-DEBUG] ... just sayin...");
 
     if (!presetNeedsSaving()) {
       handlePlaylist();
@@ -138,11 +131,8 @@ void WLED::loop()
     handlePresets();
     yield();
 
-    DEBUG_PRINTLN("[QM-DEBUG] ... is you.");
-
     if (!offMode || strip.isOffRefreshRequired() || strip.needsUpdate())
       strip.service();
-    DEBUG_PRINTLN("[QM-DEBUG] ... is you good??");
     #ifdef ESP8266
     else if (!noWifiSleep)
       delay(1); //required to make sure ESP enters modem sleep (see #1184)
@@ -153,8 +143,6 @@ void WLED::loop()
   avgStripMillis += stripMillis;
   if (stripMillis > maxStripMillis) maxStripMillis = stripMillis;
   #endif
-
-  DEBUG_PRINTLN("[QM-DEBUG] booooh.");
 
   yield();
 #ifdef ESP8266

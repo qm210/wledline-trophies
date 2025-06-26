@@ -365,15 +365,15 @@ extern byte realtimeMode;           // used in getMappedPixelIndex()
 #define FX_MODE_PSHOURGLASS            207
 #define FX_MODE_PS1DSPRAY              208
 #define FX_MODE_PSBALANCE              209
-#define FX_MODE_PSCHASE                210
-#define FX_MODE_PSSTARBURST            211
-#define FX_MODE_PS1DGEQ                212
-#define FX_MODE_PSFIRE1D               213
-#define FX_MODE_PS1DSONICSTREAM        214
-#define FX_MODE_PS1DSONICBOOM          215
-#define FX_MODE_PS1DSPRINGY            216
-#define FX_MODE_PARTICLEGALAXY         217
-#define FX_MODE_DEADLINE_TROPHY_2024   218
+#define FX_MODE_DEADLINE_TROPHY        210 // <-- qm210: obvious why it had to be this one...
+#define FX_MODE_PSCHASE                211
+#define FX_MODE_PSSTARBURST            212
+#define FX_MODE_PS1DGEQ                213
+#define FX_MODE_PSFIRE1D               214
+#define FX_MODE_PS1DSONICSTREAM        215
+#define FX_MODE_PS1DSONICBOOM          216
+#define FX_MODE_PS1DSPRINGY            217
+#define FX_MODE_PARTICLEGALAXY         218
 #define MODE_COUNT                     219
 
 

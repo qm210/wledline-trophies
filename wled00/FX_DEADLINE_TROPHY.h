@@ -1,13 +1,19 @@
 #pragma once
 
 #include "FX.h"
+#include "../usermods/DEADLINE_TROPHY/DeadlineTrophy.h"
 
 // bla bla bla quickficks
 uint16_t mode_static(void);
 
-////////////////////////////
-//  Deadline Trophy 2024  //
-////////////////////////////
+ ///////////////////////////////////////
+ // DEV INFO: cf. DEV INFO in FX.cpp! //
+ ///////////////////////////////////////
+
+
+ //////////////////////////
+ //  Deadline Trophy FX  //
+ //////////////////////////
 
 const size_t nOuterLeft = 10;
 const size_t nLeft = 35;
@@ -123,7 +129,7 @@ uint32_t float_hsv(float hue, float sat, float val) {
 const int DEBUG_STEPS = 5;
 int DEBUG_COUNTER = 0;
 
-uint16_t mode_DeadlineTrophy2024(void) {
+uint16_t mode_DeadlineTrophy(void) {
   auto isLogo = strip.getCurrSegmentId() == 0;
 
   um_data_t *um_data;
@@ -223,9 +229,10 @@ uint16_t mode_DeadlineTrophy2024(void) {
     setFloor(stepTime < 1.0 ? BLACK : WHITE);
 
     return FRAMETIME;
-} // mode_DeadlineTrophy2024
+} // mode_DeadlineTrophy
 
 
-static const char _data_FX_MODE_DEADLINE_TROPHY_2024[] PROGMEM =
-    "Deadline'24 Trophy@;;!;1";
+static const char _data_FX_MODE_DEADLINE_TROPHY[] PROGMEM =
+    "DEADLINE TROPHY [WIP]@;;!;1";
     // <-- find out what the cryptic @... parameters mean. default is "name@;;!;1"
+
