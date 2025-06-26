@@ -90,8 +90,8 @@ namespace DeadlineTrophy {
 #define USERMOD_DEADLINE_TROPHY
 #endif
 
-#ifndef DEADLINE_MAX_AMPERE
-#define DEADLINE_MAX_AMPERE 1200
+#ifndef RESET_CONFIG
+#define RESET_CONFIG
 #endif
 
 // These Limits are from the wled_cfg(2).json that Topy sent me on 2024/10/20 (via Signal)
@@ -104,6 +104,11 @@ namespace DeadlineTrophy {
 #undef LED_MILLIAMPS_DEFAULT
 #endif
 #define LED_MILLIAMPS_DEFAULT 255
+
+// (this is for the temperature control mechanism that isn't actually used anymore)
+#ifndef DEADLINE_MAX_AMPERE
+#define DEADLINE_MAX_AMPERE 1200
+#endif
 
 // Brightness should be default at max, then the current needs to be limited still
 #ifndef DEADLINE_INIT_BRIGHTNESS
@@ -118,13 +123,13 @@ namespace DeadlineTrophy {
 
 // forcing  uniqueness make sense for many trophies at the same place
 
-#ifndef FORCE_MDNS_PREFIX_UNIQUE
-#define FORCE_MDNS_PREFIX_UNIQUE
-#endif
+// #ifndef FORCE_MDNS_PREFIX_UNIQUE
+// #define FORCE_MDNS_PREFIX_UNIQUE
+// #endif
 
-#ifndef WLED_AP_SSID_UNIQUE
-#define WLED_AP_SSID_UNIQUE
-#endif
+// #ifndef WLED_AP_SSID_UNIQUE
+// #define WLED_AP_SSID_UNIQUE
+// #endif
 
 // Audioreactive Usermod (Sound-To-Light)
 #ifndef UM_AUDIOREACTIVE_ENABLE

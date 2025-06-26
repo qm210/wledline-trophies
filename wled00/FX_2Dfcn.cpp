@@ -174,11 +174,12 @@ void WS2812FX::setUpDeadlineTrophy() {
 
         Segment seg = DeadlineTrophy::segment[i];
         seg.setName(DeadlineTrophy::segmentName[i]);
+
         // no idea whether refreshLightCapabilities() works in our use case, so... directly:
         seg._capabilities = DeadlineTrophy::segmentCapabilities[i];
 
         seg.options =
-            i == 0
+            i == _mainSegment
                 ? SEGMENT_ON | SELECTED
                 : SEGMENT_ON;
         seg.mode = FX_MODE_DEADLINE_TROPHY;

@@ -233,6 +233,6 @@ uint16_t mode_DeadlineTrophy(void) {
 
 
 static const char _data_FX_MODE_DEADLINE_TROPHY[] PROGMEM =
-    "DEADLINE TROPHY [WIP]@;;!;1";
+    "DEADLINE TROPHY@;;!;1";
     // <-- find out what the cryptic @... parameters mean. default is "name@;;!;1"
 
