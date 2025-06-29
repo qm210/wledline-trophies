@@ -111,6 +111,10 @@
 
 #include "src/dependencies/network/Network.h"
 
+#ifdef USE_DEADLINE_CONFIG
+  #include "../usermods/DEADLINE_TROPHY/config_defines.h"
+#endif
+
 #ifdef WLED_USE_MY_CONFIG
   #include "my_config.h"
 #endif

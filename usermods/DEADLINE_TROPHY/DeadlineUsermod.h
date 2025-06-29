@@ -140,6 +140,10 @@ public:
     void setup()
     {
         DEBUG_PRINTF("[DEADLINE] QM watches you! (non-creepily.) Say Hi at qm@z10.info\n");
+    #ifdef USERMOD_DEADLINE_TROPHY
+        DEBUG_PRINTF("[DEADLINE_DEBUG] USERMOD_DEADLINE_TROPHY.\n");
+    #endif
+        DEBUG_PRINTF("[DEADLINE_DEBUG] MDNS_NAME \"%s\"\n", MDNS_NAME);
 
         justBefore = millis();
         runningSec = 0;

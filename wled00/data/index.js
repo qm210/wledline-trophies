@@ -794,9 +794,6 @@ function populateSegments(s)
 		let staY = inst.startY;
 		let stoY = inst.stopY;
 		let isMSeg = isM && staX<mw*mh; // 2D matrix segment
-        if (isDeadline) {
-            isMSeg = stoY - staY > 1;
-        }
 
 		let rvXck = `<label class="check revchkl">Reverse ${isM?'':'direction'}<input type="checkbox" id="seg${i}rev" onchange="setRev(${i})" ${inst.rev?"checked":""}><span class="checkmark"></span></label>`;
 		let miXck = `<label class="check revchkl">Mirror<input type="checkbox" id="seg${i}mi" onchange="setMi(${i})" ${inst.mi?"checked":""}><span class="checkmark"></span></label>`;
@@ -905,18 +902,6 @@ function populateSegments(s)
 						`<button class="btn btn-xs" id="segd${i}" title="Delete" onclick="delSeg(${i})"><i class="icons btn-icon">&#xe037;</i></button>`+
 					`</div>`+
 				`</div>`+
-                `<div class="seg-options">` +
-                    (!isMSeg&&stoX-staX>1 ? rvXck : '') +
-                    (isMSeg&&stoY-staY>1&&stoX-staX>1 ? map2D : '') +
-                    (!isMSeg ? '' :
-                    `<label class="check revchkl" id="seg${i}lbtm">`+
-                        (isMSeg?'Transpose':'Mirror effect') + (isMSeg ?
-                        '<input type="checkbox" id="seg'+i+'tp" onchange="setTp('+i+')" '+(inst.tp?"checked":"")+'>':
-                        '<input type="checkbox" id="seg'+i+'mi" onchange="setMi('+i+')" '+(inst.mi?"checked":"")+'>') +
-                        `<span class="checkmark"></span>`+
-                    `</label>`
-                    ) +
-                `</div>`+
                 (cfg.comp.segpwr ? '' : segp) +
 			`</div>`;
 	}
@@ -938,7 +923,7 @@ function populateSegments(s)
 		if (simplifiedUI) gId("segcont").classList.add("hide");
 	}
 	if (!isM && !noNewSegs && (cfg.comp.seglen?parseInt(gId(`seg${lSeg}s`).value):0)+parseInt(gId(`seg${lSeg}e`).value)<ledCount) gId(`segr${lSeg}`).classList.remove("hide");
-	gId('segutil2').style.display = (segCount > 1) ? "block":"none"; // rsbtn parent
+	gId('segutil2').style.display = (segCount > 1 && !isDeadline) ? "block":"none"; // rsbtn parent
 
 	if (Array.isArray(li.maps) && li.maps.length>1) {
 		let cont = `Ledmap:&nbsp;<select class="sel-sg" onchange="requestJson({'ledmap':parseInt(this.value)})">`;
@@ -1239,7 +1224,8 @@ function updateLen(s)
             }
             len *= height;
 			let tPL = gId(`seg${s}lbtm`);
-			if (stop-start>1 && height>1) {
+
+            if (stop-start>1 && height>1) {
 				// 2D segment
 				if (tPL) tPL.classList.remove('hide'); // unhide transpose checkbox
 				let sE = gId('fxlist').querySelector(`.lstI[data-id="${selectedFx}"]`);
@@ -1810,11 +1796,12 @@ function requestJson(command=null)
 			populatePalettes(i);
 			if (isInfo) populateInfo(i);
 			if (simplifiedUI) simplifyUI();
-		}
-		var s = json.state ? json.state : json;
-		readState(s);
+        }
 
         setDeadlineTrophyFeatures(i);
+
+		var s = json.state ? json.state : json;
+        readState(s);
 
         if (d.DEBUG)
             console.log("[DEBUG] Received State", s, ", Info", i);
@@ -1838,13 +1825,14 @@ function requestJson(command=null)
 	});
 }
 function setDeadlineTrophyFeatures(i) {
-    if (!i) {
-        console.error("setDeadlineTrophyFeatures() needs valid info");
+    if (!i || !i.DEADLINE) {
+        isDeadline = false;
         return;
     }
     hideFixed = i.segFixed;
-    isDeadline = !!i.DEADLINE;
-    d.DEBUG = isDeadline; // global flag for debugging that you can interfere with via Console... :)
+    isDeadline = true;
+    d.DEBUG = true;
+    // <-- global flag for debugging that you can interfere with via Console... :)
 }
 function togglePower()
 {
@@ -1970,11 +1958,11 @@ function makeSeg()
 
 function resetUtil(off=false)
 {
+	gId('segutil').innerHTML = `<div class="seg btn btn-s${off?' off':''}" style="padding:0;margin-bottom:12px;">`
+	+ '<label class="check schkl"><input type="checkbox" id="selall" onchange="selSegAll(this)"><span class="checkmark" title="Select all"></span></label>';
     if (isDeadline) {
         return;
     }
-	gId('segutil').innerHTML = `<div class="seg btn btn-s${off?' off':''}" style="padding:0;margin-bottom:12px;">`
-	+ '<label class="check schkl"><input type="checkbox" id="selall" onchange="selSegAll(this)"><span class="checkmark" title="Select all"></span></label>'
 	+ `<div class="segname" ${off?'':'onclick="makeSeg()"'}><i class="icons btn-icon">&#xe18a;</i>Add segment</div>`
 	+ '<div class="pop hide" onclick="event.stopPropagation();">'
 	+ `<i class="icons g-icon" title="Select group" onclick="this.nextElementSibling.classList.toggle('hide');">&#xE34B;</i>`

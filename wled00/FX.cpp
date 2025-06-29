@@ -26,7 +26,7 @@
 #endif
 
 #ifdef USERMOD_DEADLINE_TROPHY
-#include "FX_deadlineTrophy2024.h"
+#include "FX_DEADLINE_TROPHY.h"
 #endif
 
  //////////////

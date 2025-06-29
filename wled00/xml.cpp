@@ -175,7 +175,7 @@ void getSettingsJS(byte subPage, Print& settingsScript)
   #ifdef USERMOD_DEADLINE_TROPHY
     settingsScript.print(F("makeDeadlineTrophyWs();"));
   #else
-    settingsScript.print(F("gId('dl_values').style.display='none';"));
+    settingsScript.print(F("gId('dl_values')?.style.display='none';"));
   #endif
   }
 
