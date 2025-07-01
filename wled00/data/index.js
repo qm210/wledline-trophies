@@ -1437,7 +1437,7 @@ function makeWS() {
 	ws.onmessage = (e)=>{
 		if (e.data instanceof ArrayBuffer) return; // liveview packet
 		var json = JSON.parse(e.data);
-        if (d.DEBUG) console.info("[DEBUG] WebSocket Message", json);
+        if (d.DEBUG) console.info("[QM-DEBUG] WebSocket Message", json);
 		if (json.leds) return; // JSON liveview packet
 		clearTimeout(jsonTimeout);
 		jsonTimeout = null;
@@ -1527,7 +1527,7 @@ function readState(s,command=false)
 
     if (isDeadline) {
         // deadline allows only one selected, so take the first that matches.
-        console.log("readState()", s);
+        console.log("[QM-DEBUG] readState()", s);
         // showMatrixFilters(isM);
     }
 
@@ -1766,7 +1766,7 @@ function requestJson(command=null)
 	};
 
     if (d.DEBUG)
-        console.log("requestJson() called,", command, req, useWs ? "useWs" : "!useWs");
+        console.log("[QM-DEBUG] requestJson() called,", command, req, useWs ? "useWs" : "!useWs");
 
 	if (useWs) {
 		ws.send(req?req:'{"v":true}');
@@ -1804,7 +1804,7 @@ function requestJson(command=null)
         readState(s);
 
         if (d.DEBUG)
-            console.log("[DEBUG] Received State", s, ", Info", i);
+            console.log("[QM-DEBUG] Received State", s, ", Info", i);
 
 		//load presets and open websocket sequentially
 		if (!pJson || isEmpty(pJson)) setTimeout(()=>{

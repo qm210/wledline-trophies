@@ -366,7 +366,10 @@ void getSettingsJS(byte subPage, Print& settingsScript)
       printSetFormValue(settingsScript,la,bus->getLEDCurrent());
       printSetFormValue(settingsScript,ma,bus->getMaxCurrent());
       sumMa += bus->getMaxCurrent();
+
+      DEBUG_PRINTF("[DEBUG BUS %d] %d / %d\n", s, bus->getLEDCurrent(), bus->getMaxCurrent());
     }
+    DEBUG_PRINTF("[DEBUG MA] %d / %d\n", BusManager::ablMilliampsMax(), sumMa);
     printSetFormValue(settingsScript,PSTR("MA"),BusManager::ablMilliampsMax() ? BusManager::ablMilliampsMax() : sumMa);
     printSetFormCheckbox(settingsScript,PSTR("ABL"),BusManager::ablMilliampsMax() || sumMa > 0);
     printSetFormCheckbox(settingsScript,PSTR("PPL"),!BusManager::ablMilliampsMax() && sumMa > 0);

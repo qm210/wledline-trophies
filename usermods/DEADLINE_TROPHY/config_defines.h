@@ -14,7 +14,7 @@
 
 // (this is for the temperature control mechanism that isn't actually used anymore)
 #ifndef DEADLINE_MAX_AMPERE
-#define DEADLINE_MAX_AMPERE 1200
+#define DEADLINE_MAX_AMPERE 1.2
 #endif
 
 // Brightness should be default at max, then the current needs to be limited still

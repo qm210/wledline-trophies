@@ -127,10 +127,14 @@ private:
     float attenuateByT_releasePerSecond = 0.002;
 
     // for UDP sending
+    IPAddress broadcastIp;
     static const unsigned int MAX_UDP_SIZE = 1024;
     byte udpPacket[MAX_UDP_SIZE];
 
     unsigned long lastLoggedUdpAt = 0;
+
+    uint32_t debugColor = 0;
+    bool printDebugColor = true;
 
     // for monitoring the (temperature values etc)
     char controlLoopValues[DEADLINE_VALUES_STRLEN];
@@ -139,11 +143,9 @@ public:
 
     void setup()
     {
-        DEBUG_PRINTF("[DEADLINE] QM watches you! (non-creepily.) Say Hi at qm@z10.info\n");
-    #ifdef USERMOD_DEADLINE_TROPHY
-        DEBUG_PRINTF("[DEADLINE_DEBUG] USERMOD_DEADLINE_TROPHY.\n");
-    #endif
-        DEBUG_PRINTF("[DEADLINE_DEBUG] MDNS_NAME \"%s\"\n", MDNS_NAME);
+        DEBUG_PRINTF("[DEADLINE_TROPHY] QM watches you! (non-creepily.) Say Hi at qm@z10.info\n");
+
+        broadcastIp = ~uint32_t(Network.subnetMask()) | uint32_t(Network.gatewayIP());
 
         justBefore = millis();
         runningSec = 0;

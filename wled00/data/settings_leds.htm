@@ -784,11 +784,23 @@ Swap: <select id="xw${s}" name="XW${s}">
                         element.style.display = "none";
                     }
                 });
-            gId("abl_info").innerHTML = `
+            d.querySelectorAll('#abl input').forEach(input=>{
+                input.disabled = true;
+            });
+            ["L00", "L10", "L01", "L11", "L02", "L03"]
+                .forEach(name => {
+                    const pinInput = d.querySelectorAll("input[name='" + name + "']")[0];
+                    pinInput.disabled = true;
+                });
+            const info = gId("abl_info");
+            if (!info) return;
+            info.innerHTML = `
                 The Deadline Trophy has control over the automatic brightness limit.
                 <br/>
                 This is just for info.
             `;
+            info.style.fontWeight = "bold";
+            info.style.color = "red";
         }
 	</script>
 	<style>@import url("style.css");</style>
@@ -806,9 +818,18 @@ Swap: <select id="xw${s}" name="XW${s}">
 		<span id="psu2"><br></span>
 		<br>
 		Enable automatic brightness limiter: <input type="checkbox" name="ABL" onchange="enABL()"><br>
+        <div id="abl_info"></div> <!-- QM added -->
 		<div id="abl">
-            <!-- QM: DL TROPHY has fixed limit on current -->
-			Maximum Current: <input name="MA" id="MA" type="number" class="l" min="250" max="65000" oninput="UI()" required> mA<br>
+            <i>Automatically limits brightness to stay close to the limit.<br>
+				Keep at &lt;1A if powering LEDs directly from the ESP 5V pin!<br>
+				If using multiple outputs it is recommended to use per-output limiter.<br>
+				Analog (PWM) and virtual LEDs cannot use automatic brightness limiter.<br></i>
+			<div id="psuMA">Maximum PSU Current: <input name="MA" type="number" class="xl" min="250" max="65000" oninput="UI()" required> mA<br></div>
+            Use per-output limiter: <input type="checkbox" name="PPL" onchange="UI()"><br>
+			<div id="ppldis" style="display:none;">
+				<i>Make sure you enter correct value for each LED output.<br>
+				If using multiple outputs with only one PSU, distribute its power proportionally amongst outputs.</i><br>
+			</div>
 			<div id="ampwarning" class="warn" style="display: none;">
 				&#9888; Your power supply provides high current.<br>
 				To improve the safety of your setup,<br>
@@ -832,6 +853,36 @@ Swap: <select id="xw${s}" name="XW${s}">
 		Make a segment for each output: <input type="checkbox" name="MS"><br>
 		Custom bus start indices: <input type="checkbox" onchange="tglSi(this.checked)" id="si"><br>
 		<hr class="sml">
+		<div id="color_order_mapping">
+			Color Order Override:
+			<div id="com_entries"></div>
+			<hr class="sml">
+			<button type="button" id="com_add" onclick="addCOM()">+</button>
+			<button type="button" id="com_rem" onclick="remCOM()">-</button><br>
+		</div>
+		<hr class="sml">
+		<div id="btns"></div>
+		Disable internal pull-up/down: <input type="checkbox" name="IP"><br>
+		Touch threshold: <input type="number" class="s" min="0" max="100" name="TT" required><br>
+		<hr class="sml">
+		IR GPIO: <input type="number" min="-1" max="48" name="IR" onchange="UI()" class="xs"><select name="IT" onchange="UI()">
+		<option value=0>Remote disabled</option>
+		<option value=1>24-key RGB</option>
+		<option value=2>24-key with CT</option>
+		<option value=3>40-key blue</option>
+		<option value=4>44-key RGB</option>
+		<option value=5>21-key RGB</option>
+		<option value=6>6-key black</option>
+		<option value=7>9-key red</option>
+		<option value=8>JSON remote</option>
+		</select><span style="cursor: pointer;" onclick="off('IR')">&nbsp;&#x2715;</span><br>
+		Apply IR change to main segment only: <input type="checkbox" name="MSO"><br>
+		<div id="json" style="display:none;">JSON file: <input type="file" name="data" accept=".json"><button type="button" class="sml" onclick="uploadFile(d.Sf.data,'/ir.json')">Upload</button><br></div>
+		<a href="https://kno.wled.ge/interfaces/infrared/" target="_blank">IR info</a><br>
+		<hr class="sml">
+		Relay GPIO: <input type="number" min="-1" max="48" name="RL" onchange="UI()" class="xs"><span style="cursor: pointer;" onclick="off('RL')">&nbsp;&#x2715;</span><br>
+		Invert <input type="checkbox" name="RM"> Open drain <input type="checkbox" name="RO"><br>
+        <hr class="sml">
 		<h3>Defaults</h3>
 		Turn LEDs on after power up/reset: <input type="checkbox" name="BO"><br>
 		Default brightness: <input name="CA" type="number" class="m" min="1" max="255" required> (1-255)<br><br>
