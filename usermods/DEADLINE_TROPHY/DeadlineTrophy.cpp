@@ -10,7 +10,7 @@ namespace DeadlineTrophy {
     }
 
     BusConfig createBus(uint8_t type, uint16_t count, uint16_t start, uint8_t pin1, uint8_t pin2) {
-        const uint8_t colorOrder = COL_ORDER_GRB;
+        const uint8_t colorOrder = COL_ORDER_RGB; // QM-REVERT: COL_ORDER_GRB, but see whether the WebSocket Peek works now
         const uint8_t skipFirst = 0;
         const bool reversed = false;
         const uint8_t AWmode = RGBW_MODE_MANUAL_ONLY;

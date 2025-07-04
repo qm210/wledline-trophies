@@ -12,6 +12,7 @@ unsigned long wsLastLiveTime = 0;
 #define WS_LIVE_INTERVAL 40
 
 #ifdef USERMOD_DEADLINE_TROPHY
+#include "../usermods/DEADLINE_TROPHY/DeadlineTrophy.h"
 #include "../usermods/DEADLINE_TROPHY/DeadlineUsermod.h"
 #endif
 
@@ -185,6 +186,8 @@ void sendDataWs(AsyncWebSocketClient * client)
   releaseJSONBufferLock();
 }
 
+bool debugOnce = true;
+
 bool sendLiveLedsWs(uint32_t wsClient)
 {
   AsyncWebSocketClient * wsc = ws.client(wsClient);
@@ -193,8 +196,6 @@ bool sendLiveLedsWs(uint32_t wsClient)
   size_t used = strip.getLengthTotal();
 #ifdef ESP8266
   const size_t MAX_LIVE_LEDS_WS = 256U;
-#elifdef USERMOD_DEADLINE_TROPHY
-  const size_t MAX_LIVE_LEDS_WS = 1053U; // QM-WIP: workaround (cf. comment below)
 #else
   const size_t MAX_LIVE_LEDS_WS = 1024U;
 #endif
@@ -207,11 +208,17 @@ bool sendLiveLedsWs(uint32_t wsClient)
     n = 1;
     if (used > MAX_LIVE_LEDS_WS) n = 2;
     if (used > MAX_LIVE_LEDS_WS*4) n = 4;
-    // QM-WIP: for a matrix with gaps, do not send all the gaps - make deadline trophy compatible
     pos = 4;
   }
 #endif
   size_t bufSize = pos + (used/n)*3;
+
+#ifdef USERMOD_DEADLINE_TROPHY
+  // QM: as is QoMmon practice, we do our own thing and no one can get me to stop
+  // but in here, I try to keep my Übergrifflichkeiten all as localized as possible
+  n = 1;
+  bufSize = pos + 3 * DeadlineTrophy::N_LEDS_TOTAL;
+#endif
 
   AsyncWebSocketBuffer wsBuf(bufSize);
   if (!wsBuf) return false; //out of memory
@@ -227,9 +234,18 @@ bool sendLiveLedsWs(uint32_t wsClient)
     buffer[3] = Segment::maxHeight/n;
   }
 #endif
+#ifdef USERMOD_DEADLINE_TROPHY
+  // QM also here: custom layout. these are the matrix dimensions, width of 16 is easiest to debug.
+  // (the first four lines are the base, then the logo comes consecutively until the single ones at the end.)
+  buffer[2] = 16;
+  buffer[3] = 11; // just enough so 16*11 = 176 > 172
+#endif
 
   for (size_t i = 0; pos < bufSize -2; i += n)
   {
+    if (debugOnce) {
+        DEBUG_PRINTF("[QM_DEBUG_LOOP] i=%d pos=%d < %d n=%d", i, pos, bufSize - 2, n);
+    }
 #ifndef WLED_DISABLE_2D
     if (strip.isMatrix && n>1 && (i/Segment::maxWidth)%n) i += Segment::maxWidth * (n-1);
 #endif
@@ -238,10 +254,47 @@ bool sendLiveLedsWs(uint32_t wsClient)
     uint8_t g = G(c);
     uint8_t b = B(c);
     uint8_t w = W(c);
+    if (debugOnce) {
+        DEBUG_PRINTF("--> %d, %d, %d, %d\n", r, g, b, w);
+    }
+#ifdef USERMOD_DEADLINE_TROPHY
+    if (i >= used)
+        break;
+    // QM: yes, we fill it differently, i.e. in mapped index order (and ignore gaps, of course)
+    size_t index = strip.getMappedPixelIndex(i);
+
+    if (debugOnce) {
+        DEBUG_PRINTF("[QM_DEBUG_LOOP] -- i=%d/%d, [%d], rgbw=(%d, %d, %d, %d); index = %d, pos = %d | %d %d\n", i, used, bufSize, r, g, b, w, index, pos, strip.getLength(), strip.getLengthPhysical());
+    }
+
+    if (index >= DeadlineTrophy::N_LEDS_TOTAL) {
+        continue;
+    }
+    pos = index;
+#endif
+
     buffer[pos++] = bri ? qadd8(w, r) : 0; //R, add white channel to RGB channels as a simple RGBW -> RGB map
     buffer[pos++] = bri ? qadd8(w, g) : 0; //G
     buffer[pos++] = bri ? qadd8(w, b) : 0; //B
+
+#ifdef USERMOD_DEADLINE_TROPHY
+    if (debugOnce) {
+        DEBUG_PRINTF("[QM_DEBUG_LOOP] -- -- pos=%d, index=%d, i=%d\n", pos, index, i);
+    }
+    // QM: cheat around the official Abbruchbedingung (must only be smaller than bufSize - 2)
+    pos = 0;
+#endif
+}
+
+  if (debugOnce) {
+    DEBUG_PRINTF("\nAbgebrochen mit pos=%d < %d\n", pos, bufSize-2);
+    for (size_t p = 0; p < bufSize; p++) {
+        DEBUG_PRINTF("[QM-DEBUG-WS] BUFFER[%d] = %d\n", p, buffer[p]);
+    }
+    DEBUG_PRINTLN();
   }
+
+  debugOnce = false;
 
   wsc->binary(std::move(wsBuf));
   return true;

@@ -62,7 +62,7 @@ public:
 
     bool doSendUdp = true;
     bool keepSendingUdp = true;
-    float sendUdpEverySec = 0.210; // try to find minimum that works
+    float sendUdpEverySec = 0.14; // get as frequent you can be
     // <-- 0: disable automatic sending, only via trigger from wherever you program it to
     bool doDebugLogUdp = false;
     bool doOneVerboseDebugLogUdp = false;

@@ -146,7 +146,7 @@ uint16_t mode_DeadlineTrophy(void) {
     SEGMENT.fill(BLACK);
     for (b = 0; b < nBars; b++) {
         hue[b] = random(210, 330);
-        val[b] = random(0, 255);
+        val[b] = random(128, 255);
         sat[b] = 255;
     }
 
