@@ -74,7 +74,7 @@ void wsEvent(AsyncWebSocket * server, AsyncWebSocketClient * client, AwsEventTyp
                 client->text(F("{\"error\":\"DeadlineUsermod not initialized.\"}"));
                 return;
             }
-            umDeadline->doDebugLogUdp ^= true;
+            // umDeadline->doDebugLogUdp ^= true;
             umDeadline->doOneVerboseDebugLogUdp = true;
             // WebSocket sending of the temperature values etc (NOT the LED colors, these go via UDP):
             auto deadlineMessage = umDeadline->buildControlLoopValues();
@@ -186,8 +186,6 @@ void sendDataWs(AsyncWebSocketClient * client)
   releaseJSONBufferLock();
 }
 
-bool debugOnce = true;
-
 bool sendLiveLedsWs(uint32_t wsClient)
 {
   AsyncWebSocketClient * wsc = ws.client(wsClient);
@@ -243,9 +241,6 @@ bool sendLiveLedsWs(uint32_t wsClient)
 
   for (size_t i = 0; pos < bufSize -2; i += n)
   {
-    if (debugOnce) {
-        DEBUG_PRINTF("[QM_DEBUG_LOOP] i=%d pos=%d < %d n=%d", i, pos, bufSize - 2, n);
-    }
 #ifndef WLED_DISABLE_2D
     if (strip.isMatrix && n>1 && (i/Segment::maxWidth)%n) i += Segment::maxWidth * (n-1);
 #endif
@@ -254,23 +249,17 @@ bool sendLiveLedsWs(uint32_t wsClient)
     uint8_t g = G(c);
     uint8_t b = B(c);
     uint8_t w = W(c);
-    if (debugOnce) {
-        DEBUG_PRINTF("--> %d, %d, %d, %d\n", r, g, b, w);
-    }
 #ifdef USERMOD_DEADLINE_TROPHY
-    if (i >= used)
+    if (i >= used) {
         break;
+    }
     // QM: yes, we fill it differently, i.e. in mapped index order (and ignore gaps, of course)
     size_t index = strip.getMappedPixelIndex(i);
-
-    if (debugOnce) {
-        DEBUG_PRINTF("[QM_DEBUG_LOOP] -- i=%d/%d, [%d], rgbw=(%d, %d, %d, %d); index = %d, pos = %d | %d %d\n", i, used, bufSize, r, g, b, w, index, pos, strip.getLength(), strip.getLengthPhysical());
-    }
 
     if (index >= DeadlineTrophy::N_LEDS_TOTAL) {
         continue;
     }
-    pos = index;
+    pos = 4 + 3 * index;
 #endif
 
     buffer[pos++] = bri ? qadd8(w, r) : 0; //R, add white channel to RGB channels as a simple RGBW -> RGB map
@@ -278,23 +267,11 @@ bool sendLiveLedsWs(uint32_t wsClient)
     buffer[pos++] = bri ? qadd8(w, b) : 0; //B
 
 #ifdef USERMOD_DEADLINE_TROPHY
-    if (debugOnce) {
-        DEBUG_PRINTF("[QM_DEBUG_LOOP] -- -- pos=%d, index=%d, i=%d\n", pos, index, i);
-    }
     // QM: cheat around the official Abbruchbedingung (must only be smaller than bufSize - 2)
+    //     but will be set in our use case to (4 + 3*index) anyway before next use.
     pos = 0;
 #endif
 }
-
-  if (debugOnce) {
-    DEBUG_PRINTF("\nAbgebrochen mit pos=%d < %d\n", pos, bufSize-2);
-    for (size_t p = 0; p < bufSize; p++) {
-        DEBUG_PRINTF("[QM-DEBUG-WS] BUFFER[%d] = %d\n", p, buffer[p]);
-    }
-    DEBUG_PRINTLN();
-  }
-
-  debugOnce = false;
 
   wsc->binary(std::move(wsBuf));
   return true;

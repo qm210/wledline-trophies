@@ -129,7 +129,7 @@ uint32_t float_hsv(float hue, float sat, float val) {
 const int DEBUG_STEPS = 5;
 int DEBUG_COUNTER = 0;
 
-uint16_t mode_DeadlineTrophy(void) {
+static uint16_t mode_DeadlineTrophy(void) {
   auto isLogo = strip.getCurrSegmentId() == 0;
 
   um_data_t *um_data;
