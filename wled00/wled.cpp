@@ -568,15 +568,16 @@ void WLED::beginStrip()
     strip.show();
   }
 
+#ifdef USE_DEADLINE_CONFIG
+  // QM: we do not want colorUpdated because this resets the segments, which we already forced to be awesome
+  //     so we call stateUpdated, which is a part of colorUpdated only.
+  stateUpdated(CALL_MODE_INIT);
+  if (true) {} else // <-- behold my genius to exclude the following line without an extra directive :D
+#endif
   colorUpdated(CALL_MODE_INIT); // will not send notification but will initiate transition
   if (bootPreset > 0) {
     applyPreset(bootPreset, CALL_MODE_INIT);
   }
-
-#ifdef USE_DEADLINE_CONFIG
-    // QM: I forgot why I added that last October, so maybe evaluate whether still relevant
-    stateUpdated(CALL_MODE_INIT);
-#endif
 
   strip.setTransition(transitionDelayDefault);  // restore transitions
 
@@ -616,9 +617,6 @@ void WLED::initAP(bool resetAP)
     }
     if (udpPort2 > 0 && udpPort2 != ntpLocalPort && udpPort2 != udpPort && udpPort2 != udpRgbPort) {
       udp2Connected = notifier2Udp.begin(udpPort2);
-    }
-    if (udpSenderPort > 0) { // qm: I guess the checks are nice, but superfluous
-        udpSenderConnected = senderUdp.begin(udpSenderPort);
     }
 
     e131.begin(false, e131Port, e131Universe, E131_MAX_UNIVERSE_COUNT);
@@ -793,8 +791,6 @@ void WLED::initInterfaces()
     if (udpConnected && udpPort2 != udpPort && udpPort2 != udpRgbPort)
       udp2Connected = notifier2Udp.begin(udpPort2);
   }
-  if (udpSenderPort > 0)
-    udpSenderConnected = senderUdp.begin(udpSenderPort);
 
   if (ntpEnabled)
     ntpConnected = ntpUdp.begin(ntpLocalPort);

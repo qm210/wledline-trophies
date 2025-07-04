@@ -85,6 +85,10 @@
 #define WLED_DEBUG_NO_VERBOSE_LOGGING
 #endif
 
+#ifndef WLED_DEBUG_NO_JSON_LOCKS
+#define WLED_DEBUG_NO_JSON_LOCKS
+#endif
+
 #ifndef WLED_DEBUG_NO_SLOW_WARNINGS
 #define WLED_DEBUG_NO_SLOW_WARNINGS
 #endif
@@ -94,3 +98,11 @@
 #undef WLED_MAX_BUTTONS
 #endif
 #define WLED_MAX_BUTTONS 0
+
+// found this, I guess the ESP32 favours it. It is noted with, at least:
+// - network: this will save us 2 bytes of RAM while increasing code by ~400 bytes
+// - notifications: this will save us 8 bytes of RAM while increasing code by ~400 bytes
+// - ...
+#ifndef WLED_SAVE_RAM
+#define WLED_SAVE_RAM
+#endif

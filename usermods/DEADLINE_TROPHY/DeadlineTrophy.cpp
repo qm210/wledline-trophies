@@ -80,8 +80,6 @@ namespace DeadlineTrophy {
         gammaCorrectVal = 2.8;
         NeoGammaWLEDMethod::calcGammaTable(gammaCorrectVal);
 
-        bootPreset = FX_MODE_DEADLINE_TROPHY;
-
         #ifdef DEADLINE_INIT_BRIGHTNESS
         briS = DEADLINE_INIT_BRIGHTNESS;
         turnOnAtBoot = briS > 0;

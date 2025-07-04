@@ -303,11 +303,6 @@ void getSettingsJS(byte subPage, Print& settingsScript)
     printSetFormValue(settingsScript,PSTR("AW"),Bus::getGlobalAWMode());
     printSetFormCheckbox(settingsScript,PSTR("PR"),BusManager::hasParallelOutput());  // get it from bus manager not global variable
 
-    DEBUG_PRINTF("[QM-DEBUG-WRITING] %d %d\n",
-                    BusManager::getNumBusses(),
-                    BusManager::getTotalLength()
-                );
-
     unsigned sumMa = 0;
     for (size_t s = 0; s < BusManager::getNumBusses(); s++) {
       const Bus *bus = BusManager::getBus(s);

@@ -756,15 +756,13 @@ typedef class Udp {
     uint16_t  Port;
     uint16_t  Port2;
     uint16_t  RgbPort;
-    uint16_t  SenderPort;
     struct {
       uint8_t NumRetries : 5;
       bool    Connected : 1;
       bool    Connected2 : 1;
       bool    RgbConnected : 1;
-      bool    SenderConnected: 1;
     };
-    Udp(int p1, int p2, int p3, int p4, int r, bool c1, bool c2, bool c3, bool c4) {
+    Udp(int p1, int p2, int p3, int r, bool c1, bool c2, bool c3) {
       Port = p1;
       Port2 = p2;
       RgbPort = p3;
@@ -772,31 +770,24 @@ typedef class Udp {
       Connected = c1;
       Connected2 = c2;
       RgbConnected = c3;
-      // QM-WIP: see if we can not just reuse one of the above for sending
-      SenderPort = p4;
-      SenderConnected = c4;
     }
 } __attribute__ ((aligned(1), packed)) udp_port_t;
 WLED_GLOBAL udp_port_t udp _INIT_N(({21234, 65506, 19446, 0, false, false, false}));
 #define udpPort            udp.Port
 #define udpPort2           udp.Port2
 #define udpRgbPort         udp.RgbPort
-#define udpSenderPort      udp.SenderPort
 #define udpNumRetries      udp.NumRetries
 #define udpConnected       udp.Connected
 #define udp2Connected      udp.Connected2
 #define udpRgbConnected    udp.RgbConnected
-#define udpSenderConnected udp.SenderConnected
 #else
 WLED_GLOBAL uint16_t udpPort    _INIT(21324); // WLED notifier default port
 WLED_GLOBAL uint16_t udpPort2   _INIT(65506); // WLED notifier supplemental port
 WLED_GLOBAL uint16_t udpRgbPort _INIT(19446); // Hyperion port
-WLED_GLOBAL uint16_t udpSenderPort _INIT(3413); // QM: UDP SENDING FOR DEADLINE TROPHY
 WLED_GLOBAL uint8_t  udpNumRetries _INIT(0);  // Number of times a UDP sync message is retransmitted. Increase to increase reliability
 WLED_GLOBAL bool     udpConnected _INIT(false);
 WLED_GLOBAL bool     udp2Connected _INIT(false);
 WLED_GLOBAL bool     udpRgbConnected _INIT(false);
-WLED_GLOBAL bool     udpSenderConnected _INIT(false);  // QM: UDP SENDING FOR DEADLINE TROPHY
 #endif
 
 // ui style
@@ -925,7 +916,6 @@ WLED_GLOBAL AsyncWebHandler *editHandler _INIT(nullptr);
 
 // udp interface objects
 WLED_GLOBAL WiFiUDP notifierUdp, rgbUdp, notifier2Udp;
-WLED_GLOBAL WiFiUDP senderUdp;
 WLED_GLOBAL WiFiUDP ntpUdp;
 WLED_GLOBAL ESPAsyncE131 e131 _INIT_N(((handleE131Packet)));
 WLED_GLOBAL ESPAsyncE131 ddp  _INIT_N(((handleE131Packet)));

@@ -1,17 +1,8 @@
 #pragma once
 
+#include "WiFiUdp.h"
+
 #define DEADLINE_VALUES_STRLEN 250
-
-// CAUTION: 4A in production -- with the wrong patterns for too long, this might grill it. QM did one already.
-#ifndef DEADLINE_MAX_AMPERE
-  #ifdef WLED_DEBUG
-    #define DEADLINE_MAX_AMPERE 1
-  #else
-    #define DEADLINE_MAX_AMPERE 4
-  #endif
-#endif
-
-#define ABS_ZERO 273.15
 
 class DeadlineUsermod : public Usermod
 {
@@ -24,6 +15,7 @@ public:
     // for the analogRead(), average over some samples to smoothen fluctuations.
     static const int AVERAGE_SAMPLES = 10;
 
+    static constexpr float KELVIN_OFFSET = 273.15;
     /*
         logoTherm goes via voltage divider with R6, Thermistor TH1, R7
 
@@ -53,7 +45,7 @@ public:
     static constexpr float logoR6_Ohm = 1.5e4;
     static constexpr float logoR7_Ohm = 1e3;
     static constexpr float logoThermistor_R0_Ohm = 1e4;
-    static constexpr float logoTherm_OneOverT0 = 1. / (ABS_ZERO + 25);
+    static constexpr float logoTherm_OneOverT0 = 1. / (25. + KELVIN_OFFSET);
     static constexpr float logoTherm_OneOverB = 1. / 3900.;
     static constexpr float voltageAdcCoeff = 3.3 / 4095.; // 12bit ADC
 
@@ -68,9 +60,35 @@ public:
 
     const float maxCurrent = DEADLINE_MAX_AMPERE * 1000;
 
-    void sendTrophyUdp(bool log = false);
+    bool doSendUdp = true;
+    bool keepSendingUdp = true;
+    float sendUdpEverySec = 0.210; // try to find minimum that works
+    // <-- 0: disable automatic sending, only via trigger from wherever you program it to
+    bool doDebugLogUdp = false;
+    bool doOneVerboseDebugLogUdp = false;
 
 private:
+
+    IPAddress udpSenderIp;
+    uint16_t udpSenderPort;
+    // <-- let's use the same port as local port as well as remote, 'cause why not.
+    bool udpSenderConnected = false;
+    WiFiUDP udpSender;
+    static const unsigned int MAX_UDP_SIZE = 1024;
+    byte udpPacket[MAX_UDP_SIZE];
+
+    void sendTrophyUdp();
+
+    float sendUdpInSec = 0;
+
+    bool debugLogUdp = false;
+    unsigned long lastLoggedUdpAt = 0;
+    uint32_t debugColor = 0;
+    bool printDebugColor = true;
+
+    // for monitoring the (temperature values etc)
+    char controlLoopValues[DEADLINE_VALUES_STRLEN];
+
 
     // analog readings
     uint16_t val_logoTherm[AVERAGE_SAMPLES];
@@ -89,7 +107,6 @@ private:
     float inputCurrentSwitch_waitSeconds = 1.;
     float inputCurrentSwitch_riseSeconds = 1.;
 
-    long lastDebugOutAt;
     long now;
     float runningSec;
     float elapsedSec;
@@ -126,30 +143,20 @@ private:
     float attenuateByT_attackFactorWhenCritical = 0.2;
     float attenuateByT_releasePerSecond = 0.002;
 
-    // for UDP sending
-    IPAddress broadcastIp;
-    static const unsigned int MAX_UDP_SIZE = 1024;
-    byte udpPacket[MAX_UDP_SIZE];
-
-    unsigned long lastLoggedUdpAt = 0;
-
-    uint32_t debugColor = 0;
-    bool printDebugColor = true;
-
-    // for monitoring the (temperature values etc)
-    char controlLoopValues[DEADLINE_VALUES_STRLEN];
-
 public:
 
     void setup()
     {
-        DEBUG_PRINTF("[DEADLINE_TROPHY] QM watches you! (non-creepily.) Say Hi at qm@z10.info\n");
+        // QM-TODO: Must make Configurable, of course.
+        udpSenderPort = 3413;
+        udpSenderIp = IPAddress(192, 168, 178, 20); // <- my IP right now.
+        // First tried Broadcast, but is way too slow:
+        // udpSenderIp = ~uint32_t(Network.subnetMask()) | uint32_t(Network.gatewayIP());
 
-        broadcastIp = ~uint32_t(Network.subnetMask()) | uint32_t(Network.gatewayIP());
+        DEBUG_PRINTF("[DEADLINE_TROPHY] QM watches you! (non-creepily.) Say Hi at qm@z10.info\n");
 
         justBefore = millis();
         runningSec = 0;
-        lastDebugOutAt = 0;
 
         hasEnoughSamples = false;
         inputVoltageWasReachedOnce = false;
@@ -172,10 +179,7 @@ public:
         elapsedSec = 1e-3 * (now - justBefore);
         runningSec += elapsedSec;
 
-        // Useful for debugging, but way too slow, of course.
-        bool logUdp = false; // lastLoggedUdpAt == 0; || (now - lastLoggedUdpAt) > 30000;
-
-        sendTrophyUdp(logUdp);
+        sendTrophyUdp();
 
         // qm210: below are the temperature control loops, once considered super-important
         // but then never tested and somehow also not required anymore (needs low enough constant Ampere limit)
@@ -266,8 +270,14 @@ public:
     void calcLogoTherm()
     {
         _logoRead = getAverage(val_logoTherm);
+        _R_TH1 = -logoR7_Ohm;
+        if (_logoRead == 0.0f) {
+            // unclear whether 0K is top premium choice, but it makes visible that something went wrong :P
+            currentLogoTempKelvin = 0.;
+            return;
+        }
         _voltageRatio = currentInputVoltage / (voltageAdcCoeff * _logoRead);
-        _R_TH1 = 1. / (_voltageRatio - 1) * logoR6_Ohm - logoR7_Ohm;
+        _R_TH1 += 1. / (_voltageRatio - 1) * logoR6_Ohm;
         _logRatio = logf(_R_TH1 / logoThermistor_R0_Ohm);
         currentLogoTempKelvin = 1. / ( logoTherm_OneOverT0 + logoTherm_OneOverB * _logRatio );
     }
@@ -297,7 +307,7 @@ public:
             }
         }
 
-        if (currentLogoTempKelvin >= limit_criticalTempDegC + ABS_ZERO) {
+        if (currentLogoTempKelvin >= limit_criticalTempDegC + KELVIN_OFFSET) {
             if (!limit_becauseTooHot) {
                 limit_becauseTooHot = true;
                 attenuateFactor *= attenuateByT_attackFactorWhenCritical;
@@ -386,7 +396,7 @@ public:
 
     const char* buildControlLoopValues()
     {
-        DEBUG_PRINTLN("[QM-DEBUG] CALLED buildControlLoopValues");
+        // is called every time the sensor values are requested by the WebSocket (i.e. often!)
 
         if (!hasEnoughSamples) {
             sprintf(controlLoopValues, "{\"error\": \"not enough samples taken yet.\"}");
@@ -396,9 +406,9 @@ public:
         sprintf(
             controlLoopValues,
             "{\"dl\": {\"T\": %.3f, \"minT\": %.3f, \"maxT\": %.3f, \"VCC\": %.3f, \"maxVCC\": %.3f, \"minVCC\": %.3f, \"adcT\": %.1f, \"adcV\": %.1f, \"att\": %.2f, \"aboveT\":%d, \"belowV\":%d, \"sec\": %.2f}}",
-            currentLogoTempKelvin - ABS_ZERO,
-            minLogoTempKelvin - ABS_ZERO,
-            maxLogoTempKelvin - ABS_ZERO,
+            currentLogoTempKelvin - KELVIN_OFFSET,
+            minLogoTempKelvin - KELVIN_OFFSET,
+            maxLogoTempKelvin - KELVIN_OFFSET,
             currentInputVoltage,
             maxInputVoltage,
             minInputVoltage,

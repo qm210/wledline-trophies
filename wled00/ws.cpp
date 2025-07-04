@@ -40,7 +40,7 @@ void wsEvent(AsyncWebSocket * server, AsyncWebSocketClient * client, AwsEventTyp
         }
 
         bool verboseResponse = false;
-        bool sendDeadlineValues = false;
+        bool sendDeadlineSensorValues = false;
         if (!requestJSONBufferLock(11)) {
           client->text(F("{\"error\":3}")); // ERR_NOBUF
           return;
@@ -59,7 +59,7 @@ void wsEvent(AsyncWebSocket * server, AsyncWebSocketClient * client, AwsEventTyp
         } else if (root.containsKey("lv")) {
           wsLiveClientId = root["lv"] ? client->id() : 0;
         } else if (root.containsKey("dl")) {
-          sendDeadlineValues = true;
+          sendDeadlineSensorValues = true;
         } else {
           verboseResponse = deserializeState(root);
         }
@@ -67,16 +67,17 @@ void wsEvent(AsyncWebSocket * server, AsyncWebSocketClient * client, AwsEventTyp
         releaseJSONBufferLock();
 
         #ifdef USERMOD_DEADLINE_TROPHY
-        if (sendDeadlineValues) {
-            // WebSocket sending of the temperature values etc
-            // (NOT the RGB values, we do that via UDP now)
+        if (sendDeadlineSensorValues) {
             auto umDeadline = GET_DEADLINE_USERMOD();
-            if (umDeadline != nullptr) {
-                auto deadlineMessage = umDeadline->buildControlLoopValues();
-                client->text(deadlineMessage);
-            } else {
+            if (umDeadline == nullptr) {
                 client->text(F("{\"error\":\"DeadlineUsermod not initialized.\"}"));
+                return;
             }
+            umDeadline->doDebugLogUdp ^= true;
+            umDeadline->doOneVerboseDebugLogUdp = true;
+            // WebSocket sending of the temperature values etc (NOT the LED colors, these go via UDP):
+            auto deadlineMessage = umDeadline->buildControlLoopValues();
+            client->text(deadlineMessage);
             return;
         }
         #endif

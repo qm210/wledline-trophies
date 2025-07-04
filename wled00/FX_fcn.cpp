@@ -1825,22 +1825,9 @@ void WS2812FX::resetSegments() {
   _mainSegment = 0;
 }
 
-bool printDebug = true;
-
 void WS2812FX::makeAutoSegments(bool forceReset) {
 #ifdef USE_DEADLINE_CONFIG
-  // QM-WIP JUST OUTPUT DEBUG  -- REMOVE LATER
-  if (printDebug) {
-    DEBUG_PRINTF("[QM-DEBUG] beginStrip, autoSegments? %d\n", autoSegments);
-    for (int s = 0; s < _segments.size(); s++) {
-        DEBUG_PRINTF("           Segments(%d, %d, %d, %d)\n", _segments[s].start,
-                                                              _segments[s].stop,
-                                                              _segments[s].startY,
-                                                              _segments[s].stopY);
-    }
-    printDebug = false;
-  }
-  return;
+  return; // QM: our segments are fixed and we are very sure about that.
 #endif
 
   if (autoSegments) { //make one segment per bus

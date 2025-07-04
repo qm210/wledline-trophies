@@ -31,7 +31,13 @@
             ws = new WebSocket(url);
             const refreshButton = gId("dl_refresh");
             ws.onmessage = e => {
-                const json = JSON.parse(e.data);
+                let json;
+                try {
+                    json = JSON.parse(e.data);
+                } catch (err) {
+                    console.info("[QM-DEBUG] WebSocket: Invalid JSON", e.data);
+                    return;
+                }
                 if (d.DEBUG) console.log("[DEBUG] WebSocket Data", json);
                 if (json.dl) {
                     updateTrophyReadings(json.dl);
