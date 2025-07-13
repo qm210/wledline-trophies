@@ -81,11 +81,11 @@ namespace DeadlineTrophy {
         NeoGammaWLEDMethod::calcGammaTable(gammaCorrectVal);
 
         #ifdef DEADLINE_INIT_BRIGHTNESS
-        briS = DEADLINE_INIT_BRIGHTNESS;
-        turnOnAtBoot = briS > 0;
+            briS = DEADLINE_INIT_BRIGHTNESS;
+            turnOnAtBoot = briS > 0;
         #else
-        briS = 96;
-        turnOnAtBoot = true;
+            briS = 96;
+            turnOnAtBoot = true;
         #endif
 
         transitionDelayDefault = 100;
@@ -131,4 +131,62 @@ namespace DeadlineTrophy {
         SEG_CAPABILITY_W,
         SEG_CAPABILITY_W
     };
+
+    // Coord* logoCoordinates() {
+    //     if (logoInitialized) {
+    //         return logoCoordinates_;
+    //     }
+    //     for (uint8_t x = 0; x < logoW; ++x)
+    //     for (uint8_t y = 0; y < logoH; ++y) {
+    //         uint8_t ledIndex = mappingTable[x + logoW * y];
+    //         uint8_t ledIndexInLogo = ledIndex - N_LEDS_BASE;
+    //         if (ledIndex > N_LEDS_TOTAL) {
+    //             continue;
+    //         }
+    //         logoCoordinates_[ledIndexInLogo] = {x, y};
+    //     }
+    //     logoInitialized = true;
+    //     return logoCoordinates_;
+    // };
+
+    std::array<Coord, N_LEDS_LOGO>& logoCoordinates() {
+        if (logoInitialized) {
+            return logoCoordinates_;
+        }
+        for (uint8_t x = 0; x < logoW; ++x)
+        for (uint8_t y = 0; y < logoH; ++y) {
+            uint8_t ledIndex = mappingTable[x + logoW * y];
+            uint8_t ledIndexInLogo = ledIndex - N_LEDS_BASE;
+            if (ledIndex > N_LEDS_TOTAL) {
+                continue;
+            }
+            logoCoordinates_[ledIndexInLogo] = {x, y};
+        }
+        logoInitialized = true;
+        return logoCoordinates_;
+    };
+
+    // std::vector<Coord>& logoCoordinates() {
+    //     // vector never changes, but needs to be created dynamically, so... here we are. static.
+    //     static std::vector<Coord> coords = [] {
+    //         std::vector<Coord> result;
+    //         result.resize(N_LEDS_LOGO);
+    //         for (uint8_t x = 0; x < logoW; ++x)
+    //         for (uint8_t y = 0; y < logoH; ++y) {
+    //             uint8_t ledIndex = mappingTable[x + logoW * y];
+    //             uint8_t ledIndexInLogo = ledIndex - N_LEDS_BASE;
+    //             if (ledIndex > N_LEDS_TOTAL) {
+    //                 continue;
+    //             }
+    //             result[ledIndexInLogo] = {x, y};
+    //         }
+    //         int i = 0;
+    //         for (const auto& coord : result) {
+    //             DEBUG_PRINTF("[QM_ÖHMLOL - inside] %d = %d / %d\n", i, coord.x, coord.y);
+    //             i++;
+    //         }
+    //         return result;
+    //     }();
+    //     return coords;
+    // };
 }

@@ -6,6 +6,13 @@
 #define USERMOD_DEADLINE_TROPHY
 #endif
 
+// for the Simulator Communication
+// (there is also DEADLINE_UDP_SENDER_IP but that works without default)
+
+#ifndef DEADLINE_UDP_SENDER_PORT
+#define DEADLINE_UDP_SENDER_PORT 3413
+#endif
+
 // These Limits are from the wled_cfg(2).json that Topy sent me on 2024/10/20 (via Signal)
 #ifdef ABL_MILLIAMPS_DEFAULT
 #undef ABL_MILLIAMPS_DEFAULT
@@ -77,6 +84,10 @@
 
 // and some helpers for developing / performance
 
+#ifndef WLED_ENABLE_WEBSOCKETS
+#define WLED_ENABLE_WEBSOCKETS
+#endif
+
 #ifndef WLED_DEBUG
 #define WLED_DEBUG
 #endif
@@ -85,9 +96,9 @@
 #define WLED_DEBUG_NO_VERBOSE_LOGGING
 #endif
 
-// #ifndef WLED_DEBUG_NO_JSON_LOCKS
-// #define WLED_DEBUG_NO_JSON_LOCKS
-// #endif
+#ifndef WLED_DEBUG_NO_JSON_LOCKS
+#define WLED_DEBUG_NO_JSON_LOCKS
+#endif
 
 #ifndef WLED_DEBUG_NO_SLOW_WARNINGS
 #define WLED_DEBUG_NO_SLOW_WARNINGS

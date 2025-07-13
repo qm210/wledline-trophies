@@ -2,8 +2,6 @@
 
 #include "WiFiUdp.h"
 
-#define DEADLINE_VALUES_STRLEN 250
-
 class DeadlineUsermod : public Usermod
 {
 public:
@@ -62,15 +60,15 @@ public:
 
     bool doSendUdp = true;
     bool keepSendingUdp = true;
-    float sendUdpEverySec = 0.14; // get as frequent you can be
+    float sendUdpEverySec = 0.02; // get as frequent you can be
     // <-- 0: disable automatic sending, only via trigger from wherever you program it to
     bool doDebugLogUdp = false;
     bool doOneVerboseDebugLogUdp = false;
 
 private:
 
-    IPAddress udpSenderIp;
-    uint16_t udpSenderPort;
+    IPAddress udpSenderIp = INADDR_NONE;
+    uint16_t udpSenderPort = DEADLINE_UDP_SENDER_PORT;
     // <-- let's use the same port as local port as well as remote, 'cause why not.
     bool udpSenderConnected = false;
     WiFiUDP udpSender;
@@ -83,11 +81,9 @@ private:
 
     bool debugLogUdp = false;
     unsigned long lastLoggedUdpAt = 0;
-    uint32_t debugColor = 0;
-    bool printDebugColor = true;
 
     // for monitoring the (temperature values etc)
-    char controlLoopValues[DEADLINE_VALUES_STRLEN];
+    char controlLoopValues[255];
 
 
     // analog readings
@@ -147,13 +143,19 @@ public:
 
     void setup()
     {
-        // QM-TODO: Must make Configurable, of course.
-        udpSenderPort = 3413;
-        udpSenderIp = IPAddress(192, 168, 178, 20); // <- my IP right now.
-        // First tried Broadcast, but is way too slow:
-        // udpSenderIp = ~uint32_t(Network.subnetMask()) | uint32_t(Network.gatewayIP());
-
         DEBUG_PRINTF("[DEADLINE_TROPHY] QM watches you! (non-creepily.) Say Hi at qm@z10.info\n");
+
+#ifdef DEADLINE_UDP_SENDER_IP
+        // If the default (0.0.0.0) equals "broadcast", this is going to be WAY too slow, I suppose.
+        // anyway...
+        if (!udpSenderIp.fromString(DEADLINE_UDP_SENDER_IP)) {
+            DEBUG_PRINTF("[DEADLINE_TROPHY] UDP SENDER IP failed to set from \"%s\", is \"%s\"",
+                DEADLINE_UDP_SENDER_IP,
+                udpSenderIp.toString().c_str()
+            );
+        }
+#endif
+        DEBUG_PRINTF("[QM_DEBUG] UDP SENDER IP = \"%s\"\n", udpSenderIp.toString().c_str());
 
         justBefore = millis();
         runningSec = 0;
@@ -271,15 +273,16 @@ public:
     {
         _logoRead = getAverage(val_logoTherm);
         _R_TH1 = -logoR7_Ohm;
-        if (_logoRead == 0.0f) {
-            // unclear whether 0K is top premium choice, but it makes visible that something went wrong :P
-            currentLogoTempKelvin = 0.;
-            return;
-        }
         _voltageRatio = currentInputVoltage / (voltageAdcCoeff * _logoRead);
         _R_TH1 += 1. / (_voltageRatio - 1) * logoR6_Ohm;
         _logRatio = logf(_R_TH1 / logoThermistor_R0_Ohm);
         currentLogoTempKelvin = 1. / ( logoTherm_OneOverT0 + logoTherm_OneOverB * _logRatio );
+
+        // now check for NaN (in case of _logoRead == 0 or _voltageRatio == 1)
+        if (currentLogoTempKelvin != currentLogoTempKelvin) {
+            // unclear whether 0K is top premium choice, but it makes visible that something went wrong :P
+            currentLogoTempKelvin = 0.;
+        }
     }
 
     float calcMaxCurrentLimiter(float dt) {
@@ -328,6 +331,7 @@ public:
     void addToConfig(JsonObject& doc)
     {
         JsonObject top = doc.createNestedObject(F("DeadlineTrophy"));
+
         // fun thing, fillUMPins() will look for entries in these "pin" arrays. deal with it.
         auto pins = top.createNestedArray("pin");
         pins.add(PIN_LOGOTHERM);
@@ -341,20 +345,41 @@ public:
         limT[F("critical")] = limit_criticalTempDegC;
         limT[F("attenuate")] = attenuateByT_attackFactorWhenCritical,
         limT[F("release")] = attenuateByT_releasePerSecond;
+
+        // Where the Simulator listens for UDP messages
+        auto sim = top.createNestedObject("simulator");
+        sim["ip"] = static_cast<uint32_t>(udpSenderIp);
+        sim["port"] = udpSenderPort;
     }
 
     void appendConfigData(Print& settingsScript)
     {
-        settingsScript.print(F("addInfo('DeadlineUsermod:pin[]',0,'Logo Temperature','LogoTherm');"));
-        settingsScript.print(F("addInfo('DeadlineUsermod:pin[]',1,'Common Voltage','VCC');"));
+        settingsScript.print(F("let ipInputs = d.getElementsByName('DeadlineTrophy:simulator:ip');"));
+        auto ip = static_cast<uint32_t>(udpSenderIp);
+        settingsScript.printf_P(
+            "ipInputs[1].insertAdjacentHTML('afterend', \""
+                "<input name='DeadlineTrophy:simulator:ipOct1' type='number' class='s' min='0' max='255' value='%d' required>."
+                "<input name='DeadlineTrophy:simulator:ipOct2' type='number' class='s' min='0' max='255' value='%d' required>."
+                "<input name='DeadlineTrophy:simulator:ipOct3' type='number' class='s' min='0' max='255' value='%d' required>."
+                "<input name='DeadlineTrophy:simulator:ipOct4' type='number' class='s' min='0' max='255' value='%d' required>\");\n"
+            "ipInputs.forEach(e => {e.style.display = 'none';});\n",
+            ip & 0xFF,
+            (ip>>8) & 0xFF,
+            (ip>>16) & 0xFF,
+            (ip>>24) & 0xFF
+        );
+        settingsScript.print(F("addInfo('DeadlineTrophy:simulator:port',1,'0 = off');"));
 
-        settingsScript.print(F("addInfo('DeadlineUsermod:minVoltage:threshold',1,'required minimum V<sub>CC</sub>');"));
-        settingsScript.print(F("addInfo('DeadlineUsermod:minVoltage:attenuate',1,'dim by factor when below threshold');"));
-        settingsScript.print(F("addInfo('DeadlineUsermod:minVoltage:release',1,'slowly go back to 1 (perSec) if safe');"));
+        settingsScript.print(F("addInfo('DeadlineTrophy:pin[]',0,'Logo Temperature','LogoTherm');"));
+        settingsScript.print(F("addInfo('DeadlineTrophy:pin[]',1,'Common Voltage','VCC');"));
 
-        settingsScript.print(F("addInfo('DeadlineUsermod:maxTemp:critical',1,'critical Temperature in °C');"));
-        settingsScript.print(F("addInfo('DeadlineUsermod:maxTemp:attenuate',1,'dim by factor when above critical');"));
-        settingsScript.print(F("addInfo('DeadlineUsermod:maxTemp:release',1,'slowly go back to 1 (perSec) if safe');"));
+        settingsScript.print(F("addInfo('DeadlineTrophy:minVoltage:threshold',1,'required minimum V<sub>CC</sub>');"));
+        settingsScript.print(F("addInfo('DeadlineTrophy:minVoltage:attenuate',1,'dim by factor when below threshold');"));
+        settingsScript.print(F("addInfo('DeadlineTrophy:minVoltage:release',1,'slowly go back to 1 (perSec) if safe');"));
+
+        settingsScript.print(F("addInfo('DeadlineTrophy:maxTemp:critical',1,'critical Temperature in °C');"));
+        settingsScript.print(F("addInfo('DeadlineTrophy:maxTemp:attenuate',1,'dim by factor when above critical');"));
+        settingsScript.print(F("addInfo('DeadlineTrophy:maxTemp:release',1,'slowly go back to 1 (perSec) if safe');"));
 
         // qm210: was hard in xml.cpp at first, but I guess this belongs rather here.
         settingsScript.print(F("/* USERMOD DEADLINE */ "));
@@ -367,10 +392,26 @@ public:
 
     bool readFromConfig(JsonObject& root)
     {
+        DEBUG_PRINTLN("[QM_DEBUG] DeadlineTrophy::readFromConfig");
+        serializeJsonPretty(root, Serial);
+        DEBUG_PRINTLN();
+
         JsonObject top = root[FPSTR("DeadlineTrophy")];
         if (top.isNull()) {
-            DEBUG_PRINTLN(F("DeadlineUsermod: No config found. (Using defaults.)"));
+            DEBUG_PRINTLN(F("DeadlineTrophy: No config found. (Using defaults.)"));
             return false;
+        }
+
+        JsonObject sim = top["simulator"];
+        if (!sim.isNull()) {
+            // udpSenderIp = IPAddress(static_cast<uint32_t>(sim["ip"]));
+            udpSenderIp = IPAddress(
+                atoi(sim["ipOct1"]),
+                atoi(sim["ipOct2"]),
+                atoi(sim["ipOct3"]),
+                atoi(sim["ipOct4"])
+            );
+            udpSenderPort = sim["port"];
         }
 
         JsonObject limV = top["minVoltage"];
@@ -402,7 +443,6 @@ public:
             sprintf(controlLoopValues, "{\"error\": \"not enough samples taken yet.\"}");
             return controlLoopValues;
         }
-        // needs about 200 characters or something, adjust DEADLINE_VALUES_STRLEN if larger
         sprintf(
             controlLoopValues,
             "{\"dl\": {\"T\": %.3f, \"minT\": %.3f, \"maxT\": %.3f, \"VCC\": %.3f, \"maxVCC\": %.3f, \"minVCC\": %.3f, \"adcT\": %.1f, \"adcV\": %.1f, \"att\": %.2f, \"aboveT\":%d, \"belowV\":%d, \"sec\": %.2f}}",

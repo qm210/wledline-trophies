@@ -139,8 +139,7 @@ static bool deserializeSegment(JsonObject elem, byte it, byte presetId = 0)
 
 #ifdef USE_DEADLINE_CONFIG
   // deadline trophy has fixed names, this leads to CORRUPT HEAP otherwise
-  if (true) {}
-  else
+  if (true) {} else
 #endif
   if (elem["n"]) {
     // name field exists

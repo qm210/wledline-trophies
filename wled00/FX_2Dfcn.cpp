@@ -182,13 +182,15 @@ void WS2812FX::setUpDeadlineTrophy() {
             i == _mainSegment
                 ? SEGMENT_ON | SELECTED
                 : SEGMENT_ON;
-        seg.mode = FX_MODE_DEADLINE_TROPHY;
 
         // these are the three colors per segment (the palette is applied onto that, somehow)
-        // these colors are just taken willy-nilly, just so I can write "willy-nilly", just.
+        // these colors are just taken willy-nilly, but only so I can write "willy-nilly" here.
         seg.colors[0] = 0xAA00FF;
-        seg.colors[1] = 0xFF80FF;
+        seg.colors[1] = 0xFF40FF;
         seg.colors[2] = 0xFFFFFF;
+
+        seg.setMode(FX_MODE_DEADLINE_TROPHY, true)
+            .markForReset();
 
         _segments.push_back(seg);
 
@@ -200,15 +202,6 @@ void WS2812FX::setUpDeadlineTrophy() {
         panel.push_back(p);
 
     }
-
-    // FOR DEBUGGING
-    _segments[0].mode = FX_MODE_STATIC;
-    _segments[0].colors[0] = 0xFF00FF;
-    _segments[1].mode = FX_MODE_STATIC;
-    _segments[1].colors[0] = 0x00FFFF;
-
-    // one could use multiple segments over the same LEDs and then blend, but... postpone.
-    // Segment::modeBlend(true);
 }
 #endif
 

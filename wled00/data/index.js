@@ -1884,6 +1884,7 @@ function toggleLiveview()
 		if (isLv) gId('klv2D').innerHTML = `<iframe id="${lvID}" src="about:blank"></iframe>`;
 		gId('mlv2D').style.transform = (isLv) ? "translateY(0px)":"translateY(100%)";
 	}
+    console.log("[QM_DEBUG] lvID=", lvID);
 
 	gId(lvID).style.display = (isLv) ? "block":"none";
 	gId(lvID).src = (isLv) ? getURL("/" + lvID + ((wsOn) ? "?ws":"")):"about:blank";

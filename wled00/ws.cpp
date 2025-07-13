@@ -12,8 +12,11 @@ unsigned long wsLastLiveTime = 0;
 #define WS_LIVE_INTERVAL 40
 
 #ifdef USERMOD_DEADLINE_TROPHY
-#include "../usermods/DEADLINE_TROPHY/DeadlineTrophy.h"
-#include "../usermods/DEADLINE_TROPHY/DeadlineUsermod.h"
+  #include "../usermods/DEADLINE_TROPHY/DeadlineTrophy.h"
+  #include "../usermods/DEADLINE_TROPHY/DeadlineUsermod.h"
+  const bool DEBUG_WEBSOCKET = true;
+#else
+  const bool DEBUG_WEBSOCKET = false;
 #endif
 
 void wsEvent(AsyncWebSocket * server, AsyncWebSocketClient * client, AwsEventType type, void * arg, uint8_t *data, size_t len)
@@ -49,11 +52,18 @@ void wsEvent(AsyncWebSocket * server, AsyncWebSocketClient * client, AwsEventTyp
 
         DeserializationError error = deserializeJson(*pDoc, data, len);
         JsonObject root = pDoc->as<JsonObject>();
+
         if (error || root.isNull()) {
           DEBUG_PRINTF("[WEBSOCKET ERROR] %d %s %s\n", root.isNull(), error.c_str(), data);
           releaseJSONBufferLock();
           return;
         }
+        if (DEBUG_WEBSOCKET || root.containsKey("debug")) {
+          DEBUG_PRINT("[WEBSOCKET DEBUG] ");
+          serializeJson(root, Serial);
+          DEBUG_PRINTLN();
+        }
+
         if (root["v"] && root.size() == 1) {
           //if the received value is just "{"v":true}", send only to this client
           verboseResponse = true;
@@ -74,8 +84,9 @@ void wsEvent(AsyncWebSocket * server, AsyncWebSocketClient * client, AwsEventTyp
                 client->text(F("{\"error\":\"DeadlineUsermod not initialized.\"}"));
                 return;
             }
-            // umDeadline->doDebugLogUdp ^= true;
-            umDeadline->doOneVerboseDebugLogUdp = true;
+            if (root.containsKey("debug")) {
+                umDeadline->doOneVerboseDebugLogUdp = true;
+            }
             // WebSocket sending of the temperature values etc (NOT the LED colors, these go via UDP):
             auto deadlineMessage = umDeadline->buildControlLoopValues();
             client->text(deadlineMessage);

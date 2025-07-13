@@ -538,6 +538,10 @@ void WLED::setup()
   #if defined(ARDUINO_ARCH_ESP32) && defined(WLED_DISABLE_BROWNOUT_DET)
   WRITE_PERI_REG(RTC_CNTL_BROWN_OUT_REG, 1); //enable brownout detector
   #endif
+
+  #ifdef USE_DEADLINE_CONFIG
+  strip.resume();
+  #endif
 }
 
 void WLED::beginStrip()
@@ -571,8 +575,7 @@ void WLED::beginStrip()
 #ifdef USE_DEADLINE_CONFIG
   // QM: we do not want colorUpdated because this resets the segments, which we already forced to be awesome
   //     so we call stateUpdated, which is a part of colorUpdated only.
-  stateUpdated(CALL_MODE_INIT);
-  if (true) {} else // <-- behold my genius to exclude the following line without an extra directive :D
+  effectCurrent = FX_MODE_DEADLINE_TROPHY;
 #endif
   colorUpdated(CALL_MODE_INIT); // will not send notification but will initiate transition
   if (bootPreset > 0) {

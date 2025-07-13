@@ -14,11 +14,15 @@
 		function getURL(path) {
 			return (loc ? locproto + "//" + locip : "") + path;
 		}
-        function requestTrophyData() {
+        function requestTrophyData(justOpened = false) {
             if (!ws || ws.readyState !== WebSocket.OPEN) {
                 makeDeadlineTrophyWs();
             } else {
-                ws.send("{'dl':true}");
+                ws.send(
+                    justOpened
+                        ? "{'dl':true, 'debug': true}"
+                        : "{'dl':true}"
+                );
             }
         }
         function makeDeadlineTrophyWs() {
@@ -52,7 +56,7 @@
             };
             ws.onopen = e => {
                 if (d.DEBUG) console.log("[DEBUG] WebSocket opened.");
-                requestTrophyData();
+                requestTrophyData(true);
                 refreshButton.style.display = "none";
             }
         }

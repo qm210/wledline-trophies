@@ -133,7 +133,6 @@ byte renderImageToSegment(Segment &seg) {
 void endImagePlayback(Segment *seg) {
   DEBUG_PRINTLN(F("Image playback end called"));
   if (!activeSeg || activeSeg != seg) return;
-  DEBUG_PRINTLN("DEUBG ___ HERE?");
   if (file) file.close();
   decoder.dealloc();
   gifDecodeFailed = false;

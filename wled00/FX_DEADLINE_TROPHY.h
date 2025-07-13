@@ -3,13 +3,11 @@
 #include "FX.h"
 #include "../usermods/DEADLINE_TROPHY/DeadlineTrophy.h"
 
-// bla bla bla quickficks
-uint16_t mode_static(void);
-
  ///////////////////////////////////////
  // DEV INFO: cf. DEV INFO in FX.cpp! //
  ///////////////////////////////////////
 
+ uint16_t mode_static(void);
 
  //////////////////////////
  //  Deadline Trophy FX  //
@@ -23,28 +21,28 @@ const size_t nOuterRight = 27;
 
 // the bars in the Logo
 const int barOuterLeft[nOuterLeft] = {
-    8, 7, 6, 5, 4, 3, 2, 1, 0,
-    9
+    161, 162, 163, 164, 165, 166, 167, 168, 169,
+    160
 };
 const int barLeft[nLeft] = {
-    10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
-    32, 31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21,
-    33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44
+    156, 155, 154, 153, 152, 151, 150, 149,
+    140, 141, 142, 143, 144, 145, 146, 147, 148,
+    133, 132, 131, 130, 129, 128, 127, 126
 };
 const int barBottom[nBottom] = {
-    9, 11, 30, 35, 103, 102, 97, 96, 91, 90, 85, 72, 67,
-    10, 31, 34, 104, 101, 98, 95, 92, 89, 86, 71, 68,
-    32, 33, 105, 100, 99, 94, 93, 88, 87, 70, 69
+    137, 136, 64, 69, 79, 70, 75, 76, 81, 82, 99, 100,
+    159, 138, 135, 65, 68, 71, 74, 77, 80, 83, 98, 101,
+    158, 139, 134, 66, 67, 72, 73, 78, 79, 84, 97, 102
 };
 const int barUpperRight[nUpperRight] = {
-    44, 46, 47, 52, 53, 58,
-    45, 48, 51, 54, 57, 59,
-    49, 50, 55, 56, 60
+    111, 116, 117, 122, 123, 125,
+    110, 112, 115, 118, 121, 124,
+    109, 113, 114, 119, 120
 };
 const int barOuterRight[nOuterRight] = {
-    87, 86, 85, 84, 83, 82, 81, 80, 79,
-    70, 71, 72, 73, 74, 75, 76, 77, 78,
-    69, 68, 67, 66, 65, 64, 63, 62, 61
+    85, 86, 87, 88, 89, 90,
+    96, 95, 94, 93, 92, 91,
+    103, 104, 105, 106, 107, 108
 };
 
 const size_t nBars = 5;
@@ -62,9 +60,6 @@ const int* indexBars[] = {
     barUpperRight,
     barOuterRight
 };
-const int nBase = 64;
-const int indexBack = 170;
-const int indexFloor = 171;
 
 int hue[nBars] = {0};
 int sat[nBars] = {0};
@@ -76,61 +71,65 @@ const int valSpread = 2.;
 const float satDecay = 0.5;
 const float satSpawnChance = 0.001;
 
-// copy&paste from setUpDeadlineTrophy(), is ok for now.
-const int logoW = 27;
-const int logoH = 21;
+const int logoW = DeadlineTrophy::logoW;
+const int logoH = DeadlineTrophy::logoH;
+const int baseSize = DeadlineTrophy::baseEdge;
 
-void setBase(size_t index, uint32_t color) {
-    auto bus = BusManager::getBus(1);
-    if (strip.getCurrSegmentId() != 1 || !bus) {
+// TODO: Umrechnungsfunktionen in DeadlineTrophy.h schieben.
+inline void setPixel(size_t segmentIndex, int x, int y, uint32_t color) {
+    if (strip.getCurrSegmentId() != segmentIndex) {
         return;
     }
-    // directly go for the LED busses, cause at least we understand these...
-    bus->setPixelColor(index % nBase, color);
+    SEGMENT.setPixelColorXY(x, y, color);
+}
+
+void setBase(size_t x, size_t y, uint32_t color) {
+    if (x >= baseSize || y >= baseSize) {
+        return;
+    }
+    setPixel(0, x, y, color);
 }
 
 void setLogo(size_t x, size_t y, uint32_t color) {
-    if (strip.getCurrSegmentId() != 0) {
+    if (x >= logoW || y >= logoH) {
         return;
     }
-    // is not that much more computational expensive, because the logo is at the first Bus.
-    strip.setPixelColor(x + logoW * y, color);
+    // TODO: 30°-Drehung
+    // TODO: sinnieren über floatzahlige Koordinaten - evtl sinnvoll, evtl wumpe
+    setPixel(1, x, y, color);
 }
 
-void setSingleWhite(bool isFloor, uint32_t color) {
-    auto index = isFloor ? 3 : 2;
-    auto bus = BusManager::getBus(index);
-    if (strip.getCurrSegmentId() != index || !bus) {
-        return;
-    }
-    bus->setPixelColor(0, color);
-}
 void setBack(uint32_t color) {
-    setSingleWhite(false, color);
-}
-void setFloor(uint32_t color) {
-    setSingleWhite(true, color);
+    setPixel(2, baseSize, logoH, color);
 }
 
+void setFloor(uint32_t color) {
+    setPixel(3, baseSize, logoH + 1, color);
+}
 
 uint32_t float_hsv(float hue, float sat, float val) {
     // parameters in [0, 255] but as float
-    return uint32_t(
-        CRGB(
-            CHSV(
-                static_cast<uint8_t>(hue),
-                static_cast<uint8_t>(sat),
-                static_cast<uint8_t>(val)
-            )
-        )
-    );
+    uint32_t color = uint32_t(CRGB(CHSV(
+        static_cast<uint8_t>(hue),
+        static_cast<uint8_t>(sat),
+        static_cast<uint8_t>(val)
+    )));
+    // remove the specific "white" that might be in the color (or shouldn't we?)
+    return color & 0x00FFFFFF;
 }
 
-const int DEBUG_STEPS = 5;
-int DEBUG_COUNTER = 0;
+const int DEBUG_STEPS = 0; // for printing debug output every ... steps
+int debugCounter = 0;
+bool calledOnce = false;
 
-static uint16_t mode_DeadlineTrophy(void) {
-  auto isLogo = strip.getCurrSegmentId() == 0;
+uint16_t mode_DeadlineTrophy(void) {
+  if (!calledOnce) {
+    calledOnce = true;
+    DEBUG_PRINTLN("[DEADLINE_TROPHY] FX is just called for the first time :)");
+  }
+
+  auto isBase = strip.getCurrSegmentId() == 0;
+  auto isLogo = strip.getCurrSegmentId() == 1;
 
   um_data_t *um_data;
   if (!UsermodManager::getUMData(&um_data, USERMOD_ID_AUDIOREACTIVE)) {
@@ -154,6 +153,7 @@ static uint16_t mode_DeadlineTrophy(void) {
   }
 
     size_t i, x, y;
+    uint32_t col;
     CHSV color;
 
     if (isLogo) {
@@ -164,63 +164,53 @@ static uint16_t mode_DeadlineTrophy(void) {
         float center_y = (0.5 + 0.2 * cos_t(phi)) * logoH;
         float size = 13.;
 
-        for (x = 0; x < logoW; x++) {
-            for (y = 0; y < logoH; y++) {
-                // OVERWRITE: just a line sweep
-                center_x = fmod_t(0.0005 * (strip.now % 2000), 1.) * (logoW + 2. * size) - size;
+        for (const auto& coord : DeadlineTrophy::logoCoordinates()) {
+            x = coord.x;
+            y = coord.y;
 
-                // float dist_x = float(x) - center_x;
-                float dist_x = float(x) - center_x;
-                float dist_y = 0.;
-                float intensity = exp(- (dist_x*dist_x)/size - (dist_y*dist_y)/size);
+            //just a line sweep
+            center_x = fmod_t(0.0005 * (strip.now % 2000), 1.) * (logoW + 2. * size) - size;
+            center_x = logoW - center_x;
 
-                intensity = dist_x > 0 ? exp(-dist_x / size) : 0.;
+            // float dist_x = float(x) - center_x;
+            float dist_x = float(x) - center_x;
+            float dist_y = 0.;
+            float intensity = exp(- (dist_x*dist_x)/size - (dist_y*dist_y)/size);
 
-                setLogo(
-                    x, y, float_hsv(210. - 90. * intensity, 255., 70. + 170. * intensity * intensity * intensity)
-                );
-            }
-        }
+            intensity = dist_x > 0 ? exp(-dist_x / size) : 0.;
+            col = float_hsv(210. - 90. * intensity, 255., 70. + 170. * intensity * intensity * intensity);
 
-        if (DEBUG_COUNTER <= 0) {
-            DEBUG_COUNTER = DEBUG_STEPS;
-        } else {
-            DEBUG_COUNTER--;
+            setLogo(x, y, col);
         }
     }
-    /*
 
-    // LOGO
-    if (strip.getCurrSegmentId() == 0) {
-        for (b = 0; b < nBars; b++) {
-            hue[b] = (hue[b] + random(-hueSpread, hueSpread)) % 255;
-            val[b] = MAX(val[b] + random(-valSpread, valSpread), 255);
-            sat[b] = static_cast<int>(satDecay * sat[b]);
-
-            if (0.001 * random(0, 1000) < satSpawnChance) {
-                sat[b] = 255;
-            }
-
-            // for (i = 0; i < nInBar[i]; i++) {
-            //     auto color = CHSV(hue[b], sat[b], val[b]);
-            //     SEGMENT.setPixelColor(indexBars[b][i], color);
-            // }
-        }
-
-    }
-
-    */
-
-    for (int s = 0; s < 4; s++) {
+    if (isBase) {
+        for (int s = 0; s < 4; s++)
         for (i = 0; i < 16; i++) {
             // strip.now is millisec uint32_t, so this will overflow ~ every 49 days. who shits a give.
             float wave = sin_t(PI / 15. * (static_cast<float>(i) - 0.007 * strip.now));
             float abs_wave = (wave > 0. ? wave : -wave);
             float slow_wave = 0.7 + 0.3 * sin_t(TWO_PI / 10000. * strip.now);
-            setBase(
-                16 * s + i,
-                float_hsv(160. + 70. * wave * abs_wave, 255., 255. * wave * abs_wave * slow_wave)
-            );
+            col = float_hsv(160. + 70. * wave * abs_wave, 255., 255. * wave * abs_wave * slow_wave);
+
+            if (s == 0) {
+                x = 1 + i;
+                y = 0;
+            }
+            else if (s == 1) {
+                x = 0;
+                y = 16 - i;
+            }
+            else if (s == 2) {
+                x = 17;
+                y = 1 + i;
+            }
+            else if (s == 3) {
+                x = 16 - i;
+                y = 17;
+            }
+
+            setBase(x, y, col);
         }
     }
 
@@ -228,11 +218,17 @@ static uint16_t mode_DeadlineTrophy(void) {
     setBack(stepTime < 1.0 ? WHITE : BLACK);
     setFloor(stepTime < 1.0 ? BLACK : WHITE);
 
+    if (debugCounter < 0 && DEBUG_STEPS > 0) {
+        debugCounter = DEBUG_STEPS;
+    } else {
+        debugCounter--;
+    }
+
     return FRAMETIME;
 } // mode_DeadlineTrophy
 
 
 static const char _data_FX_MODE_DEADLINE_TROPHY[] PROGMEM =
     "DEADLINE TROPHY@;;!;1";
-    // <-- find out what the cryptic @... parameters mean. default is "name@;;!;1"
+    // <-- TODO: find out how the parameters are encoded here. default is "name@;;!;1"
 
