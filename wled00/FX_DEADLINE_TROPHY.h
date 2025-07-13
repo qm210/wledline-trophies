@@ -7,7 +7,7 @@
  // DEV INFO: cf. DEV INFO in FX.cpp! //
  ///////////////////////////////////////
 
- uint16_t mode_static(void);
+extern uint16_t mode_static(void);
 
  //////////////////////////
  //  Deadline Trophy FX  //
@@ -107,6 +107,9 @@ void setFloor(uint32_t color) {
     setPixel(3, baseSize, logoH + 1, color);
 }
 
+#define IS_BASE_SEGMENT (strip.getCurrSegmentId() == 0)
+#define IS_LOGO_SEGMENT (strip.getCurrSegmentId() == 1)
+
 uint32_t float_hsv(float hue, float sat, float val) {
     // parameters in [0, 255] but as float
     uint32_t color = uint32_t(CRGB(CHSV(
@@ -118,51 +121,42 @@ uint32_t float_hsv(float hue, float sat, float val) {
     return color & 0x00FFFFFF;
 }
 
-const int DEBUG_STEPS = 0; // for printing debug output every ... steps
-int debugCounter = 0;
-bool calledOnce = false;
+const int DEBUG_LOG_EVERY_N_CALLS = 500; // for printing debug output every ... steps (0 = no debug out)
+
+#define IS_DEBUG_STEP (DEBUG_LOG_EVERY_N_CALLS > 0 && (SEGENV.call % DEBUG_LOG_EVERY_N_CALLS) == 0)
 
 uint16_t mode_DeadlineTrophy(void) {
-  if (!calledOnce) {
-    calledOnce = true;
-    DEBUG_PRINTLN("[DEADLINE_TROPHY] FX is just called for the first time :)");
-  }
-
-  auto isBase = strip.getCurrSegmentId() == 0;
-  auto isLogo = strip.getCurrSegmentId() == 1;
-
-  um_data_t *um_data;
-  if (!UsermodManager::getUMData(&um_data, USERMOD_ID_AUDIOREACTIVE)) {
-    // add support for no audio
-    um_data = simulateSound(SEGMENT.soundSim);
-  }
-  uint8_t *fftResult = (uint8_t*)um_data->u_data[2];
-
-  size_t b = 0;
-  if (SEGENV.call == 0) {
-    // very first call only, i.e. init code
-
-    SEGMENT.fill(BLACK);
-    for (b = 0; b < nBars; b++) {
-        hue[b] = random(210, 330);
-        val[b] = random(128, 255);
-        sat[b] = 255;
+    um_data_t *um_data;
+    if (!UsermodManager::getUMData(&um_data, USERMOD_ID_AUDIOREACTIVE)) {
+        // add support for no audio
+        um_data = simulateSound(SEGMENT.soundSim);
     }
-
-    line_direction = radians(random(0, 360));
-  }
+    uint8_t *fftResult = (uint8_t*)um_data->u_data[2];
 
     size_t i, x, y;
-    uint32_t col;
-    CHSV color;
+    uint32_t col = SEGCOLOR(0);
+    CHSV color = rgb2hsv_approximate(CRGB(col));
 
-    if (isLogo) {
+    if (SEGENV.call == 0) {
+        DEBUG_PRINTF("[DEADLINE_TROPHY] FX was called, now initialized for segment %d (%s) :)\n", strip.getCurrSegmentId(), SEGMENT.name);
+        SEGMENT.fill(BLACK);
+
+        line_direction = radians(random(0, 360));
+    }
+
+    if (IS_DEBUG_STEP) {
+        DEBUG_PRINTF("[QM_DEBUG] Segment %d, color %d (rgb %d, %d, %d, hsv %d, %d, %d)\n",
+            strip.getCurrSegmentId(), col, R(col), G(col), B(col), color.hue, color.sat, color.val
+        );
+    }
+
+    if (IS_LOGO_SEGMENT) {
         // circling piece of shit
         float phi = TWO_PI * fmod_t(0.0005 * strip.now, 1.);
 
         float center_x = (0.6 + 0.2 * sin_t(phi)) * logoW;
         float center_y = (0.5 + 0.2 * cos_t(phi)) * logoH;
-        float size = 13.;
+        const float size = 13.;
 
         for (const auto& coord : DeadlineTrophy::logoCoordinates()) {
             x = coord.x;
@@ -172,26 +166,28 @@ uint16_t mode_DeadlineTrophy(void) {
             center_x = fmod_t(0.0005 * (strip.now % 2000), 1.) * (logoW + 2. * size) - size;
             center_x = logoW - center_x;
 
-            // float dist_x = float(x) - center_x;
             float dist_x = float(x) - center_x;
             float dist_y = 0.;
             float intensity = exp(- (dist_x*dist_x)/size - (dist_y*dist_y)/size);
 
             intensity = dist_x > 0 ? exp(-dist_x / size) : 0.;
-            col = float_hsv(210. - 90. * intensity, 255., 70. + 170. * intensity * intensity * intensity);
+            color.hue -= 90. * intensity;
+            color.value *= intensity * intensity * intensity;
 
+            col = uint32_t(CRGB(color));
             setLogo(x, y, col);
         }
     }
 
-    if (isBase) {
+    if (IS_BASE_SEGMENT) {
         for (int s = 0; s < 4; s++)
         for (i = 0; i < 16; i++) {
             // strip.now is millisec uint32_t, so this will overflow ~ every 49 days. who shits a give.
             float wave = sin_t(PI / 15. * (static_cast<float>(i) - 0.007 * strip.now));
             float abs_wave = (wave > 0. ? wave : -wave);
             float slow_wave = 0.7 + 0.3 * sin_t(TWO_PI / 10000. * strip.now);
-            col = float_hsv(160. + 70. * wave * abs_wave, 255., 255. * wave * abs_wave * slow_wave);
+            color.hue -= 20. * wave * abs_wave;
+            color.val *= wave * abs_wave * slow_wave;
 
             if (s == 0) {
                 x = 1 + i;
@@ -210,6 +206,7 @@ uint16_t mode_DeadlineTrophy(void) {
                 y = 17;
             }
 
+            col = uint32_t(CRGB(color));
             setBase(x, y, col);
         }
     }
@@ -217,12 +214,6 @@ uint16_t mode_DeadlineTrophy(void) {
     auto stepTime = fmod_t(strip.now, 2.0);
     setBack(stepTime < 1.0 ? WHITE : BLACK);
     setFloor(stepTime < 1.0 ? BLACK : WHITE);
-
-    if (debugCounter < 0 && DEBUG_STEPS > 0) {
-        debugCounter = DEBUG_STEPS;
-    } else {
-        debugCounter--;
-    }
 
     return FRAMETIME;
 } // mode_DeadlineTrophy

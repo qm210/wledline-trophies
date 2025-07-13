@@ -15,14 +15,9 @@ void DeadlineUsermod::sendTrophyUdp()
     }
     udpSenderConnected = udpSender.begin(udpSenderPort);
 
-    DEBUG_PRINTF("[DEADLINE_TROPHY] UDP Sender Port: %d - Connected? %d\n",
-        udpSenderPort, udpSenderConnected
-    );
+    DEBUG_PRINTF("[DEADLINE_TROPHY] UDP Sender Port: %d - Connected? %d\n", udpSenderPort, udpSenderConnected);
 
     if (!udpSenderConnected) {
-      if (doSendUdp) {
-        DEBUG_PRINTLN(F("[DEADLINE_TROPHY] Wanted to send UDP values but is not connected."));
-      }
       return;
     }
   }
@@ -32,28 +27,11 @@ void DeadlineUsermod::sendTrophyUdp()
 
   bool doLog = doDebugLogUdp || doOneVerboseDebugLogUdp;
 
-  if (sendUdpEverySec > 0.) {
-    if (sendUdpInSec <= 0.) {
-        doSendUdp = true;
-        sendUdpInSec = sendUdpEverySec;
-        if (doLog) {
-            DEBUG_PRINTF("[DEADLINE_TROPHY-UDP] Send! Running %f sec. and next in %f sec.\n", runningSec, sendUdpInSec);
-        }
-    } else {
-        sendUdpInSec -= elapsedSec;
-        return;
-    }
-  }
-
-  if (!doSendUdp) {
+  if (!udpSenderEnabled) {
     return;
   }
 
-  if (doSendUdp && !keepSendingUdp) {
-    doSendUdp = false;
-  }
-
-  // Caution: Using DRGB protocol, i.e. limited to 490
+  // QM Note: Using DRGB protocol, i.e. limited to 490
   // This is enough for the DL Trophy (172 LEDs).
   // If this is decoupled and more are needed -> use DNRGB
   const int packetSize = 2 + 3 * DeadlineTrophy::N_LEDS_TOTAL;

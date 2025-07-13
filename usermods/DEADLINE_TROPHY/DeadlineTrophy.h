@@ -79,12 +79,7 @@ namespace DeadlineTrophy {
 
     struct Coord { uint8_t x; uint8_t y; };
 
-    // static Coord logoCoordinates_[N_LEDS_LOGO];
-    static std::array<Coord, N_LEDS_LOGO> logoCoordinates_;
-    static bool logoInitialized = false;
-    // Coord* logoCoordinates();
     std::array<Coord, N_LEDS_LOGO>& logoCoordinates();
-    // std::vector<Coord>& logoCoordinates();
 
     static const size_t N_SEGMENTS = 4;
     extern const char* segmentName[N_SEGMENTS];

@@ -58,10 +58,7 @@ public:
 
     const float maxCurrent = DEADLINE_MAX_AMPERE * 1000;
 
-    bool doSendUdp = true;
-    bool keepSendingUdp = true;
-    float sendUdpEverySec = 0.02; // get as frequent you can be
-    // <-- 0: disable automatic sending, only via trigger from wherever you program it to
+    bool udpSenderEnabled = true;
     bool doDebugLogUdp = false;
     bool doOneVerboseDebugLogUdp = false;
 
@@ -82,9 +79,8 @@ private:
     bool debugLogUdp = false;
     unsigned long lastLoggedUdpAt = 0;
 
-    // for monitoring the (temperature values etc)
+    // for the JSON to monitor the temperature values etc.
     char controlLoopValues[255];
-
 
     // analog readings
     uint16_t val_logoTherm[AVERAGE_SAMPLES];
