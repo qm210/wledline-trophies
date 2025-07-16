@@ -16,6 +16,10 @@
 #include <esp_timer.h>
 #endif
 
+#ifdef USERMOD_DEADLINE_TROPHY
+#include "../usermods/DEADLINE_TROPHY/usermod_deadline_trophy.h"
+#endif
+
 /*
  * Usermods allow you to add own functionality to WLED more easily
  * See: https://github.com/wled-dev/WLED/wiki/Add-own-functionality
@@ -1863,6 +1867,13 @@ class AudioReactive : public Usermod {
       configComplete &= getJsonValue(top[FPSTR(_digitalmic)]["pin"][1], i2swsPin);
       configComplete &= getJsonValue(top[FPSTR(_digitalmic)]["pin"][2], i2sckPin);
       configComplete &= getJsonValue(top[FPSTR(_digitalmic)]["pin"][3], mclkPin);
+
+    #ifdef USE_DEADLINE_CONFIG
+      enabled = true;
+      i2ssdPin = DeadlineTrophyUsermod::PIN_AR_SD;
+      i2swsPin = DeadlineTrophyUsermod::PIN_AR_WS;
+      i2sckPin = DeadlineTrophyUsermod::PIN_AR_CLK;
+    #endif
 
       configComplete &= getJsonValue(top[FPSTR(_config)][F("squelch")], soundSquelch);
       configComplete &= getJsonValue(top[FPSTR(_config)][F("gain")],    sampleGain);

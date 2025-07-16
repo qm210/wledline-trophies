@@ -2,6 +2,7 @@
 #include "wled_ethernet.h"
 
 #ifdef USE_DEADLINE_CONFIG
+#include "../usermods/DEADLINE_TROPHY/config_overwrite.h"
 #include "../usermods/DEADLINE_TROPHY/DeadlineTrophy.h"
 #endif
 
@@ -804,6 +805,16 @@ void deserializeConfigFromFS() {
   #endif
 
   success = readObjectFromFile(s_cfg_json, nullptr, pDoc);
+
+  JsonObject cfg = doc.as<JsonObject>();
+  bool needsSave = false;
+
+  #ifdef USE_DEADLINE_CONFIG
+    DEBUG_PRINTLN(F("[USE_DEADLINE_CONFIG] Overwrite config by hard-coded deadline config"));
+    // DeadlineTrophyUsermod::overwriteConfigForTrophy(cfg);
+    overwriteConfigForTrophy(cfg);
+    needsSave = true;
+  #endif
 
   // NOTE: This routine deserializes *and* applies the configuration
   //       Therefore, must also initialize ethernet from this function
