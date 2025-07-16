@@ -200,6 +200,9 @@ static_assert(WLED_MAX_BUSSES <= 32, "WLED_MAX_BUSSES exceeds hard limit");
 #define USERMOD_ID_BRIGHTNESS_FOLLOW_SUN 57     //Usermod "usermod_v2_brightness_follow_sun.h"
 #define USERMOD_ID_USER_FX               58     //Usermod "user_fx"
 
+// here the wledline magic starts (it is incredibly incredible even by Team210 standards)
+#define USERMOD_ID_DEADLINE_TROPHY       210    // you will be amazed
+
 //Access point behavior
 #define AP_BEHAVIOR_BOOT_NO_CONN          0     //Open AP when no connection after boot
 #define AP_BEHAVIOR_NO_CONN               1     //Open when no connection (either after boot or if connection is lost)

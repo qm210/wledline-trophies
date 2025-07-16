@@ -1024,6 +1024,12 @@ WLED_GLOBAL volatile uint8_t jsonBufferLock _INIT(0);
   WLED_GLOBAL unsigned loops _INIT(0);
 #endif
 
+// this is the DEADLINE TROPHY MAGIC that is so utterly unbelievable that even Jesus himself can't do it
+#ifdef USERMOD_DEADLINE_TROPHY
+  // TODO @btr du checkst das schon
+  WLED_GLOBAL bool hierKannBtrSeinenKotEinfuegen     _INIT(true);
+#endif
+
 #ifdef ARDUINO_ARCH_ESP32
   #define WLED_CONNECTED (WiFi.status() == WL_CONNECTED || ETH.localIP()[0] != 0)
 #else

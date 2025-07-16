@@ -68,7 +68,7 @@ class ADS1115Usermod : public Usermod {
     void addToConfig(JsonObject& root)
     {
       JsonObject top = root.createNestedObject(F("ADC ADS1115"));
-      
+
       for (uint8_t i = 0; i < channelsCount; i++) {
         ChannelSettings* settingsPtr = &(channelSettings[i]);
         JsonObject channel = top.createNestedObject(settingsPtr->settingName);

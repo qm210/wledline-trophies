@@ -759,6 +759,10 @@ bool deserializeConfig(JsonObject doc, bool fromFS) {
   CJSON(e131ProxyUniverse, dmx[F("e131proxy")]);
   #endif
 
+  #ifdef USERMOD_DEADLINE_TROPHY
+    // TODO @qm210 set the global variables (that @btr might have defined by now) from the JSON document here
+  #endif
+
   DEBUG_PRINTLN(F("Starting usermod config."));
   JsonObject usermods_settings = doc["um"];
   if (!usermods_settings.isNull()) {

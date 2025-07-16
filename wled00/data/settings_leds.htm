@@ -271,7 +271,7 @@
 				gRGBW |= hasW(t);                                                           // RGBW checkbox
 				gId("co"+n).style.display = (isVir(t) || isAna(t)) ? "none":"inline";       // hide color order for PWM
 				gId("dig"+n+"w").style.display = (isDig(t) && hasW(t)) ? "inline":"none";   // show swap channels dropdown
-				gId("dig"+n+"w").querySelector("[data-opt=CCT]").disabled = !hasCCT(t);     // disable WW/CW swapping	
+				gId("dig"+n+"w").querySelector("[data-opt=CCT]").disabled = !hasCCT(t);     // disable WW/CW swapping
 				if (!(isDig(t) && hasW(t))) d.Sf["WO"+n].value = 0;                         // reset swapping
 				gId("dig"+n+"c").style.display = (isAna(t)) ? "none":"inline";              // hide count for analog
 				gId("dig"+n+"r").style.display = (isVir(t)) ? "none":"inline";              // hide reversed for virtual
@@ -479,7 +479,7 @@ mA/LED: <select name="LAsel${s}" onchange="enLA(this,'${s}');UI();">
 							if (type.t != undefined && type.t != "") {
 								opt.setAttribute('data-type', type.t);
 							}
-							sel.appendChild(opt);			
+							sel.appendChild(opt);
 						}
 					}
 				});
@@ -586,7 +586,7 @@ Swap: <select id="xw${s}" name="XW${s}">
 			var cs = false;
 			for (var i=1; i < gEBCN("iST").length; i++) {
 				var s = chrID(i);
-				var p = chrID(i-1); // cover edge case 'A' previous char being '9' 
+				var p = chrID(i-1); // cover edge case 'A' previous char being '9'
 				var v = parseInt(gId("ls"+p).value) + parseInt(gN("LC"+p).value);
 				if (v != parseInt(gId("ls"+s).value)) {cs = true; startsDirty[i] = true;}
 			}
@@ -617,7 +617,7 @@ Swap: <select id="xw${s}" name="XW${s}">
 
 			function receivedText(e) {
 				let lines = e.target.result;
-				let c = JSON.parse(lines); 
+				let c = JSON.parse(lines);
 				if (c.hw) {
 					if (c.hw.led) {
 						// remove all existing outputs
