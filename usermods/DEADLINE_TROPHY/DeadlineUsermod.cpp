@@ -31,6 +31,13 @@ void DeadlineUsermod::sendTrophyUdp()
     return;
   }
 
+  // udpSenderIntervalSec must be set > 0. else the ESP32 sender queue can get clogged.
+  if (sendUdpInSec > 0.) {
+    sendUdpInSec -= elapsedSec;
+    return;
+  }
+  sendUdpInSec += udpSenderIntervalSec;
+
   // QM Note: Using DRGB protocol, i.e. limited to 490
   // This is enough for the DL Trophy (172 LEDs).
   // If this is decoupled and more are needed -> use DNRGB

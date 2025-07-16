@@ -56,9 +56,10 @@ public:
 
     */
 
-    const float maxCurrent = DEADLINE_MAX_AMPERE * 1000;
+    const float maxCurrent = ABL_MILLIAMPS_DEFAULT;
 
     bool udpSenderEnabled = true;
+    float udpSenderIntervalSec = 0.01; // must not überforder the ESP32 WiFi! this CAN happen.
     bool doDebugLogUdp = false;
     bool doOneVerboseDebugLogUdp = false;
 
