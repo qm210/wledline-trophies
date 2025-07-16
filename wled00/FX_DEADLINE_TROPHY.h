@@ -135,7 +135,8 @@ uint16_t mode_DeadlineTrophy(void) {
 
     size_t i, x, y;
     uint32_t col = SEGCOLOR(0);
-    CHSV color = rgb2hsv_approximate(CRGB(col));
+    CHSV color_ = rgb2hsv_approximate(CRGB(col));
+    CHSV color(color_);
 
     if (SEGENV.call == 0) {
         DEBUG_PRINTF("[DEADLINE_TROPHY] FX was called, now initialized for segment %d (%s) :)\n", strip.getCurrSegmentId(), SEGMENT.name);
@@ -171,10 +172,11 @@ uint16_t mode_DeadlineTrophy(void) {
             float intensity = exp(- (dist_x*dist_x)/size - (dist_y*dist_y)/size);
 
             intensity = dist_x > 0 ? exp(-dist_x / size) : 0.;
-            color.hue -= 90. * intensity;
-            color.value *= intensity * intensity * intensity;
-
+            color.hue = color_.hue - 90. * intensity;
+            color.sat = color_.sat;
+            color.val = color_.val * intensity * intensity;
             col = uint32_t(CRGB(color));
+
             setLogo(x, y, col);
         }
     }
@@ -186,8 +188,9 @@ uint16_t mode_DeadlineTrophy(void) {
             float wave = sin_t(PI / 15. * (static_cast<float>(i) - 0.007 * strip.now));
             float abs_wave = (wave > 0. ? wave : -wave);
             float slow_wave = 0.7 + 0.3 * sin_t(TWO_PI / 10000. * strip.now);
-            color.hue -= 20. * wave * abs_wave;
-            color.val *= wave * abs_wave * slow_wave;
+
+            color.hue = color_.hue - 20. * wave * abs_wave;
+            color.val = color_.val * abs_wave * slow_wave;
 
             if (s == 0) {
                 x = 1 + i;
