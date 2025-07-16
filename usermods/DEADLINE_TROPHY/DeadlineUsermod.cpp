@@ -55,15 +55,6 @@ void DeadlineUsermod::sendTrophyUdp()
     udpPacket[s++] = g;
     udpPacket[s++] = b;
   }
-  /* for (int i=0; i < nLeds; i++) {
-    uint32_t color = strip.getPixelColor(i);
-    uint8_t r = R(color);
-    uint8_t g = G(color);
-    uint8_t b = B(color);
-    udpPacket[s++] = r;
-    udpPacket[s++] = g;
-    udpPacket[s++] = b;
-  } */
 
   udpSender.beginPacket(udpSenderIp, udpSenderPort);
   udpSender.write(udpPacket, packetSize);
