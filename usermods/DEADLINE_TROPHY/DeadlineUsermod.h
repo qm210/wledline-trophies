@@ -58,7 +58,7 @@ public:
 
     */
 
-    const float maxCurrent = DEADLINE_MAX_AMPERE * 1000;
+    const float maxCurrent = ABL_MILLIAMPS_DEFAULT * 1000;
 
     bool doSendUdp = true;
     bool keepSendingUdp = true;

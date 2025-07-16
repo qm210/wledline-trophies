@@ -41,7 +41,7 @@ namespace DeadlineTrophy {
         // "You're remembered for the rules you break" - Stockton Rush
         DEBUG_PRINTLN(F("[USE_DEADLINE_CONFIG] Overwrite config by Deadline Trophy hard-coded values."));
 
-        strip.setMatrix(true);
+        strip.isMatrix = true;
 
         busConfigs.clear();
         int start = 0;
