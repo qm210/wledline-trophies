@@ -795,9 +795,9 @@ void deserializeConfigFromFS() {
   #ifdef RESET_CONFIG
     DEBUG_PRINT(F("[RESET_CONFIG] Flag set; Delete /cfg.json... "));
     if (WLED_FS.remove("/cfg.json")) {
-        DEBUG_PRINTLN("done.");
+        DEBUG_PRINTLN(F("done."));
     } else {
-        DEBUG_PRINTLN("failed.");
+        DEBUG_PRINTLN(F("failed."));
     }
   #else
     DEBUG_PRINTLN(F("Reading settings from /cfg.json..."));

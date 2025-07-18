@@ -401,14 +401,20 @@ public:
 
         JsonObject sim = top["simulator"];
         if (!sim.isNull()) {
-            // udpSenderIp = IPAddress(static_cast<uint32_t>(sim["ip"]));
-            udpSenderIp = IPAddress(
-                atoi(sim["ipOct1"]),
-                atoi(sim["ipOct2"]),
-                atoi(sim["ipOct3"]),
-                atoi(sim["ipOct4"])
-            );
             udpSenderPort = sim["port"];
+
+            if (sim.containsKey("ipOct1")) {
+                // this is the WebUI implementation
+                udpSenderIp = IPAddress(
+                    atoi(sim["ipOct1"]),
+                    atoi(sim["ipOct2"]),
+                    atoi(sim["ipOct3"]),
+                    atoi(sim["ipOct4"])
+                );
+            } else {
+                // this is the persisted key
+                udpSenderIp = IPAddress(static_cast<uint32_t>(sim["ip"]));
+            }
         }
 
         JsonObject limV = top["minVoltage"];

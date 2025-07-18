@@ -121,7 +121,7 @@ uint32_t float_hsv(float hue, float sat, float val) {
     return color & 0x00FFFFFF;
 }
 
-const int DEBUG_LOG_EVERY_N_CALLS = 500; // for printing debug output every ... steps (0 = no debug out)
+const int DEBUG_LOG_EVERY_N_CALLS = 0; // for printing debug output every ... steps (0 = no debug out)
 
 #define IS_DEBUG_STEP (DEBUG_LOG_EVERY_N_CALLS > 0 && (SEGENV.call % DEBUG_LOG_EVERY_N_CALLS) == 0)
 
