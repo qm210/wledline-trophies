@@ -41,6 +41,12 @@ Then have your modifications in the `data/` folder:
  * `data/FX_DEADLINE_TROPHY.h` - your pattern (there will be some documentation somewhere on what to actually do)
  * `data/my_config.h` - your global config flags via `#define`, e.g. network settings blablahblooblooh
 
+The `my_config.h` should at least contain the credentials for your WiFi in order to access the UI on http://deadline.local (default, configurable later on)
+```
+#define CLIENT_SSID "..."
+#define CLIENT_PASS "..."
+```
+
 then mount these into the container (depending on your environment) and run the thing;
 ```
 # Linux
@@ -57,7 +63,6 @@ You can then run [esptool](https://docs.espressif.com/projects/esptool/en/latest
 ```
 esptool --port <Port> write-flash -z 0x10000 deadline_trophy.bin
 # ... so use the correct port, looking like "/dev/ttyUSB0" under Linux and "COM5" under Windows
-# The 0x10000 is where the 
 
 # Note, if esptool is not available, but pip is, just use one of these
 #   pip install esptool
@@ -67,8 +72,24 @@ esptool --port <Port> write-flash -z 0x10000 deadline_trophy.bin
  * make sure your ESP32 controller is connected to some available COM port.
  * also make sure the cable is not a charge-only cable ;)
  * seems there is a `--chip esp32` that can be left out, but if something doesn't work, try the esptool command with that.
+ * The `0x10000` is where the application partition should start - worked on QM's machine - tell me if it doesn't.
 
-### Troubleshooting the Containerized Build
+If no errors appeared until there, one should be able to access the UI in the configured network under http://deadline.local
+
+### Summary: Developer Workflow
+So, ideally, for the time being, you do (in this project root folder)
+ * Set Up (once or seldom)
+   * `podman build -t trophy-builder .`
+   * adjust `data/my_config.h`
+ * Then all day long (example PowerShell, adjust as required)
+   * adjust `data/FX_DEADLINE_TROPHY.h` according to whatever floats your goat
+   * `podman run --rm -v ${PWD}/data:/mnt trophy-builder`
+   * `esptool --port COM5 write-flash -z 0x10000 .\data\firmware.bin`
+ * And when the weather starts getting harsher, remember that once again, it might be Deadline soon.
+
+## Troubleshooting
+
+#### the Containerized Build
 for troubleshooting in Podman: (if you use Docker, I assume you know your stuff anyway.)
 ```
 # make sure the VM is actually running, otherwise call these two and build again
