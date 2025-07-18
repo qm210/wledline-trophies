@@ -55,7 +55,7 @@ This will then run platformio and produce a `data/deadline_trophy.bin` (also one
 ### Upload the .bin to the Controller
 You can then run [esptool](https://docs.espressif.com/projects/esptool/en/latest/esp32/esptool/flashing-firmware.html) to upload
 ```
-esptool --chip esp32 --port <Port> write_flash -z 0x1000 deadline_trophy.bin
+esptool --port <Port> write-flash -z 0x1000 deadline_trophy.bin
 # ... so use the correct one, maybe:
 # - Linux has ports like "/dev/ttyUSB0"
 # - Windows has ports like "COM5"
@@ -67,6 +67,7 @@ esptool --chip esp32 --port <Port> write_flash -z 0x1000 deadline_trophy.bin
 ```
  * make sure your ESP32 controller is connected to some available COM port.
  * also make sure the cable is not a charge-only cable ;)
+ * seems there is a `--chip esp32` that can be left out, but if something doesn't work, try the esptool command with that.
 
 ### Troubleshooting the Containerized Build
 for troubleshooting in Podman: (if you use Docker, I assume you know your stuff anyway.)
