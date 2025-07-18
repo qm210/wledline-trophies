@@ -14,6 +14,7 @@ touch wled00/my_config.h
 platformio run
 
 # and publish the result
+cp -v .pio/build/deadline_trophy/firmware.bin /mnt/deadline_trophy.bin
 cp -v .pio/build/deadline_trophy/firmware.bin /mnt/deadline_trophy_$(date +%Y%m%d_%H%M).bin
 
 # Maybe Zukunftsmusik: Manage the upload to the COM port from the container, like

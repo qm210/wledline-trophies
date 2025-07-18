@@ -21,12 +21,14 @@ You can use this
 So then you can run this WLED fork on the controller without any LEDs attached and visualize the
 
 
-## Building via PlatformIO
+## Build & Upload via PlatformIO
+If you hate using such build containers (because you feel irrationally smart or something) or have PlatformIO anyway:
+
 Take PlatformIO (i.e. [PlatformIO for VSCode](https://platformio.org/install/ide?install=vscode)), download the repo, connect the controller via COM port, upload the shit via PlatformIO and tell me where it breaks.
 
-## Building via our docker image
-Disclaimer: If you hate using such build images, for some irrational reason or another, just use PlatformIO with the raw sources on your own
- * If you fail, just ask me
+## Build via Container
+Less requirements on your local drive, and less pollution, and maybe less confusing – just as an option.
+ * If you fail, just ask me (the qm dude)
    * If you are half as insufferable as your hate against images suggests, I will be glad to help :)
    * If you fall into the wrong half - I don't give a shit.
 
@@ -48,10 +50,24 @@ podman run --rm -v ${PWD}/data:/mnt trophy-builder
 # Windows Command Prompt
 podman run --rm -v %cd%\data:/mnt trophy-builder
 ```
-This will then run platformio including the upload.
+This will then run platformio and produce a `data/deadline_trophy.bin` (also one with a timestamp, just in case...).
+
+### Upload the .bin to the Controller
+You can then run [esptool](https://docs.espressif.com/projects/esptool/en/latest/esp32/esptool/flashing-firmware.html) to upload
+```
+esptool.py --chip esp32 --port <Port> write_flash -z 0x1000 deadline_trophy.bin
+# ... so use the correct one, maybe:
+# - Linux has ports like "/dev/ttyUSB0"
+# - Windows has ports like "COM5"
+
+# Note, if you didn't set up esptool on its own, but platformio, you can access it as
+# cd <UserDirectory>\.platformio\packages\tool-esptoolpy\
+# python esptool.py --chip esp32 --port <Port> write_flash 0x1000 deadline_trophy.bin
+```
  * make sure your ESP32 controller is connected to some available COM port.
  * also make sure the cable is not a charge-only cable ;)
 
+### Troubleshooting the Containerized Build
 for troubleshooting in Podman: (if you use Docker, I assume you know your stuff anyway.)
 ```
 # make sure the VM is actually running, otherwise call these two and build again
