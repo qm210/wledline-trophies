@@ -22,7 +22,7 @@ So then you can run this WLED fork on the controller without any LEDs attached a
 
 
 ## Building via PlatformIO
-Take PlatformIO (i.e. [PlatformIO for VSCode](https://platformio.org/install/ide?install=vscode)), download the repo, connect the controller, upload the shit and tell me where it breaks.
+Take PlatformIO (i.e. [PlatformIO for VSCode](https://platformio.org/install/ide?install=vscode)), download the repo, connect the controller via COM port, upload the shit via PlatformIO and tell me where it breaks.
 
 ## Building via our docker image
 Disclaimer: If you hate using such build images, for some irrational reason or another, just use PlatformIO with the raw sources on your own
@@ -31,14 +31,41 @@ Disclaimer: If you hate using such build images, for some irrational reason or a
    * If you fall into the wrong half - I don't give a shit.
 
 Now:
-Can be built using Docker or the more lightweight [Podman](https://podman.io/docs/installation), for the latter you might need to start the podman VM:
+Can be built using Docker or the more lightweight [Podman](https://podman.io/docs/installation), as
 ```
+podman build -t trophy-builder .
+```
+Then have your modifications in the `data/` folder:
+ * `data/FX_DEADLINE_TROPHY.h` - your pattern (there will be some documentation somewhere on what to actually do)
+ * `data/my_config.h` - your global config flags via `#define`, e.g. network settings blablahblooblooh
+
+then mount these into the container (depending on your environment) and run the thing;
+```
+# Linux
+podman run --rm -v $(pwd)/data:/mnt trophy-builder
+# Windows PowerShell
+podman run --rm -v ${PWD}/data:/mnt trophy-builder
+# Windows Command Prompt
+podman run --rm -v %cd%\data:/mnt trophy-builder
+```
+This will then run platformio including the upload.
+ * make sure your ESP32 controller is connected to some available COM port.
+ * also make sure the cable is not a charge-only cable ;)
+
+for troubleshooting in Podman: (if you use Docker, I assume you know your stuff anyway.)
+```
+# make sure the VM is actually running, otherwise call these two and build again
 podman machine init
 podman machine start
 
-... to be continued ...
+# might come handy:
+podman images
+
+# if there is garbage, you can remove these by
+#  podman rmi <id>
+#  podman image prune
 ```
-yeah. to be continued.
+
 
 ## Forked from the offical WLED release 0.16.0
  * https://github.com/wled/WLED

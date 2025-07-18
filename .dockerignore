@@ -1,0 +1,12 @@
+usermods/*
+!usermods/audioreactive
+!usermods/DEADLINE_TROPHY
+
+node_modules/
+.*/
+build_output/
+images/
+lib/
+test/
+
+*.bin
