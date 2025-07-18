@@ -55,10 +55,9 @@ This will then run platformio and produce a `data/deadline_trophy.bin` (also one
 ### Upload the .bin to the Controller
 You can then run [esptool](https://docs.espressif.com/projects/esptool/en/latest/esp32/esptool/flashing-firmware.html) to upload
 ```
-esptool --port <Port> write-flash -z 0x1000 deadline_trophy.bin
-# ... so use the correct one, maybe:
-# - Linux has ports like "/dev/ttyUSB0"
-# - Windows has ports like "COM5"
+esptool --port <Port> write-flash -z 0x10000 deadline_trophy.bin
+# ... so use the correct port, looking like "/dev/ttyUSB0" under Linux and "COM5" under Windows
+# The 0x10000 is where the 
 
 # Note, if esptool is not available, but pip is, just use one of these
 #   pip install esptool
