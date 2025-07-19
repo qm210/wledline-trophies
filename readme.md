@@ -71,6 +71,9 @@ podman run --rm -v %cd%\data:/mnt trophy-builder
 This will then run platformio and produce a `data/deadline_trophy.bin` (also one with a timestamp, just in case...).
 
 ### Upload the .bin to the Controller
+> [!NOTE]
+> OH! :scream: Looks like I just found out about the [ESP Flash Download Tool](https://docs.espressif.com/projects/esp-test-tools/en/latest/esp32/production_stage/tools/flash_download_tool.html) - maybe give it a try.
+
 You can then run [esptool](https://docs.espressif.com/projects/esptool/en/latest/esp32/esptool/flashing-firmware.html) to upload
 ```
 esptool --port <Port> write-flash -z 0x10000 deadline_trophy.bin
