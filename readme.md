@@ -18,15 +18,23 @@ You can use this
 * and as long as you get the Simulator built
   * so far, only tested on a Windows 11, but this will expand to whatever we need
 
-So then you can run this WLED fork on the controller without any LEDs attached and visualize the
+So then you can run this WLED fork on the controller without any LEDs attached and visualize the theoretical output.
 
-
-## Build & Upload via PlatformIO
+# Build & Upload via PlatformIO
 If you hate using such build containers (because you feel irrationally smart or something) or have PlatformIO anyway:
 
 Take PlatformIO (i.e. [PlatformIO for VSCode](https://platformio.org/install/ide?install=vscode)), download the repo, connect the controller via COM port, upload the shit via PlatformIO and tell me where it breaks.
 
-## Build via Container
+#### Stuff to Change
+Obviously, no one can stop you from changing whatever you find here, but if you just want to develop a pattern of your own, look for
+* `wled00/my_config.h`
+  * for some overall define flags (it should contain some documentation, speaking as of now)
+* `wled00/FX_DEADLINE_TROPHY.h`
+  * contains the function that is called for every time step and segment
+  * modify this to make your own pattern instead
+  * for inspiration, you can look to the [existing patterns in FX.cpp](wled00/FX.cpp)
+
+# Build via Container
 Less requirements on your local drive, and less pollution, and maybe less confusing – just as an option.
  * If you fail, just ask me (the qm dude)
    * If you are half as insufferable as your hate against images suggests, I will be glad to help :)
