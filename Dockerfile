@@ -4,26 +4,32 @@
 # the ultimate idea is that this is called as (mounting in your modifications in data/)
 #   > podman run --rm -v ${PWD}/data:/mnt <name>
 #
-# note: I figured I'll take a python-with-platformio base image
-#       and then install node there, instead of the other way round.
-#       Might think about blahblahbloobloobloooh, but didn't, so far.
+# note: based on the idea of the takigama/platformio base image
+#       but they don't offer platformio 6.1.6 yet, which we require
+#       (well, I didn't. but Korkenzieher did.)
 
-FROM takigama/platformio
+#FROM python:3
+FROM nikolaik/python-nodejs:python3.13-nodejs20
 
-WORKDIR /opt
+# for debug output, but less spammypip install
+RUN git config --global advice.detachedHead false
+RUN set -x
 
-COPY . /opt
+RUN pip install -U platformio==6.1.18
 
-RUN apt-get update \
- && apt-get install -y curl gnupg udev \
- && curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
- && apt-get install -y nodejs \
- && apt-get clean \
- && rm -rf /var/lib/apt/lists/*
+# RUN apt-get update \
+#  && apt-get install -y curl gnupg udev \
+#  && curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
+#  && apt-get install -y nodejs \
+#  && apt-get clean \
+#  && rm -rf /var/lib/apt/lists/* \
+
 RUN npm install -g npm@latest
 
-RUN platformio pkg install --project-dir .
-
+WORKDIR /opt
+COPY . /opt
 RUN chmod +x ./container_build.sh
+
+RUN platformio pkg install --project-dir .
 
 CMD ["/bin/bash", "./container_build.sh"]

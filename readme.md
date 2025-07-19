@@ -100,7 +100,7 @@ There are a lot, but these are most relevant to know
 // if set, this will always delete the config file on the controller at boot
 #define RESET_CONFIG
 
-// if set, this will increase logging to read from the Serial monitor (e.g. the one in PlatformIO)
+// if set, this will increase logging to read from any Serial monitor (baud 115200)
 #define WLED_DEBUG
 ```
 
