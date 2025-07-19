@@ -1,5 +1,7 @@
 # This is QM's WLED fork for best support of the Deadline'24 Trophy ever
-Modified for multiple reasons
+.. and there's oh-so-little one can do about it.
+
+Why fork, you might ask? Because multiple reasons:
  * Hard limit of the maximum current
    * Due to a lot of LEDs tightly packed within epoxy, these can get too hot otherwise and kill the circuit
    * these CAN NOT be fixed!
@@ -7,6 +9,8 @@ Modified for multiple reasons
  * ability to constantly send the current RGB values via UDP
    * in order to work with my Trophy Smiuluator at https://github.com/qm210/dltrophy-simulator
  * easier development using a build image (see below)
+
+Also, if these don't convince you, well – fork you ¯\\\_(ツ)\_/¯
 
 ## If you are one of these losers who do not have a Trophy yet
 ...good news that I had several ounces of boque to invest into the [Simulator](https://github.com/qm210/dltrophy-simulator)
