@@ -68,28 +68,41 @@ podman run --rm -v ${PWD}/data:/mnt trophy-builder
 # Windows Command Prompt
 podman run --rm -v %cd%\data:/mnt trophy-builder
 ```
-This will then run platformio and produce a `data/deadline_trophy.bin` (also one with a timestamp, just in case...).
+This will then run platformio and produce a `data/firmware.bin` (also one called `deadline_trophy_<Timestamp>.bin`, just in case you tend to get distracted...).
 
-### Upload the .bin to the Controller
-> [!NOTE]
-> OH! :scream: Looks like I just found out about the [ESP Flash Download Tool](https://docs.espressif.com/projects/esp-test-tools/en/latest/esp32/production_stage/tools/flash_download_tool.html) - maybe give it a try.
+## Upload the .bin to the Controller
+One should be able to access the UI
 
-You can then run [esptool](https://docs.espressif.com/projects/esptool/en/latest/esp32/esptool/flashing-firmware.html) to upload
+The resulting `firmware.bin` can be uploaded via WLED's integrated Over-The-Air Updater, via
+* Web UI -> Config -> Security & Updates -> Manual OTA Update
+  * e.g. [http://<WLED host>/update](http://deadline.local/update) (...unless you changed that hostname.)
+* Select the bin file and **Update!**
+
+There are manual ways of doing this with `esptool` etc. but this required advanced knowledge about the partitioning,
+i.e. I can prepare that documentation but if no one ever needs it, won't waste my time now... gotta do important... shrooms, or something.
+
+This fork uses `deadline.local` as default DNS name, i.e. you can then access the UI under http://deadline.local, when in your configured network. You can also pass
+
+### Compiler Flags
+There are a lot, but these are most relevant to know
 ```
-esptool --port <Port> write-flash -z 0x10000 deadline_trophy.bin
-# ... so use the correct port, looking like "/dev/ttyUSB0" under Linux and "COM5" under Windows
+// local network access
+#define CLIENT_SSID "guess what"
+#define CLIENT_PASS "won't tell you"
 
-# Note, if esptool is not available, but pip is, just use one of these
-#   pip install esptool
-#   python -m pip install esptool
-# ... or pip3 or whatever... guess you're old enough.
+// to access the UI under http://whatever.local
+#define MDNS_NAME whatever
+
+// for the Simulator
+#define DEADLINE_UDP_SENDER_IP "192.168.178.20"
+#define DEADLINE_UDP_SENDER_PORT 3413
+
+// if set, this will always delete the config file on the controller at boot
+#define RESET_CONFIG
+
+// if set, this will increase logging to read from the Serial monitor (e.g. the one in PlatformIO)
+#define WLED_DEBUG
 ```
- * make sure your ESP32 controller is connected to some available COM port.
- * also make sure the cable is not a charge-only cable ;)
- * seems there is a `--chip esp32` that can be left out, but if something doesn't work, try the esptool command with that.
- * The `0x10000` is where the application partition should start - worked on QM's machine - tell me if it doesn't.
-
-If no errors appeared until there, one should be able to access the UI in the configured network under http://deadline.local
 
 ### Summary: Developer Workflow
 So, ideally, for the time being, you do (in this project root folder)
