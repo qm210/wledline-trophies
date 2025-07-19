@@ -164,7 +164,7 @@ void WS2812FX::setUpDeadlineTrophy() {
     _length = DeadlineTrophy::N_LEDS_TOTAL;
 
     Segment::maxWidth = DeadlineTrophy::logoW;
-    Segment::maxHeight = DeadlineTrophy::logoH + DeadlineTrophy::baseEdge;
+    Segment::maxHeight = DeadlineTrophy::logoH + DeadlineTrophy::baseSize;
     _mainSegment = 1; // is the logo, no idea where this is used (so far)
 
     _segments.clear();

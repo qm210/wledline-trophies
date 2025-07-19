@@ -71,11 +71,9 @@ const int valSpread = 2.;
 const float satDecay = 0.5;
 const float satSpawnChance = 0.001;
 
-const int logoW = DeadlineTrophy::logoW;
-const int logoH = DeadlineTrophy::logoH;
-const int baseSize = DeadlineTrophy::baseEdge;
+using namespace DeadlineTrophy;
 
-// TODO: Umrechnungsfunktionen in DeadlineTrophy.h schieben.
+// could do: Umrechnungsfunktionen in DeadlineTrophy.h schieben.
 inline void setPixel(size_t segmentIndex, int x, int y, uint32_t color) {
     if (strip.getCurrSegmentId() != segmentIndex) {
         return;
@@ -107,6 +105,11 @@ void setFloor(uint32_t color) {
     setPixel(3, baseSize, logoH + 1, color);
 }
 
+const int baseX0[4] = {17, 16, 0, 1};
+const int baseY0[4] = {1, 17, 16, 0};
+const int baseDX[4] = {0, -1, 0, +1};
+const int baseDY[4] = {+1, 0, -1, 0};
+
 #define IS_BASE_SEGMENT (strip.getCurrSegmentId() == 0)
 #define IS_LOGO_SEGMENT (strip.getCurrSegmentId() == 1)
 
@@ -135,8 +138,8 @@ uint16_t mode_DeadlineTrophy(void) {
 
     size_t i, x, y;
     uint32_t col = SEGCOLOR(0);
-    CHSV color_ = rgb2hsv_approximate(CRGB(col));
-    CHSV color(color_);
+    CHSV color = rgb2hsv_approximate(CRGB(col));
+    CHSV color_(color);
 
     if (SEGENV.call == 0) {
         DEBUG_PRINTF("[DEADLINE_TROPHY] FX was called, now initialized for segment %d (%s) :)\n", strip.getCurrSegmentId(), SEGMENT.name);
@@ -192,22 +195,8 @@ uint16_t mode_DeadlineTrophy(void) {
             color.hue = color_.hue - 20. * wave * abs_wave;
             color.val = color_.val * abs_wave * slow_wave;
 
-            if (s == 0) {
-                x = 1 + i;
-                y = 0;
-            }
-            else if (s == 1) {
-                x = 0;
-                y = 16 - i;
-            }
-            else if (s == 2) {
-                x = 17;
-                y = 1 + i;
-            }
-            else if (s == 3) {
-                x = 16 - i;
-                y = 17;
-            }
+            x = baseX0[s] + baseDX[s] * i;
+            y = baseY0[s] + baseDY[s] * i;
 
             col = uint32_t(CRGB(color));
             setBase(x, y, col);

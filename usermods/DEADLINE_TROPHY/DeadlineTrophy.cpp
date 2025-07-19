@@ -100,10 +100,10 @@ namespace DeadlineTrophy {
         "Floor Spot"
     };
     const Segment segment[] = {
-        { 0, baseEdge, logoH, logoH + baseEdge },
+        { 0, baseSize, logoH, logoH + baseSize },
         { 0, logoW, 0, logoH },
-        { baseEdge, baseEdge + 1, logoH, logoH + 1 },
-        { baseEdge, baseEdge + 1, logoH + 1, logoH + 2 }
+        { baseSize, baseSize + 1, logoH, logoH + 1 },
+        { baseSize, baseSize + 1, logoH + 1, logoH + 2 }
     };
     const uint8_t segmentCapabilities[] = {
         SEG_CAPABILITY_RGB,
