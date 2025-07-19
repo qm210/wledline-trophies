@@ -19,14 +19,9 @@
 #endif
 #define ABL_MILLIAMPS_DEFAULT 1200
 
-// (this is for the temperature control mechanism that isn't actually used anymore)
-#ifndef DEADLINE_MAX_AMPERE
-#define DEADLINE_MAX_AMPERE 1.2
-#endif
-
-// Brightness should be default at max, then the current needs to be limited still
+// Brightness default at max, because the current limitation should apply anyway (BE VERY SURE ABOUT THAT.)
 #ifndef DEADLINE_INIT_BRIGHTNESS
-#define DEADLINE_INIT_BRIGHTNESS 100
+#define DEADLINE_INIT_BRIGHTNESS 255
 #endif
 
 // Network stuff -- mDNS might be irrelevant, as Scotty told me it isn't enabled (waste of power)
@@ -88,9 +83,9 @@
 #define WLED_ENABLE_WEBSOCKETS
 #endif
 
-#ifndef WLED_DEBUG
-#define WLED_DEBUG
-#endif
+// #ifndef WLED_DEBUG
+// #define WLED_DEBUG
+// #endif
 
 #ifndef WLED_DEBUG_NO_VERBOSE_LOGGING
 #define WLED_DEBUG_NO_VERBOSE_LOGGING

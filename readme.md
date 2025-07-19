@@ -1,84 +1,113 @@
-<p align="center">
-  <img src="/images/wled_logo_akemi.png">
-  <a href="https://github.com/wled-dev/WLED/releases"><img src="https://img.shields.io/github/release/wled-dev/WLED.svg?style=flat-square"></a>
-  <a href="https://raw.githubusercontent.com/wled-dev/WLED/main/LICENSE"><img src="https://img.shields.io/github/license/wled-dev/wled?color=blue&style=flat-square"></a>
-  <a href="https://wled.discourse.group"><img src="https://img.shields.io/discourse/topics?colorB=blue&label=forum&server=https%3A%2F%2Fwled.discourse.group%2F&style=flat-square"></a>
-  <a href="https://discord.gg/QAh7wJHrRM"><img src="https://img.shields.io/discord/473448917040758787.svg?colorB=blue&label=discord&style=flat-square"></a>
-  <a href="https://kno.wled.ge"><img src="https://img.shields.io/badge/quick_start-wiki-blue.svg?style=flat-square"></a>
-  <a href="https://github.com/Aircoookie/WLED-App"><img src="https://img.shields.io/badge/app-wled-blue.svg?style=flat-square"></a>
-  <a href="https://gitpod.io/#https://github.com/wled-dev/WLED"><img src="https://img.shields.io/badge/Gitpod-ready--to--code-blue?style=flat-square&logo=gitpod"></a>
+# This is QM's WLED fork for best support of the Deadline'24 Trophy ever
+Modified for multiple reasons
+ * Hard limit of the maximum current
+   * Due to a lot of LEDs tightly packed within epoxy, these can get too hot otherwise and kill the circuit
+   * these CAN NOT be fixed!
+ * Fixed LED segments for base, logo, and the single-white LEDs at the floor and back side
+ * ability to constantly send the current RGB values via UDP
+   * in order to work with my Trophy Smiuluator at https://github.com/qm210/dltrophy-simulator
+ * easier development using a build image (see below)
 
-  </p>
+## If you are one of these losers who do not have a Trophy yet
+...good news that I had several ounces of boque to invest into the [Simulator](https://github.com/qm210/dltrophy-simulator)
 
-# Welcome to my project WLED! ✨
+You can use this
+* as long as you have a single ESP32 on your own
+  * should work for a ESP32-WROOM-32D with at least 4 MB Flash
+  * but try whatevery you have and tell me about it
+* and as long as you get the Simulator built
+  * so far, only tested on a Windows 11, but this will expand to whatever we need
 
-A fast and feature-rich implementation of an ESP32 and ESP8266 webserver to control NeoPixel (WS2812B, WS2811, SK6812) LEDs or also SPI based chipsets like the WS2801 and APA102!
-
-## ⚙️ Features
-- WS2812FX library with more than 100 special effects  
-- FastLED noise effects and 50 palettes  
-- Modern UI with color, effect and segment controls  
-- Segments to set different effects and colors to user defined parts of the LED string  
-- Settings page - configuration via the network  
-- Access Point and station mode - automatic failsafe AP  
-- [Up to 10 LED outputs](https://kno.wled.ge/features/multi-strip/#esp32) per instance
-- Support for RGBW strips  
-- Up to 250 user presets to save and load colors/effects easily, supports cycling through them.  
-- Presets can be used to automatically execute API calls  
-- Nightlight function (gradually dims down)  
-- Full OTA software updateability (HTTP + ArduinoOTA), password protectable  
-- Configurable analog clock (Cronixie, 7-segment and EleksTube IPS clock support via usermods) 
-- Configurable Auto Brightness limit for safe operation  
-- Filesystem-based config for easier backup of presets and settings  
-
-## 💡 Supported light control interfaces
-- WLED app for [Android](https://play.google.com/store/apps/details?id=com.aircoookie.WLED) and [iOS](https://apps.apple.com/us/app/wled/id1475695033)
-- JSON and HTTP request APIs  
-- MQTT   
-- E1.31, Art-Net, DDP and TPM2.net
-- [diyHue](https://github.com/diyhue/diyHue) (Wled is supported by diyHue, including Hue Sync Entertainment under udp. Thanks to [Gregory Mallios](https://github.com/gmallios))
-- [Hyperion](https://github.com/hyperion-project/hyperion.ng)
-- UDP realtime  
-- Alexa voice control (including dimming and color)  
-- Sync to Philips hue lights  
-- Adalight (PC ambilight via serial) and TPM2  
-- Sync color of multiple WLED devices (UDP notifier)  
-- Infrared remotes (24-key RGB, receiver required)  
-- Simple timers/schedules (time from NTP, timezones/DST supported)  
-
-## 📲 Quick start guide and documentation
-
-See the [documentation on our official site](https://kno.wled.ge)!
-
-[On this page](https://kno.wled.ge/basics/tutorials/) you can find excellent tutorials and tools to help you get your new project up and running!
-
-## 🖼️ User interface
-<img src="/images/macbook-pro-space-gray-on-the-wooden-table.jpg" width="50%"><img src="/images/walking-with-iphone-x.jpg" width="50%">
-
-## 💾 Compatible hardware
-
-See [here](https://kno.wled.ge/basics/compatible-hardware)!
-
-## ✌️ Other
-
-Licensed under the EUPL v1.2 license  
-Credits [here](https://kno.wled.ge/about/contributors/)!
-
-Join the Discord server to discuss everything about WLED!
-
-<a href="https://discord.gg/QAh7wJHrRM"><img src="https://discordapp.com/api/guilds/473448917040758787/widget.png?style=banner2" width="25%"></a>
-
-Check out the WLED [Discourse forum](https://wled.discourse.group)!  
-
-You can also send me mails to [dev.aircoookie@gmail.com](mailto:dev.aircoookie@gmail.com), but please, only do so if you want to talk to me privately.  
-
-If WLED really brightens up your day, you can [![](https://img.shields.io/badge/send%20me%20a%20small%20gift-paypal-blue.svg?style=flat-square)](https://paypal.me/aircoookie)
+So then you can run this WLED fork on the controller without any LEDs attached and visualize the
 
 
-*Disclaimer:*   
+## Build & Upload via PlatformIO
+If you hate using such build containers (because you feel irrationally smart or something) or have PlatformIO anyway:
 
-If you are prone to photosensitive epilepsy, we recommended you do **not** use this software.  
-If you still want to try, don't use strobe, lighting or noise modes or high effect speed settings.
+Take PlatformIO (i.e. [PlatformIO for VSCode](https://platformio.org/install/ide?install=vscode)), download the repo, connect the controller via COM port, upload the shit via PlatformIO and tell me where it breaks.
 
-As per the EUPL license, I assume no liability for any damage to you or any other person or equipment.  
+## Build via Container
+Less requirements on your local drive, and less pollution, and maybe less confusing – just as an option.
+ * If you fail, just ask me (the qm dude)
+   * If you are half as insufferable as your hate against images suggests, I will be glad to help :)
+   * If you fall into the wrong half - I don't give a shit.
+
+Now:
+Can be built using Docker or the more lightweight [Podman](https://podman.io/docs/installation), as
+```
+podman build -t trophy-builder .
+```
+Then have your modifications in the `data/` folder:
+ * `data/FX_DEADLINE_TROPHY.h` - your pattern (there will be some documentation somewhere on what to actually do)
+ * `data/my_config.h` - your global config flags via `#define`, e.g. network settings blablahblooblooh
+
+The `my_config.h` should at least contain the credentials for your WiFi in order to access the UI on http://deadline.local (default, configurable later on)
+```
+#define CLIENT_SSID "..."
+#define CLIENT_PASS "..."
+```
+
+then mount these into the container (depending on your environment) and run the thing;
+```
+# Linux
+podman run --rm -v $(pwd)/data:/mnt trophy-builder
+# Windows PowerShell
+podman run --rm -v ${PWD}/data:/mnt trophy-builder
+# Windows Command Prompt
+podman run --rm -v %cd%\data:/mnt trophy-builder
+```
+This will then run platformio and produce a `data/deadline_trophy.bin` (also one with a timestamp, just in case...).
+
+### Upload the .bin to the Controller
+You can then run [esptool](https://docs.espressif.com/projects/esptool/en/latest/esp32/esptool/flashing-firmware.html) to upload
+```
+esptool --port <Port> write-flash -z 0x10000 deadline_trophy.bin
+# ... so use the correct port, looking like "/dev/ttyUSB0" under Linux and "COM5" under Windows
+
+# Note, if esptool is not available, but pip is, just use one of these
+#   pip install esptool
+#   python -m pip install esptool
+# ... or pip3 or whatever... guess you're old enough.
+```
+ * make sure your ESP32 controller is connected to some available COM port.
+ * also make sure the cable is not a charge-only cable ;)
+ * seems there is a `--chip esp32` that can be left out, but if something doesn't work, try the esptool command with that.
+ * The `0x10000` is where the application partition should start - worked on QM's machine - tell me if it doesn't.
+
+If no errors appeared until there, one should be able to access the UI in the configured network under http://deadline.local
+
+### Summary: Developer Workflow
+So, ideally, for the time being, you do (in this project root folder)
+ * Set Up (once or seldom)
+   * `podman build -t trophy-builder .`
+   * adjust `data/my_config.h`
+ * Then all day long (example PowerShell, adjust as required)
+   * adjust `data/FX_DEADLINE_TROPHY.h` according to whatever floats your goat
+   * `podman run --rm -v ${PWD}/data:/mnt trophy-builder`
+   * `esptool --port COM5 write-flash -z 0x10000 .\data\firmware.bin`
+ * And when the weather starts getting harsher, remember that once again, it might be Deadline soon.
+
+## Troubleshooting
+
+#### the Containerized Build
+for troubleshooting in Podman: (if you use Docker, I assume you know your stuff anyway.)
+```
+# make sure the VM is actually running, otherwise call these two and build again
+podman machine init
+podman machine start
+
+# might come handy:
+podman images
+
+# if there is garbage, you can remove these by
+#  podman rmi <id>
+#  podman image prune
+```
+
+
+## Forked from the offical WLED release 0.16.0
+ * https://github.com/wled/WLED
+ * well, forked earlier, but rebased since then.
+ * Licensed under the EUPL v1.2 license
+   * Credits [here](https://kno.wled.ge/about/contributors/)!
 

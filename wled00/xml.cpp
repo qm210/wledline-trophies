@@ -322,6 +322,9 @@ void getSettingsJS(byte subPage, Print& settingsScript)
       char la[4] = "LA"; la[2] = offset+s; la[3] = 0; //LED current
       char ma[4] = "MA"; ma[2] = offset+s; ma[3] = 0; //max per-port PSU current
       settingsScript.print(F("addLEDs(1);"));
+    #ifdef USERMOD_DEADLINE_TROPHY
+      settingsScript.print(F("d.DEADLINE_TROPHY_MOD = true;")); // qm: might actually be unused by now
+    #endif
       uint8_t pins[5];
       int nPins = bus->getPins(pins);
       for (int i = 0; i < nPins; i++) {

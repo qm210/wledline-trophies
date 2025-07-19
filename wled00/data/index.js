@@ -1435,6 +1435,7 @@ function makeWS() {
 	ws = new WebSocket(url);
 	ws.binaryType = "arraybuffer";
 	ws.onmessage = (e)=>{
+        console.log("WS DATA", e);
 		if (e.data instanceof ArrayBuffer) return; // liveview packet
         var json = JSON.parse(e.data);
         if (d.DEBUG) console.info("[QM-DEBUG] WebSocket Message", json);

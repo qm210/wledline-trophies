@@ -45,7 +45,7 @@ void WS2812FX::setUpMatrix() {
     // safety check
     if (Segment::maxWidth * Segment::maxHeight > MAX_LEDS || Segment::maxWidth > 255 || Segment::maxHeight > 255 || Segment::maxWidth <= 1 || Segment::maxHeight <= 1) {
       DEBUG_PRINTLN(F("2D Bounds error."));
-      setMatrix(false);
+      isMatrix = false;
       Segment::maxWidth = _length;
       Segment::maxHeight = 1;
       panel.clear(); // release memory allocated by panels
@@ -145,7 +145,7 @@ void WS2812FX::setUpMatrix() {
       #endif
     } else { // memory allocation error
       DEBUG_PRINTLN(F("ERROR 2D LED map allocation error."));
-      setMatrix(false);
+      isMatrix = false;
       panel.clear();
       Segment::maxWidth = _length;
       Segment::maxHeight = 1;
@@ -153,7 +153,7 @@ void WS2812FX::setUpMatrix() {
     }
   }
 #else
-  setMatrix(false); // no matter what config says
+  isMatrix = false; // no matter what config says
 #endif
 }
 

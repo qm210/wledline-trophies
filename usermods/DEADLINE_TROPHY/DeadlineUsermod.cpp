@@ -31,6 +31,13 @@ void DeadlineUsermod::sendTrophyUdp()
     return;
   }
 
+  // udpSenderIntervalSec must be set > 0. else the ESP32 sender queue can get clogged.
+  if (sendUdpInSec > 0.) {
+    sendUdpInSec -= elapsedSec;
+    return;
+  }
+  sendUdpInSec += udpSenderIntervalSec;
+
   // QM Note: Using DRGB protocol, i.e. limited to 490
   // This is enough for the DL Trophy (172 LEDs).
   // If this is decoupled and more are needed -> use DNRGB
@@ -55,15 +62,6 @@ void DeadlineUsermod::sendTrophyUdp()
     udpPacket[s++] = g;
     udpPacket[s++] = b;
   }
-  /* for (int i=0; i < nLeds; i++) {
-    uint32_t color = strip.getPixelColor(i);
-    uint8_t r = R(color);
-    uint8_t g = G(color);
-    uint8_t b = B(color);
-    udpPacket[s++] = r;
-    udpPacket[s++] = g;
-    udpPacket[s++] = b;
-  } */
 
   udpSender.beginPacket(udpSenderIp, udpSenderPort);
   udpSender.write(udpPacket, packetSize);

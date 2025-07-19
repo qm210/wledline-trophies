@@ -958,11 +958,6 @@ class WS2812FX {
     inline Segment* getSegments()         { return &(_segments[0]); }                     // returns pointer to segment vector structure (warning: use carefully)
 
     // 2D support (panels)
-    bool isMatrix;
-
-    void setMatrix(bool _isMatrix) {
-        isMatrix = _isMatrix;
-    }
 
 #ifndef WLED_DISABLE_2D
     struct Panel {
@@ -1003,6 +998,7 @@ class WS2812FX {
 
   // end 2D support
 
+    bool isMatrix;
     struct {
       bool autoSegments : 1;
       bool correctWB    : 1;
