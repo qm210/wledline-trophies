@@ -1,7 +1,7 @@
 {
-  "name": "wled",
-  "version": "0.16.0-alpha",
-  "description": "Tools for WLED project",
+  "name": "wledline-trophies",
+  "version": "1.0",
+  "description": "WLED fork for Deadline Trophies",
   "main": "tools/cdata.js",
   "directories": {
     "lib": "lib",
@@ -14,14 +14,14 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/wled-dev/WLED.git"
+    "url": "git+https://github.com/qm210/wledline-trophies.git"
   },
   "author": "",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/wled-dev/WLED/issues"
+    "url": "https://github.com/qm210/wledline-trophies/issues"
   },
-  "homepage": "https://github.com/wled-dev/WLED#readme",
+  "homepage": "https://github.com/qm210/wledline-trophies#readme",
   "dependencies": {
     "clean-css": "^5.3.3",
     "html-minifier-terser": "^7.2.0",

@@ -1,10 +1,16 @@
 param(
+    [string]$Name = "trophy-builder",
     [string]$Port
 )
 
-# as an example of how it can look
-# if the previous "podman build -t trophy-builder ." went through successfully
-podman run -it --rm -v $PWD/data:/mnt trophy-builder
+# as an example of how all of this can look
+
+$imageExists = podman images --format "{{.Repository}}" | Where-Object { $_ -eq $Name }
+if (-not $imageExists) {
+    podman build -t $Name .
+}
+
+podman run -it --rm -v $PWD/data:/mnt $Name
 
 # if given the $Port, then try upload (assumes that the build went through)
 if ($PSBoundParameters.ContainsKey('Port')) {

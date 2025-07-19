@@ -71,7 +71,9 @@ const int valSpread = 2.;
 const float satDecay = 0.5;
 const float satSpawnChance = 0.001;
 
-using namespace DeadlineTrophy;
+using DeadlineTrophy::logoW;
+using DeadlineTrophy::logoH;
+using DeadlineTrophy::baseSize;
 
 // could do: Umrechnungsfunktionen in DeadlineTrophy.h schieben.
 inline void setPixel(size_t segmentIndex, int x, int y, uint32_t color) {
