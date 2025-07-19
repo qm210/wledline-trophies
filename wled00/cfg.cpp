@@ -748,6 +748,7 @@ bool deserializeConfig(JsonObject doc, bool fromFS) {
     CJSON(aOtaEnabled, ota[F("aota")]);
     #endif
     getStringFromJson(otaPass, pwd, 33); //normally not present due to security
+    CJSON(otaSameSubnet, ota[F("same-subnet")]);
   }
 
   #ifdef WLED_ENABLE_DMX
@@ -766,6 +767,10 @@ bool deserializeConfig(JsonObject doc, bool fromFS) {
   CJSON(e131ProxyUniverse, dmx[F("e131proxy")]);
   #endif
 
+  #ifdef USERMOD_DEADLINE_TROPHY
+    // TODO @qm210 set the global variables (that @btr might have defined by now) from the JSON document here
+  #endif
+
   DEBUG_PRINTLN(F("Starting usermod config."));
   JsonObject usermods_settings = doc["um"];
   if (!usermods_settings.isNull()) {
@@ -782,7 +787,7 @@ bool deserializeConfig(JsonObject doc, bool fromFS) {
 
 static const char s_cfg_json[] PROGMEM = "/cfg.json";
 
-void deserializeConfigFromFS() {
+bool deserializeConfigFromFS() {
   [[maybe_unused]] bool success = deserializeConfigSec();
   #ifdef WLED_ADD_EEPROM_SUPPORT
   if (!success) { //if file does not exist, try reading from EEPROM
@@ -790,7 +795,7 @@ void deserializeConfigFromFS() {
   }
   #endif
 
-  if (!requestJSONBufferLock(1)) return;
+  if (!requestJSONBufferLock(1)) return false;
 
   #ifdef RESET_CONFIG
     DEBUG_PRINT(F("[RESET_CONFIG] Flag set; Delete /cfg.json... "));
@@ -812,7 +817,7 @@ void deserializeConfigFromFS() {
 
   releaseJSONBufferLock();
 
-  if (needsSave) serializeConfigToFS(); // usermods required new parameters
+  return needsSave;
 }
 
 void serializeConfigToFS() {
@@ -1240,6 +1245,7 @@ void serializeConfig(JsonObject root) {
   #ifndef WLED_DISABLE_OTA
   ota[F("aota")] = aOtaEnabled;
   #endif
+  ota[F("same-subnet")] = otaSameSubnet;
 
   #ifdef WLED_ENABLE_DMX
   JsonObject dmx = root.createNestedObject("dmx");

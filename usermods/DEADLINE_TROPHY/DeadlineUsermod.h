@@ -328,7 +328,6 @@ public:
     void addToConfig(JsonObject& doc)
     {
         JsonObject top = doc.createNestedObject(F("DeadlineTrophy"));
-
         // fun thing, fillUMPins() will look for entries in these "pin" arrays. deal with it.
         auto pins = top.createNestedArray("pin");
         pins.add(PIN_LOGOTHERM);
