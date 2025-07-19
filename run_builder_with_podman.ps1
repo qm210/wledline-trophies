@@ -10,9 +10,13 @@ if (-not $imageExists) {
     podman build -t $Name .
 }
 
-podman run -it --rm -v $PWD/data:/mnt $Name
+podman run --rm -v $PWD/data:/mnt $Name
+
+# for debugging, hack into the container as
+# podman run -it --rm -v $PWD/data:/mnt $Name /bin/bash
 
 # if given the $Port, then try upload (assumes that the build went through)
+# NOTE: this is experimental, rather use the WLED-internal OTA Software Updater!
 if ($PSBoundParameters.ContainsKey('Port')) {
     esptool --port $Port write-flash -z 0x10000 .\data\firmware.bin
 }

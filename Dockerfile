@@ -22,6 +22,8 @@ RUN apt-get update \
  && rm -rf /var/lib/apt/lists/*
 RUN npm install -g npm@latest
 
+RUN platformio pkg install --project-dir .
+
 RUN chmod +x ./container_build.sh
 
 CMD ["/bin/bash", "./container_build.sh"]
