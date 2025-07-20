@@ -15,8 +15,6 @@ FROM nikolaik/python-nodejs:python3.13-nodejs20
 RUN git config --global advice.detachedHead false
 RUN set -x
 
-RUN pip install -U platformio==6.1.18
-
 # RUN apt-get update \
 #  && apt-get install -y curl gnupg udev \
 #  && curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
@@ -28,8 +26,28 @@ RUN npm install -g npm@latest
 
 WORKDIR /opt
 COPY . /opt
-RUN chmod +x ./container_build.sh
 
-RUN platformio pkg install --project-dir .
+# WIP: could be good style to run as non-root.
+#      -- but is more work, for some future person, who loves stuff like that.
+RUN chown -R pn:pn /opt
+USER pn
+
+RUN echo && echo && echo
+ENV HOME="/home/pn"
+RUN echo "HOME="$HOME
+ENV PATH="$HOME/.local/bin:$HOME/.platformio/packages/tool-esptoolpy:${PATH}"
+RUN echo "PATH="$PATH
+
+RUN mkdir -p $HOME/.platformio
+
+RUN pip install --user -U platformio
+
+# this is not only debug output, it also creates .../.platformio
+# RUN platformio system info
+
+RUN platformio pkg install --tool platformio/tool-esptoolpy
+RUN platformio pkg install
+
+RUN chmod +x ./container_build.sh
 
 CMD ["/bin/bash", "./container_build.sh"]
