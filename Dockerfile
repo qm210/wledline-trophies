@@ -31,9 +31,6 @@ RUN chmod +x ./container_build.sh && \
     # we fail horribly if we do not install esptool before the rest
     # (...took me about six very pleasurable hours to trace that)
     pio pkg install --tool platformio/tool-esptoolpy && \
-    pio pkg install && \
-    # cleanup is "just" for a smaller image size, but hey.
-    npm cache clean --force && \
-    rm -rf $HOME/.cache/pip
+    pio pkg install
 
 CMD ["/bin/bash", "./container_build.sh"]
