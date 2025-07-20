@@ -7,9 +7,6 @@
 [ -f /mnt/my_config.h ] && cp -v /mnt/my_config.h wled00/
 [ -f /mnt/FX_DEADLINE_TROPHY.h ] && cp -v /mnt/FX_DEADLINE_TROPHY.h wled00/
 
-# fallback
-touch wled00/my_config.h
-
 # clean output
 rm -f /mnt/firmware.bin
 
@@ -20,7 +17,5 @@ platformio run
 cp -v .pio/build/deadline_trophy/firmware.bin /mnt
 # and one with clear specification for the record:
 cp -v .pio/build/deadline_trophy/firmware.bin /mnt/deadline_trophy_$(date +%Y%m%d_%H%M).bin
-
-# Maybe Zukunftsmusik: Manage the upload to the COM port from the container, like
-#   platformio run --target upload
-# but this needs permission to access the COM ports, blahblah, so yeah, not today.
+# also, the partitions are useful for flashing a pristine controller
+cp -v .pio/build/deadline_trophy/partitions.bin /mnt

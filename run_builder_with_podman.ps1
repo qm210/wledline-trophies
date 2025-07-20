@@ -10,7 +10,7 @@ if (-not $imageExists) {
     podman build -t $Name .
 }
 
-podman run -v $PWD/data:/mnt $Name
+podman run --rm -v $PWD/data:/mnt $Name
 
 # for debugging, hack into the container as
 # podman run -it --rm -v $PWD/data:/mnt $Name /bin/bash
