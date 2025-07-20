@@ -10,8 +10,15 @@
 # clean output
 rm -f /mnt/firmware.bin
 
+echo
+echo "\n== LET'S BUILD!! == exclamation marks."
+echo
+
 # now let's platformio do its magic.
-platformio run
+if ! platformio run; then
+    echo "== BUILD FAILED == Exclamation Mark! You win some, you lose some."
+    exit $?
+fi
 
 # and publish the result
 cp -v .pio/build/deadline_trophy/firmware.bin /mnt

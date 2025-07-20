@@ -13,6 +13,11 @@ extern uint16_t mode_static(void);
  //  Deadline Trophy FX  //
  //////////////////////////
 
+
+const int DEBUG_LOG_EVERY_N_CALLS = 10000; // for printing debug output every ... steps (0 = no debug out)
+
+#define IS_DEBUG_STEP (DEBUG_LOG_EVERY_N_CALLS > 0 && (SEGENV.call % DEBUG_LOG_EVERY_N_CALLS) == 0)
+
 const size_t nOuterLeft = 10;
 const size_t nLeft = 35;
 const size_t nBottom = 36;
@@ -80,10 +85,16 @@ inline void setPixel(size_t segmentIndex, int x, int y, uint32_t color) {
     if (strip.getCurrSegmentId() != segmentIndex) {
         return;
     }
+    color = color & 0x00FFFFFF; // <-- again: remove white. we don't have.
     SEGMENT.setPixelColorXY(x, y, color);
 }
 
 void setBase(size_t x, size_t y, uint32_t color) {
+    if (IS_DEBUG_STEP) {
+        DEBUG_PRINTF("[QM_DEBUG] %d, %d (%d) / %d - %d (%d %d %d %d) - is it? %d\n",
+            x, y, x + y*Segment::vWidth(), baseSize, color, R(color), G(color), B(color), W(color), !(x >= baseSize || y >= baseSize)
+        );
+    }
     if (x >= baseSize || y >= baseSize) {
         return;
     }
@@ -107,13 +118,16 @@ void setFloor(uint32_t color) {
     setPixel(3, baseSize, logoH + 1, color);
 }
 
+void setBaseHSV(size_t x, size_t y, CHSV color) { setBase(x, y, uint32_t(CRGB(color))); }
+void setLogoHSV(size_t x, size_t y, CHSV color) { setLogo(x, y, uint32_t(CRGB(color))); }
+
+#define IS_BASE_SEGMENT (strip.getCurrSegmentId() == 0)
+#define IS_LOGO_SEGMENT (strip.getCurrSegmentId() == 1)
+
 const int baseX0[4] = {17, 16, 0, 1};
 const int baseY0[4] = {1, 17, 16, 0};
 const int baseDX[4] = {0, -1, 0, +1};
 const int baseDY[4] = {+1, 0, -1, 0};
-
-#define IS_BASE_SEGMENT (strip.getCurrSegmentId() == 0)
-#define IS_LOGO_SEGMENT (strip.getCurrSegmentId() == 1)
 
 uint32_t float_hsv(float hue, float sat, float val) {
     // parameters in [0, 255] but as float
@@ -125,10 +139,6 @@ uint32_t float_hsv(float hue, float sat, float val) {
     // remove the specific "white" that might be in the color (or shouldn't we?)
     return color & 0x00FFFFFF;
 }
-
-const int DEBUG_LOG_EVERY_N_CALLS = 0; // for printing debug output every ... steps (0 = no debug out)
-
-#define IS_DEBUG_STEP (DEBUG_LOG_EVERY_N_CALLS > 0 && (SEGENV.call % DEBUG_LOG_EVERY_N_CALLS) == 0)
 
 uint16_t mode_DeadlineTrophy(void) {
     um_data_t *um_data;
@@ -179,29 +189,38 @@ uint16_t mode_DeadlineTrophy(void) {
             intensity = dist_x > 0 ? exp(-dist_x / size) : 0.;
             color.hue = color_.hue - 90. * intensity;
             color.sat = color_.sat;
-            color.val = color_.val * intensity * intensity;
-            col = uint32_t(CRGB(color));
+            color.val = 40; // color_.val * intensity * intensity * 0.1;
 
-            setLogo(x, y, col);
+            setLogoHSV(x, y, color);
         }
     }
 
     if (IS_BASE_SEGMENT) {
         for (int s = 0; s < 4; s++)
         for (i = 0; i < 16; i++) {
+            x = baseX0[s] + baseDX[s] * i;
+            y = baseY0[s] + baseDY[s] * i;
+
             // strip.now is millisec uint32_t, so this will overflow ~ every 49 days. who shits a give.
             float wave = sin_t(PI / 15. * (static_cast<float>(i) - 0.007 * strip.now));
             float abs_wave = (wave > 0. ? wave : -wave);
             float slow_wave = 0.7 + 0.3 * sin_t(TWO_PI / 10000. * strip.now);
 
             color.hue = color_.hue - 20. * wave * abs_wave;
-            color.val = color_.val * abs_wave * slow_wave;
+            // color.val = color_.val * abs_wave * slow_wave;
 
-            x = baseX0[s] + baseDX[s] * i;
-            y = baseY0[s] + baseDY[s] * i;
+            color.hue = s == 0 ? 0 : s == 1 ? 90 : s == 2 ? 180 : 210;
 
-            col = uint32_t(CRGB(color));
-            setBase(x, y, col);
+            if (i == 0) {
+                // first is always white
+                color.sat = 0;
+            } else {
+                color.sat = 100;
+            }
+
+            color.val = ((strip.now % 16000) > (i * 1000)) ? 255 : 20;
+
+            setBaseHSV(x, y, color);
         }
     }
 

@@ -10,7 +10,8 @@ if (-not $imageExists) {
     podman build -t $Name .
 }
 
-podman run --rm -v $PWD/data:/mnt $Name
+# colorful xterm is 256 colorful! :)
+podman run --rm -it -e TERM=xterm-256color -v $PWD/data:/mnt $Name
 
 # for debugging, hack into the container as
 # podman run -it --rm -v $PWD/data:/mnt $Name /bin/bash
