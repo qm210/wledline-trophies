@@ -108,6 +108,9 @@ There are a lot, but these are most relevant to know
 So, ideally, for the time being, you do (in this project root folder)
  * Set Up (once or seldom)
    * `podman build -t trophy-builder .`
+     * for a virgin controller: also `podman run <...see below...>` the thing once to get the `partitions.bin`, then
+       `esptool.py --chip esp32 --port <PORT> write_flash 0x8000 .\data\partition.bin`
+       * **DOCS ARE WORK-IN-PROGRESS HERE**
    * adjust `data/my_config.h`
  * Then all day long (example PowerShell, adjust as required)
    * adjust `data/FX_DEADLINE_TROPHY.h` according to whatever floats your goat
@@ -128,8 +131,10 @@ podman machine start
 podman images
 
 # if there is garbage, you can remove these by
-#  podman rmi <id>
-#  podman image prune
+#   podman rmi <id> (--force)
+#   podman image prune
+# see running containers
+#   podman ps --all
 ```
 
 
