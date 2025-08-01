@@ -118,6 +118,63 @@ So, ideally, for the time being, you do (in this project root folder)
    * `esptool --port COM5 write-flash -z 0x10000 .\data\firmware.bin`
  * And when the weather starts getting harsher, remember that once again, it might be Deadline soon.
 
+### Making your FX Audio Reactive
+ * we use the official AudioReactive mod for audio sync, this fork just has fixed I2S microphone pin settings
+ * i.e. to implement a pattern reacting to sound, search for any other FX that already uses something like
+ ```
+ um_data_t *um_data = getAudioData();
+ uint8_t *fftResult = (uint8_t*)um_data->u_data[2];
+ ```
+ * from `audio_reactive.cpp` we can see the slots of um_data:
+ ```
+ - setup()
+	// we will assign all usermod exportable data here as pointers to original variables or arrays and allocate memory for pointers
+	um_data = new um_data_t;
+	um_data->u_size = 8;
+	um_data->u_type = new um_types_t[um_data->u_size];
+	um_data->u_data = new void*[um_data->u_size];
+	um_data->u_data[0] = &volumeSmth;      //*used (New)
+	um_data->u_type[0] = UMT_FLOAT;
+	um_data->u_data[1] = &volumeRaw;      // used (New)
+	um_data->u_type[1] = UMT_UINT16;
+	um_data->u_data[2] = fftResult;        //*used (Blurz, DJ Light, Noisemove, GEQ_base, 2D Funky Plank, Akemi)
+	um_data->u_type[2] = UMT_BYTE_ARR;
+	um_data->u_data[3] = &samplePeak;      //*used (Puddlepeak, Ripplepeak, Waterfall)
+	um_data->u_type[3] = UMT_BYTE;
+	um_data->u_data[4] = &FFT_MajorPeak;   //*used (Ripplepeak, Freqmap, Freqmatrix, Freqpixels, Freqwave, Gravfreq, Rocktaves, Waterfall)
+	um_data->u_type[4] = UMT_FLOAT;
+	um_data->u_data[5] = &my_magnitude;   // used (New)
+	um_data->u_type[5] = UMT_FLOAT;
+	um_data->u_data[6] = &maxVol;          // assigned in effect function from UI element!!! (Puddlepeak, Ripplepeak, Waterfall)
+	um_data->u_type[6] = UMT_BYTE;
+	um_data->u_data[7] = &binNum;          // assigned in effect function from UI element!!! (Puddlepeak, Ripplepeak, Waterfall)
+	um_data->u_type[7] = UMT_BYTE;
+ 
+ - and their definition
+    // new "V2" audiosync struct - 44 Bytes
+    struct __attribute__ ((packed)) audioSyncPacket {  // "packed" ensures that there are no additional gaps
+      char    header[6];      //  06 Bytes  offset 0
+      uint8_t reserved1[2];   //  02 Bytes, offset 6  - gap required by the compiler - not used yet
+      float   sampleRaw;      //  04 Bytes  offset 8  - either "sampleRaw" or "rawSampleAgc" depending on soundAgc setting
+      float   sampleSmth;     //  04 Bytes  offset 12 - either "sampleAvg" or "sampleAgc" depending on soundAgc setting
+      uint8_t samplePeak;     //  01 Bytes  offset 16 - 0 no peak; >=1 peak detected. In future, this will also provide peak Magnitude
+      uint8_t reserved2;      //  01 Bytes  offset 17 - for future extensions - not used yet
+      uint8_t fftResult[16];  //  16 Bytes  offset 18
+      uint16_t reserved3;     //  02 Bytes, offset 34 - gap required by the compiler - not used yet
+      float  FFT_Magnitude;   //  04 Bytes  offset 36
+      float  FFT_MajorPeak;   //  04 Bytes  offset 40
+    };
+ ```
+
+ * As the official AudioReactive integration supports [UDP Sound Sync](https://mm.kno.wled.ge/WLEDSR/UDP-Sound-Sync/)
+   you can - for those without a Trophy or otherwise a microphone - feed your controller corresponding audio sync data via UDP.
+ * Maybe TODO:
+   * if this becomes relevant, I might write a tool to analyse a track and then play it back after some delay (so it looks better with latency)
+     * but until then, use https://github.com/netmindz/WLED-sync or (under Windows) https://github.com/Victoare/SR-WLED-audio-server-win to develop.
+ * maybe the Deadline Trophy usermod also gets equipped with a UDP feature to accept arbitrary control data (i.e. for MIDI controlling)
+   or also to fine-control the time cursor of your current pattern (so you can develop your audio sync more tightly),
+   but this will only be relevant when I find that someone could really use it.
+
 ## Troubleshooting
 
 #### the Containerized Build

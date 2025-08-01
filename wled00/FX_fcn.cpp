@@ -669,21 +669,6 @@ bool IRAM_ATTR_YN Segment::isPixelClipped(int i) const {
   return false;
 }
 
-/*
-QM-WIP TODO: check what the modern equivalent of this function is / or whether never needed again
-void IRAM_ATTR_YN Segment::setPixelColor(int i, uint32_t col)
-{
-  if (i < customMappingSize) {
-    i = customMappingTable[i];
-  }
-  if (i >= _length) {
-    // includes the 66536 from the -1 mapping
-    return;
-  }
-  BusManager::setPixelColor(i, col);
-}
-*/
-
 void IRAM_ATTR_YN Segment::setPixelColor(int i, uint32_t col) const
 {
   if (!isActive() || i < 0) return; // not active or invalid index

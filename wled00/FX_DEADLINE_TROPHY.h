@@ -141,12 +141,9 @@ uint32_t float_hsv(float hue, float sat, float val) {
 }
 
 uint16_t mode_DeadlineTrophy(void) {
-    um_data_t *um_data;
-    if (!UsermodManager::getUMData(&um_data, USERMOD_ID_AUDIOREACTIVE)) {
-        // add support for no audio
-        um_data = simulateSound(SEGMENT.soundSim);
-    }
-    uint8_t *fftResult = (uint8_t*)um_data->u_data[2];
+    // official way to get the AudioReactive data, but we try the Audio-per-UDP-Message route
+    // um_data_t *um_data = getAudioData();
+    // uint8_t *fftResult = (uint8_t*)um_data->u_data[2];
 
     size_t i, x, y;
     uint32_t col = SEGCOLOR(0);
@@ -188,8 +185,9 @@ uint16_t mode_DeadlineTrophy(void) {
 
             intensity = dist_x > 0 ? exp(-dist_x / size) : 0.;
             color.hue = color_.hue - 90. * intensity;
-            color.sat = color_.sat;
-            color.val = 40; // color_.val * intensity * intensity * 0.1;
+            color.sat = color_.sat * intensity;
+            // some annoying blinking, for now.
+            color.val = static_cast<uint8_t>(255.f * exp(-0.003 * (strip.now % 2000)));
 
             setLogoHSV(x, y, color);
         }
