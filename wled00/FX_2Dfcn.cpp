@@ -164,7 +164,7 @@ void WS2812FX::setUpDeadlineTrophy() {
     _length = DeadlineTrophy::N_LEDS_TOTAL;
 
     Segment::maxWidth = DeadlineTrophy::logoW;
-    Segment::maxHeight = DeadlineTrophy::logoH + DeadlineTrophy::baseSize;
+    Segment::maxHeight = max(DeadlineTrophy::logoH, DeadlineTrophy::baseSize);
     _mainSegment = 1; // is the logo, no idea where this is used (so far)
 
     _segments.clear();
@@ -185,12 +185,12 @@ void WS2812FX::setUpDeadlineTrophy() {
 
         // these are the three colors per segment (the palette is applied onto that, somehow)
         // these colors are just taken willy-nilly, but only so I can write "willy-nilly" here.
-        seg.colors[0] = 0xAA00FF;
-        seg.colors[1] = 0xFF40FF;
-        seg.colors[2] = 0xFFFFFF;
+        // seg.colors[0] = 0xAA00FF;
+        // seg.colors[1] = 0xFF40FF;
+        // seg.colors[2] = 0xFFFFFF;
 
-        seg.setMode(FX_MODE_DEADLINE_TROPHY, true)
-            .markForReset();
+        // seg.setMode(FX_MODE_DEADLINE_TROPHY, true)
+        seg.markForReset();
 
         _segments.push_back(seg);
 
