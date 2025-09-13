@@ -58,8 +58,6 @@ void setLogo(size_t x, size_t y, uint32_t color) {
     if (x >= logoW || y >= logoH) {
         return;
     }
-    // TODO: 30°-Drehung
-    // TODO: sinnieren über floatzahlige Koordinaten - evtl sinnvoll, evtl wumpe
     setPixel(1, x, y, color);
 }
 

@@ -21,6 +21,7 @@
 			c.width  = window.innerWidth * 0.98; //remove scroll bars
 			c.height = window.innerHeight * 0.98; //remove scroll bars
 		}
+        const query = Object.fromEntries((new URLSearchParams(window.location.search)).entries());
 		setCanvas();
 		// Check for canvas support
 		var ctx = c.getContext('2d');
@@ -55,13 +56,28 @@
 						let mH = leds[3]; // matrix height
 						let pPL = Math.min(c.width / mW, c.height / mH); // pixels per LED (width of circle)
 						let lOf = Math.floor((c.width - pPL*mW)/2); //left offset (to center matrix)
-						var i = 4;
-						for (y=0.5;y<mH;y++) for (x=0.5; x<mW; x++) {
+
+                        function drawPixel(i, x, y, r=1) {
 							ctx.fillStyle = `rgb(${leds[i]},${leds[i+1]},${leds[i+2]})`;
 							ctx.beginPath();
-							ctx.arc(x*pPL+lOf, y*pPL, pPL*0.4, 0, 2 * Math.PI);
+							ctx.arc(x*pPL+lOf, y*pPL, pPL*0.4*r, 0, 2 * Math.PI);
 							ctx.fill();
-							i+=3;
+                        }
+
+                        if (window.parent?.isDeadline) { // QM_DEADLINE_TROPHY PEEK COMPETENCE
+                            const mMin = Math.min(mW, mH);
+                            lOf = Math.floor((c.width - pPL*mMin)/2);
+                            let pos;
+                            for (let i = 0; i < 172; i++) {
+                                pos = trophyPixel(i);
+                                pos && drawPixel(i, mMin * pos.x, mMin * pos.y, pos.r ?? 1);
+                            }
+                        } else {
+    						var i = 4;
+	    					for (y=0.5;y<mH;y++) for (x=0.5; x<mW; x++) {
+                                drawPixel(i, x, y);
+                                i+=3;
+                            }
                         }
 					}
 				} catch (err) {
@@ -79,6 +95,65 @@
 				}, 250);
 			}
 		});
+
+        const __ = 65535; // mapping gap = (uint16_t)(-1)
+        const LOGO_MAPPING = [
+            __, __, __, __, __, __, __, __,169, __, __,149, __,148,125, __,124,120, __, __, __, __, __, __, __, __,
+            __, __, __, __, __, __, __,168, __, __,150, __,147,126, __,123,121, __,119, __, __, __, __, __, __, __,
+            __, __, __, __, __, __,167, __, __,151, __,146,127, __, __,122, __,118,114, __, __, __, __, __, __, __,
+            __, __, __, __, __,166, __, __,152, __,145,128, __, __, __, __,117,115, __,113, __, __, 90, 91, __,108,
+            __, __, __, __,165, __, __,153, __,144,129, __, __, __, __, __,116, __,112,109, __, 89, 92, __,107, __,
+            __, __, __,164, __, __,154, __,143,130, __, __, __, __, __, __, __,111,110, __, 88, 93, __,106, __, __,
+            __, __,163, __, __,155, __,142,131, __, __, __, __, __, __, __, __, __, __, 87, 94, __,105, __, __, __,
+            __,162, __, __,156, __,141,132, __, __, __, __, __, __, __, __, __, __, 86, 95, __,104, __, __, __, __,
+           161, __, __,157, __,140,133, __, __, __, __, __, __, __, __, __, __, 85, 96, __,103, __, __, __, __, __,
+            __,160,158, __,139,134, __, 66, 67, __, 72, 73, __, 78, 79, __, 84, 97, __,102, __, __, __, __, __, __,
+            __,159, __,138,135, __, 65, 68, __, 71, 74, __, 77, 80, __, 83, 98, __,101, __, __, __, __, __, __, __,
+            __, __,137,136, __, 64, 69, __, 70, 75, __, 76, 81, __, 82, 99, __,100, __, __, __, __, __, __, __, __,
+        ];
+        const LOGO_WIDTH = 26;
+        const LOGO_HEIGHT = 13;
+        const N_EDGE = 16;
+        const baseCorner = [
+            [1, 0],
+            [1, 1],
+            [0, 1],
+            [0, 0]
+        ];
+        const cornerShift = 1;
+
+        function trophyPixel(index) {
+            // can make code readable when it actually shows okayish performance
+            if (index < 0) {
+                return null;
+            } else if (index < 64) { // base
+                const edge = Math.floor(index / N_EDGE);
+                const step_in_edge = (index % N_EDGE) + cornerShift;
+                const step_length = 1 / (N_EDGE - 1 + 2 * cornerShift);
+                const from = baseCorner[edge % 4];
+                const to = baseCorner[(edge + 1) % 4];
+                return {
+                    x: from[0] + ((to[0] - from[0]) * step_length) * step_in_edge,
+                    y: from[1] + ((to[1] - from[1]) * step_length) * step_in_edge,
+                    r: 0.4
+                };
+            } else if (index < 170) { // logo (still the old 60°-rotated one)
+                const mapIndex = LOGO_MAPPING.indexOf(index);
+                const ix = mapIndex % LOGO_WIDTH;
+                const iy = Math.floor(mapIndex / LOGO_WIDTH);
+                return {
+                    x: 0.12 + 0.76 * ix / LOGO_WIDTH,
+                    y: 0.18 + 0.38 * iy / LOGO_HEIGHT,
+                    r: 0.32,
+                };
+            } else if (index == 170) { // floor
+                return {x: 0.5, y: 0.8, r: 0.5};
+            } else if (index == 171) { // back
+                return {x: 0.3, y: 0.67, r: 0.5};
+            } else {
+                return null;
+            }
+        }
 	</script>
 </body>
 </html>

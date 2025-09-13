@@ -41,7 +41,8 @@ var hol = [
 	[2027, 2, 28, 2, "https://aircoookie.github.io/easter.png"],	// easter 2027
 	//[2028, 3, 16, 2, "https://aircoookie.github.io/easter.png"],	// easter 2028
 	[0, 6, 4, 1, "https://images.alphacoders.com/516/516792.jpg"],	// 4th of July
-	[0, 0, 1, 1, "https://images.alphacoders.com/119/1198800.jpg"]	// new year
+	[0, 0, 1, 1, "https://images.alphacoders.com/119/1198800.jpg"],	// new year
+    [0, 8, 13, 3, "https://satori-drinks.de/assets/backdrop-wled.png"]	// QM spielt rum (jahr oder 0, monat ab 0, tag ab 1, #tage)
 ];
 
 var cpick = new iro.ColorPicker("#picker", {
@@ -1520,12 +1521,6 @@ function readState(s,command=false)
             );
     }
 
-    if (isDeadline) {
-        // deadline allows only one selected, so take the first that matches.
-        console.log("[QM-DEBUG] readState()", s);
-        // showMatrixFilters(isM);
-    }
-
 	if (s.seg.length>2) d.querySelectorAll(".pop").forEach((e)=>{e.classList.remove("hide");});
 
 	var cd = gId('csl').querySelectorAll("button");
@@ -1879,7 +1874,6 @@ function toggleLiveview()
 		if (isLv) gId('klv2D').innerHTML = `<iframe id="${lvID}" src="about:blank"></iframe>`;
 		gId('mlv2D').style.transform = (isLv) ? "translateY(0px)":"translateY(100%)";
 	}
-    console.log("[QM_DEBUG] lvID=", lvID);
 
 	gId(lvID).style.display = (isLv) ? "block":"none";
 	gId(lvID).src = (isLv) ? getURL("/" + lvID + ((wsOn) ? "?ws":"")):"about:blank";

@@ -669,12 +669,6 @@ void WLED::initConnection()
 
   if (!WLED_WIFI_CONFIGURED) {
     DEBUG_PRINTLN(F("No connection configured."));
-    // ultiWiFi.size() > 1 || (strlen(multiWiFi[0].clientSSID) >= 1 && strcmp_P(multiWiFi[0].clientSSID, PSTR(DEFAULT_CLIENT_SSID)) != 0);
-    if (multiWiFi.size() > 0) {
-        DEBUG_PRINTF("[QM_DEBUG] multiWiFi.size = %d, DEFAULT_CLIENT_SSID=\"%s\", [0]=\"%s\":\"%s\"\n", multiWiFi.size(), DEFAULT_CLIENT_SSID, multiWiFi[0].clientSSID, multiWiFi[0].clientPass);
-    } else {
-        DEBUG_PRINTF("[QM_DEBUG] multiWiFi.size = %d, DEFAULT_CLIENT_SSID=\"%s\"\n", multiWiFi.size(), DEFAULT_CLIENT_SSID);
-    }
     if (!apActive) initAP();        // instantly go to ap mode
     return;
   } else if (!apActive) {
