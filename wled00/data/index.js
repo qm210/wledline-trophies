@@ -42,7 +42,8 @@ var hol = [
 	//[2028, 3, 16, 2, "https://aircoookie.github.io/easter.png"],	// easter 2028
 	[0, 6, 4, 1, "https://images.alphacoders.com/516/516792.jpg"],	// 4th of July
 	[0, 0, 1, 1, "https://images.alphacoders.com/119/1198800.jpg"],	// new year
-    [0, 8, 13, 3, "https://satori-drinks.de/assets/backdrop-wled.png"]	// QM spielt rum (jahr oder 0, monat ab 0, tag ab 1, #tage)
+    [0, 8, 13, 2, "https://satori-drinks.de/assets/backdrop-wled.png"]	// QM spielt rum (jahr oder 0, monat ab 0, tag ab 1, #tage)
+//    [2025, 9, 3, 3, "https://www.demoparty.berlin/wp-content/uploads/2024/07/..."]	// DEADLINE 2025 (3.-5. 10. 2025)
 ];
 
 var cpick = new iro.ColorPicker("#picker", {
@@ -2251,8 +2252,6 @@ function tglSegn(s)
 
 function selSegAll(o)
 {
-    if (isDeadline) return selSegEx(0);
-
 	var obj = {"seg":[]};
 	for (let i=0; i<=lSeg; i++) if (gId(`seg${i}`)) obj.seg.push({"id":i,"sel":o.checked});
 	requestJson(obj);
@@ -2268,8 +2267,6 @@ function selSegEx(s)
 
 function selSeg(s)
 {
-    if (isDeadline) return selSegEx(s);
-
 	var sel = gId(`seg${s}sel`).checked;
 	var obj = {"seg": {"id": s, "sel": sel}};
 	requestJson(obj);

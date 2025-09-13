@@ -26,7 +26,7 @@ namespace DeadlineTrophy {
     void overwriteConfig();
 
     const int logoW = 26;
-    const int logoH = 13;
+    const int logoH = 12;
     const int baseSize = 18; // edge length 16 + 2 of the adjacent edges
 
     const int mappingSize = (logoW) * (logoH + baseSize);
