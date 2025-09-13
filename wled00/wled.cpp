@@ -435,6 +435,11 @@ void WLED::setup()
   bool needsCfgSave = deserializeConfigFromFS();
   DEBUG_PRINTF_P(PSTR("heap %u\n"), ESP.getFreeHeap());
 
+#if defined(CLIENT_PASS) && (CLIENT_PASS[0] != '\0')
+ // qm: didn't appear useful to me to just overwrite the defined config by the stored one
+  multiWiFi.push_back(WiFiConfig(CLIENT_SSID,CLIENT_PASS));
+#endif
+
 #if defined(STATUSLED) && STATUSLED>=0
   if (!PinManager::isPinAllocated(STATUSLED)) {
     // NOTE: Special case: The status LED should *NOT* be allocated.
@@ -445,7 +450,6 @@ void WLED::setup()
 
   #ifdef USE_DEADLINE_CONFIG
     DeadlineTrophy::overwriteConfig();
-    serializeConfigToFS(); // <-- probably not even required. should leave away?
   #endif
 
   DEBUG_PRINTLN(F("Initializing strip"));
@@ -665,6 +669,12 @@ void WLED::initConnection()
 
   if (!WLED_WIFI_CONFIGURED) {
     DEBUG_PRINTLN(F("No connection configured."));
+    // ultiWiFi.size() > 1 || (strlen(multiWiFi[0].clientSSID) >= 1 && strcmp_P(multiWiFi[0].clientSSID, PSTR(DEFAULT_CLIENT_SSID)) != 0);
+    if (multiWiFi.size() > 0) {
+        DEBUG_PRINTF("[QM_DEBUG] multiWiFi.size = %d, DEFAULT_CLIENT_SSID=\"%s\", [0]=\"%s\":\"%s\"\n", multiWiFi.size(), DEFAULT_CLIENT_SSID, multiWiFi[0].clientSSID, multiWiFi[0].clientPass);
+    } else {
+        DEBUG_PRINTF("[QM_DEBUG] multiWiFi.size = %d, DEFAULT_CLIENT_SSID=\"%s\"\n", multiWiFi.size(), DEFAULT_CLIENT_SSID);
+    }
     if (!apActive) initAP();        // instantly go to ap mode
     return;
   } else if (!apActive) {
@@ -681,7 +691,7 @@ void WLED::initConnection()
   if (WLED_WIFI_CONFIGURED) {
     showWelcomePage = false;
 
-    DEBUG_PRINTF_P(PSTR("Connecting to %s...\n"), multiWiFi[selectedWiFi].clientSSID);
+    DEBUG_PRINTF_P(PSTR("Connecting to %s ... !QM_DEBUG! with: \"%s\"\n"), multiWiFi[selectedWiFi].clientSSID, multiWiFi[selectedWiFi].clientPass);
 
     // convert the "serverDescription" into a valid DNS hostname (alphanumeric)
     char hostname[25];
@@ -752,7 +762,8 @@ void WLED::initInterfaces()
     MDNS.end();
     MDNS.begin(cmDNS);
 
-    DEBUG_PRINTLN(F("mDNS started"));
+    DEBUG_PRINT(F("mDNS started: "));
+    DEBUG_PRINTLN(cmDNS);
     MDNS.addService("http", "tcp", 80);
     MDNS.addService("wled", "tcp", 80);
     MDNS.addServiceTxt("wled", "tcp", "mac", escapedMac.c_str());

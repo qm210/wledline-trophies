@@ -441,12 +441,6 @@ function cpBck()
 	showToast("Copied to clipboard!");
 }
 
-function delBck()
-{
-    localStorage.removeItem("wledP");
-    window.location.reload();
-}
-
 function presetError(empty)
 {
 	var hasBackup = false; var bckstr = "";
@@ -843,7 +837,7 @@ function populateSegments(s)
 		cn += `<div class="seg lstI ${i==s.mainseg && !simplifiedUI ? 'selected' : ''} ${exp ? "expanded":""}" id="seg${i}" data-set="${inst.set}">`+
 				`<label class="check schkl ${smpl}">`+
 					`<input type="checkbox" id="seg${i}sel" onchange="selSeg(${i})" ${inst.sel ? "checked":""}>`+
-					`<span class="checkmark maybe-hide" title="Select"></span>`+
+					`<span class="checkmark" title="Select"></span>`+
 				`</label>`+
 				`<div class="segname ${smpl}" onclick="selSegEx(${i})">`+
 					`<i class="icons e-icon frz" id="seg${i}frz" title="(un)Freeze" onclick="event.preventDefault();tglFreeze(${i});">&#x${inst.frz ? (li.live && li.liveseg==i?'e410':'e0e8') : 'e325'};</i>`+

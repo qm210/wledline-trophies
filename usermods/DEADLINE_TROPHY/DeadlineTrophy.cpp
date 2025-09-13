@@ -77,7 +77,7 @@ namespace DeadlineTrophy {
 
         gammaCorrectBri = false;
         gammaCorrectCol = true;
-        gammaCorrectVal = 2.8;
+        gammaCorrectVal = 1.0; // <-- messy suggested
         NeoGammaWLEDMethod::calcGammaTable(gammaCorrectVal);
 
         #ifdef DEADLINE_INIT_BRIGHTNESS

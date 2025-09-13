@@ -793,7 +793,15 @@ bool deserializeConfigFromFS() {
   if (!success) { //if file does not exist, try reading from EEPROM
     deEEPSettings();
   }
+  #else
+  if (!success) {
+    DEBUG_PRINTLN(F("Reading from /wsec.json failed (and no EEPROM fallback supported)."));
+  }
   #endif
+
+  DEBUG_PRINTF("[QM_MULTIWIFI_AFTER_SEC] Entries: %d\n", multiWiFi.size());
+  for (int dbg = 0; dbg < multiWiFi.size(); dbg++)
+    DEBUG_PRINTF("             > \"%s\":\"%s\"\n", multiWiFi[0].clientSSID, multiWiFi[0].clientPass);
 
   if (!requestJSONBufferLock(1)) return false;
 
@@ -814,6 +822,11 @@ bool deserializeConfigFromFS() {
   //       Therefore, must also initialize ethernet from this function
   JsonObject root = pDoc->as<JsonObject>();
   bool needsSave = deserializeConfig(root, true);
+
+
+  DEBUG_PRINTF("[QM_MULTIWIFI_AFTER_CFG] Entries: %d\n", multiWiFi.size());
+  for (int dbg = 0; dbg < multiWiFi.size(); dbg++)
+    DEBUG_PRINTF("             > \"%s\":\"%s\"\n", multiWiFi[0].clientSSID, multiWiFi[0].clientPass);
 
   releaseJSONBufferLock();
 
@@ -1283,7 +1296,6 @@ bool deserializeConfigSec() {
 
   JsonObject root = pDoc->as<JsonObject>();
 
-#ifndef CLIENT_PASS
   //qm210: pretty sure the official wled code is not particularly smart here
   //       in associating the index n <-> the password field "psk" and not any SSID
   size_t n = 0;
@@ -1297,7 +1309,6 @@ bool deserializeConfigSec() {
       if (++n >= WLED_MAX_WIFI_COUNT) break;
     }
   }
-#endif
 
   JsonObject ap = root["ap"];
   getStringFromJson(apPass, ap["psk"] , 65);

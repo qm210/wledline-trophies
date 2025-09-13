@@ -388,6 +388,7 @@ public:
 
     bool readFromConfig(JsonObject& root)
     {
+        // TODO QM: set AudioReactive AGC to Normal
         DEBUG_PRINTLN("[QM_DEBUG] DeadlineTrophy::readFromConfig");
         serializeJsonPretty(root, Serial);
         DEBUG_PRINTLN();

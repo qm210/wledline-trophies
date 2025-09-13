@@ -825,6 +825,8 @@ void handleSettingsSet(AsyncWebServerRequest *request, byte subPage)
   #ifndef WLED_DISABLE_ALEXA
   if (subPage == SUBPAGE_SYNC) alexaInit();
   #endif
+
+  DEBUG_PRINTF("[QM_DEBUG] End of handleSettingsSet, subPage %d; write? %d; reboot? %d;\n", subPage, configNeedsWrite, doReboot);
 }
 
 

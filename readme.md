@@ -29,6 +29,30 @@ If you hate using such build containers (because you feel irrationally smart or 
 
 Take PlatformIO (i.e. [PlatformIO for VSCode](https://platformio.org/install/ide?install=vscode)), download the repo, connect the controller via COM port, upload the shit via PlatformIO and tell me where it breaks.
 
+### Uploading via help of what WLED already gives us
+If you have a new ESP32 without any WLED on it, you should be able to use the official WLED web installer https://install.wled.me/ that flashes the whole ESP32 with the usual, everyone has it, boring Non-Deadline-WLED (see also https://kno.wled.ge/basics/install-binary/)
+* and then set it up, and from the Settings -> Sync & Updates -> you can flash your binary Over-The-Air (OTA)
+* Remember that OTA-patching the firmware works on two same-size partitions, switching between each other, so if the Update fails, you still have the previous fallback.
+
+### Getting to work
+** If there is something not working, either directly tell QM or open an issue in this repo **
+* Files to check, maybe the-same-QM committed some... crime:
+  * `platformio_override.ini`
+  * `my_config.h`
+    * especially `#define RESET_CONFIG`, that will remove your device's config files on reboot (good for development, bad for if you actually want to config)
+  * `usermods/DEADLINE_TROPHY/config_defines.h`
+* Can't connect to the AP? is there one?
+  * Can you connect to the Serial Monitor (115200 baud)?
+    * Is there any sense here?
+      * also: if anything is in there spamming into the monitor in an endless loop, that's a super-bug, it can never do its actual job.
+    * Do you see some message along `WiFi: ...`
+    * Do you see `No connection configured.` or anything with `Access point...`? What is written below?
+  * Seeing any obvious WiFi SSIDs like `DL-TROPHY-AP` or something in your proximity?
+    * maybe try some `deadline` or `deadline2024` PW if this is QM's not-overly-hacking-proof-default
+      (...that he only uses for the deadline trophy development and his crypto wallets!)
+    * connected? try `http://4.3.2.1`
+    * Checking the Serial Monitor... is there some `WiFi-E: AP Client Connected (1) @ 407s.`?
+
 #### Stuff to Change
 Obviously, no one can stop you from changing whatever you find here, but if you just want to develop a pattern of your own, look for
 * `wled00/my_config.h`
@@ -149,7 +173,7 @@ So, ideally, for the time being, you do (in this project root folder)
 	um_data->u_type[6] = UMT_BYTE;
 	um_data->u_data[7] = &binNum;          // assigned in effect function from UI element!!! (Puddlepeak, Ripplepeak, Waterfall)
 	um_data->u_type[7] = UMT_BYTE;
- 
+
  - and their definition
     // new "V2" audiosync struct - 44 Bytes
     struct __attribute__ ((packed)) audioSyncPacket {  // "packed" ensures that there are no additional gaps
