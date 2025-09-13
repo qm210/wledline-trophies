@@ -95,7 +95,7 @@
 				}, 250);
 			}
 		});
-        // bluntly copied from DeadlineTrophy.h, but as this should not change again, it's fine.
+            // bluntly copied from DeadlineTrophy.h, but as this should not change again, it's fine.
         const __ = 65535; // mapping gap = (uint16_t)(-1)
         const LOGO_MAPPING = [
             __, __, __, __, __, __, __, __,169, __, __,149, __,148,125, __,124,120, __, __, __, __, __, __, __, __,
@@ -115,10 +115,10 @@
         const LOGO_HEIGHT = 13;
         const N_EDGE = 16;
         const baseCorner = [
-            [1, 0],
-            [1, 1],
-            [0, 1],
-            [0, 0]
+            [.98, .02],
+            [.98, .98],
+            [.02, .98],
+            [.02, .02]
         ];
         const cornerShift = 1;
 
@@ -142,9 +142,9 @@
                 const ix = mapIndex % LOGO_WIDTH;
                 const iy = Math.floor(mapIndex / LOGO_WIDTH);
                 return {
-                    x: 0.12 + 0.76 * ix / LOGO_WIDTH,
-                    y: 0.18 + 0.38 * iy / LOGO_HEIGHT,
-                    r: 0.32,
+                    x: 0.1 + 0.8 * ix / LOGO_WIDTH,
+                    y: 0.15 + 0.40 * iy / LOGO_HEIGHT,
+                    r: 0.35,
                 };
             } else if (index == 170) { // floor
                 return {x: 0.5, y: 0.8, r: 0.5};
