@@ -36,7 +36,7 @@ namespace DeadlineTrophy {
     // this Matrix-Linear-Hybrid thing is not great, with the single LEDs shoe-horned in there, but that's what we have.
     // (the empty lines are due to the actual non-equidistant lines in the logo)
     const uint16_t mappingTable[mappingSize] = {
-       __, __, __, __, __, __, __, __,169, __, __,149, __,148,125, __,124,120, __, __, __, __, __, __, __, __,
+        __, __, __, __, __, __, __, __,169, __, __,149, __,148,125, __,124,120, __, __, __, __, __, __, __, __,
         __, __, __, __, __, __, __,168, __, __,150, __,147,126, __,123,121, __,119, __, __, __, __, __, __, __,
         __, __, __, __, __, __,167, __, __,151, __,146,127, __, __,122, __,118,114, __, __, __, __, __, __, __,
         __, __, __, __, __,166, __, __,152, __,145,128, __, __, __, __,117,115, __,113, __, __, 90, 91, __,108,
