@@ -163,7 +163,7 @@ public:
         attenuateFactor = 0.;
         BusManager::setMilliampsMax(static_cast<uint16_t>(maxCurrent));
 
-        DEBUG_PRINTF("[DEADLINE_TROPHY] max %f mA -> %d\n", maxCurrent, BusManager::ablMilliampsMax());
+        DEBUG_PRINTF("[DEADLINE_TROPHY] ablMilliampsMax() = %d mA\n", BusManager::ablMilliampsMax());
 
         // 12-bit ADC is the default, but let's go sure (do we need? no idea.)
         analogSetWidth(12);
@@ -388,7 +388,6 @@ public:
 
     bool readFromConfig(JsonObject& root)
     {
-        // TODO QM: set AudioReactive AGC to Normal
         DEBUG_PRINTLN("[QM_DEBUG] DeadlineTrophy::readFromConfig");
         serializeJsonPretty(root, Serial);
         DEBUG_PRINTLN();

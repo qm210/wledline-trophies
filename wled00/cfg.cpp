@@ -799,10 +799,6 @@ bool deserializeConfigFromFS() {
   }
   #endif
 
-  DEBUG_PRINTF("[QM_MULTIWIFI_AFTER_SEC] Entries: %d\n", multiWiFi.size());
-  for (int dbg = 0; dbg < multiWiFi.size(); dbg++)
-    DEBUG_PRINTF("             > \"%s\":\"%s\"\n", multiWiFi[0].clientSSID, multiWiFi[0].clientPass);
-
   if (!requestJSONBufferLock(1)) return false;
 
   #ifdef RESET_CONFIG
@@ -823,10 +819,9 @@ bool deserializeConfigFromFS() {
   JsonObject root = pDoc->as<JsonObject>();
   bool needsSave = deserializeConfig(root, true);
 
-
-  DEBUG_PRINTF("[QM_MULTIWIFI_AFTER_CFG] Entries: %d\n", multiWiFi.size());
-  for (int dbg = 0; dbg < multiWiFi.size(); dbg++)
-    DEBUG_PRINTF("             > \"%s\":\"%s\"\n", multiWiFi[0].clientSSID, multiWiFi[0].clientPass);
+  DEBUG_PRINTF("[QM_DEBUG] WiFiConfigs: %d\n", multiWiFi.size());
+  for (int i = 0; i < multiWiFi.size(); i++)
+    DEBUG_PRINTF("[QM_DEBUG] -- \"%s\":\"%s\"\n", multiWiFi[i].clientSSID, multiWiFi[i].clientPass);
 
   releaseJSONBufferLock();
 

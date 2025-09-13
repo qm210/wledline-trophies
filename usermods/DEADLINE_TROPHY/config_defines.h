@@ -72,6 +72,11 @@
 #endif
 #define I2S_CKPIN 12
 
+// also Audioreactive, but less critical: initialize with "Normal" Automatic Gain Control
+#ifndef SR_AGC
+#define SR_AGC 1
+#endif
+
 // this includes my_config.h for customized use (WiFi access etc.)
 #ifndef WLED_USE_MY_CONFIG
 #define WLED_USE_MY_CONFIG

@@ -435,7 +435,7 @@ void WLED::setup()
   bool needsCfgSave = deserializeConfigFromFS();
   DEBUG_PRINTF_P(PSTR("heap %u\n"), ESP.getFreeHeap());
 
-#if defined(CLIENT_PASS) && (CLIENT_PASS[0] != '\0')
+#ifdef CLIENT_PASS
  // qm: didn't appear useful to me to just overwrite the defined config by the stored one
   multiWiFi.push_back(WiFiConfig(CLIENT_SSID,CLIENT_PASS));
 #endif
@@ -691,7 +691,7 @@ void WLED::initConnection()
   if (WLED_WIFI_CONFIGURED) {
     showWelcomePage = false;
 
-    DEBUG_PRINTF_P(PSTR("Connecting to %s ... !QM_DEBUG! with: \"%s\"\n"), multiWiFi[selectedWiFi].clientSSID, multiWiFi[selectedWiFi].clientPass);
+    DEBUG_PRINTF_P(PSTR("Connecting to %s ...\n"), multiWiFi[selectedWiFi].clientSSID);
 
     // convert the "serverDescription" into a valid DNS hostname (alphanumeric)
     char hostname[25];

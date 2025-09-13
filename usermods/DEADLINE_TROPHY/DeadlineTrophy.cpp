@@ -37,7 +37,7 @@ namespace DeadlineTrophy {
 
     void overwriteConfig()
     {
-        // Usermods usually only care about their own stuff, but:
+        // Usermods usually only care about their own stuff, but then again:
         // "You're remembered for the rules you break" - Stockton Rush
         DEBUG_PRINTLN(F("[USE_DEADLINE_CONFIG] Overwrite config by Deadline Trophy hard-coded values."));
 
