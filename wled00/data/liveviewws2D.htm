@@ -60,11 +60,14 @@
 
                         function drawPixel(n, x, y, r=1) {
 							ctx.fillStyle = `rgb(${leds[4+3*n]},${leds[5+3*n]},${leds[6+3*n]})`;
+							ctx.shadowColor = ctx.fillStyle;
+							ctx.shadowBlur = 0.5*pPL;
 							ctx.beginPath();
 							ctx.arc(x*pPL+lOf, y*pPL, pPL*0.4*r, 0, 2 * Math.PI);
 							ctx.fill();
                         }
 
+                        ctx.clearRect(0, 0, c.width, c.height);
                         if (window.parent?.isDeadline) { // QM_DEADLINE_TROPHY PEEK COMPETENCE
                             const mMax = Math.max(mW, mH);
                             lOf = Math.floor((c.width - pPL*mMax)/2);
@@ -141,8 +144,8 @@
                 const ix = mapIndex % LOGO_WIDTH;
                 const iy = Math.floor(mapIndex / LOGO_WIDTH);
                 return {
-                    x: 0.1 + 0.8 * ix / LOGO_WIDTH,
-                    y: 0.15 + 0.40 * iy / LOGO_HEIGHT,
+                    x: 0.13 + 0.8 * ix / LOGO_WIDTH,
+                    y: 0.2 + 0.36 * iy / LOGO_HEIGHT,
                     r: 0.8,
                 };
             } else if (index == 170) { // floor

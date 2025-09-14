@@ -76,7 +76,6 @@ private:
     static const unsigned int MAX_UDP_SIZE = 1024;
     byte udpPacket[MAX_UDP_SIZE];
     void sendTrophyUdp();
-
     static const unsigned int N_RGB_VALUES = 3 * DeadlineTrophy::N_LEDS_TOTAL;
     byte rgbValues[N_RGB_VALUES];
     void readRgbValues();
@@ -86,8 +85,9 @@ private:
     bool debugLogUdp = false;
     unsigned long lastLoggedUdpAt = 0;
 
-    // for the JSON to monitor the temperature values etc.
-    char jsonBuffer[400];
+    // for the JSON to monitor the power & temperature
+    char jsonBuffer[512];
+    float totalAmpere = 0, totalAmpereMin = 0, totalAmpereMax = 0;
 
     // analog readings
     uint16_t val_logoTherm[AVERAGE_SAMPLES];
@@ -169,8 +169,6 @@ public:
         attenuateFactor = 0.;
         BusManager::setMilliampsMax(static_cast<uint16_t>(maxCurrent));
 
-        DEBUG_PRINTF("[DEADLINE_TROPHY] ablMilliampsMax() = %d mA\n", BusManager::ablMilliampsMax());
-
         // 12-bit ADC is the default, but let's go sure (do we need? no idea.)
         analogSetWidth(12);
 
@@ -186,6 +184,8 @@ public:
 
         readRgbValues();
         sendTrophyUdp();
+
+        readUsedCurrents();
 
         // qm210: below are the temperature control loops, once considered super-important
         // but then never tested and somehow also not required anymore (needs low enough constant Ampere limit)
@@ -444,6 +444,12 @@ public:
         return USERMOD_ID_DEADLINE_TROPHY;
     }
 
+    void readUsedCurrents() {
+        totalAmpere = 0.001f * BusManager::currentMilliamps();
+        totalAmpereMin = totalAmpere < totalAmpereMin ? totalAmpere : totalAmpereMin;
+        totalAmpereMax = totalAmpere > totalAmpereMax ? totalAmpere : totalAmpereMax;
+    }
+
     const char* buildSocketJson()
     {
         // is called every time the sensor values are requested by the WebSocket (i.e. often!)
@@ -452,20 +458,11 @@ public:
             return jsonBuffer;
         }
 
-        float busAmpere;
-        float totalAmpere = 0;
-        sprintf(jsonBuffer, "[");
-        for (int b = 0; b < BusManager::busses.size(); b++) {
-            DEBUG_PRINTF("ACCESS BUS %d", b);
-            busAmpere =  0.001f * BusManager::busses[b]->getUsedCurrent();
-            totalAmpere += busAmpere;
-            DEBUG_PRINTF("AMPS %fA %fA\n", busAmpere, totalAmpere);
-            sprintf(jsonBuffer, "%s%.2f%s", jsonBuffer, busAmpere, b == 0 ? "," : "]");
-        }
-        DEBUG_PRINTF("BUFFER NOW %s\n", jsonBuffer);
         sprintf(
             jsonBuffer,
-            "{\"dl\": {\"T\": %.3f, \"minT\": %.3f, \"maxT\": %.3f, \"VCC\": %.3f, \"maxVCC\": %.3f, \"minVCC\": %.3f, \"adcT\": %.1f, \"adcV\": %.1f, \"att\": %.2f, \"aboveT\":%d, \"belowV\":%d, \"sec\": %.2f, \"sumA\": %.3f \"busA\": %s}}",
+            "{\"dl\":{\"T\": %.3f,\"minT\": %.3f,\"maxT\": %.3f,\"VCC\": %.3f,\"maxVCC\": %.3f,\"minVCC\": %.3f,"
+            "\"adcT\": %.1f,\"adcV\": %.1f,\"att\": %.2f,\"gtT\":%d,\"ltV\":%d,"
+            "\"ablmA\":%d,\"A\":%.3f,\"minA\":%.3f,\"maxA\":%.3f,\"busA\":[",
             currentLogoTempKelvin - KELVIN_OFFSET,
             minLogoTempKelvin - KELVIN_OFFSET,
             maxLogoTempKelvin - KELVIN_OFFSET,
@@ -477,11 +474,20 @@ public:
             attenuateFactor,
             limit_becauseTooHot,
             limit_becauseVoltageDrop,
-            secondsSinceVoltageThresholdReached,
+            BusManager::ablMilliampsMax(),
             totalAmpere,
-            jsonBuffer
+            totalAmpereMin,
+            totalAmpereMax
         );
-
+        // inner iteration; REMEMBER: jsonBuffer can only be referenced in itself when as first parameter..!
+        int nBusses = BusManager::busses.size();
+        for (int b = 0; b < nBusses; b++) {
+            sprintf(jsonBuffer, "%s%.2f%s",
+                jsonBuffer,
+                0.001f * BusManager::busses[b]->getUsedCurrent(),
+                b < nBusses - 1 ? "," : "]}}"
+            );
+        }
         return jsonBuffer;
     }
 

@@ -14,15 +14,11 @@
 		function getURL(path) {
 			return (loc ? locproto + "//" + locip : "") + path;
 		}
-        function requestTrophyData(justOpened = false) {
+        function requestTrophyData() {
             if (!ws || ws.readyState !== WebSocket.OPEN) {
                 makeDeadlineTrophyWs();
             } else {
-                ws.send(
-                    justOpened
-                        ? "{'dl':true, 'debug': true}"
-                        : "{'dl':true}"
-                );
+                ws.send("{'dl':true}");
             }
         }
         function makeDeadlineTrophyWs() {
@@ -56,18 +52,20 @@
             };
             ws.onopen = e => {
                 if (d.DEBUG) console.log("[DEBUG] WebSocket opened.");
-                requestTrophyData(true);
+                requestTrophyData();
                 refreshButton.style.display = "none";
             }
         }
         function updateTrophyReadings(data) {
             gId("dl_readings").style.display = "flex";
+            gId("dl_curr").innerText = `${data.A} A`;
+            gId("dl_curr_info").innerText = `limit ${0.001 * data.ablmA} A, \u2208 [${data.minA}, ${data.maxA}], busses: ${data.busA.join(" / ")} A`;
             gId("dl_tempK").innerText = `${data.T} °C`;
-            gId("dl_tempK_info").innerText = `[${data.minT}, ${data.maxT}] °C, ADC = ${data.adcT}`;
+            gId("dl_tempK_info").innerText = `\u2208 [${data.minT}, ${data.maxT}] °C, ADC = ${data.adcT}`;
             gId("dl_vcc").innerText = `${data.VCC} V`;
-            gId("dl_vcc_info").innerText = `[${data.minVCC}, ${data.maxVCC}] V`; // ADC = ${data.adcV}
-            gId("dl_attenuate").innerText = `x ${data.att}`;
-            attBy = [data.aboveT ? "> T" : "", data.belowV ? "< V" : ""].filter(b => !!b);
+            gId("dl_vcc_info").innerText = `\u2208 [${data.minVCC}, ${data.maxVCC}] V`; // ADC = ${data.adcV}
+            gId("dl_attenuate").innerText = `scale brightness x ${data.att}`;
+            attBy = [data.gtT ? "> T" : "", data.ltV ? "< V" : ""].filter(b => !!b);
             gId("dl_attenuate_info").innerText = attBy.join(" / ");
         }
 	</script>
@@ -102,6 +100,10 @@
             display: none;
             flex-direction: column;
         }
+        #dl_readings > table {
+            width: fit-content;
+            margin: auto;
+        }
         #dl_readings td:last-of-type {
             font-size: smaller;
             opacity: 0.7;
@@ -114,6 +116,11 @@
         }
         #dl_hidden {
             display: none;
+        }
+        .vals {
+            display: flex;
+            width: 100%;
+            justify-content: space-between;
         }
 	</style>
 </head>
@@ -135,23 +142,39 @@
 
 <div id="dl_readings">
     <h3 oncontextmenu="d.DEBUG = !d.DEBUG">
-        Trophy Readings
+        Trophy-Überwachungsstaat
     </h3>
     <table>
         <tbody>
             <tr>
-                <th width="33%">T<sub>logo</sub></th>
-                <td width="33%" id="dl_tempK">?</td>
-                <td width="33%" id="dl_tempK_info"></td>
+                <td width="33%">
+                    <div class="vals">
+                        <span>I<sub>total</sub> =</span>
+                        <span id="dl_curr">??</span>
+                    </div>
+                </td>
+                <td width="33%" id="dl_curr_info"></td>
             </tr>
             <tr>
-                <th>V<sub>CC</sub></th>
-                <td id="dl_vcc">?</td>
+                <td>
+                    <div class="vals">
+                        <span>T<sub>logo</sub> =</span>
+                        <span id="dl_tempK">??</span>
+                    </div>
+                </td>
+                <td id="dl_tempK_info"></td>
+            </tr>
+            <tr>
+                <td>
+                    <div class="vals">
+                        <span>V<sub>CC</sub> =</span>
+                        <span id="dl_vcc">??</span>
+                    </div>
+                </td>
                 <td id="dl_vcc_info"></td>
             </tr>
             <tr>
-                <th>brightness factor</th>
-                <td id="dl_attenuate">?</td>
+                <td id="dl_attenuate">factor on brightness?</td>
                 <td id="dl_attenuate_info"></td>
             </tr>
         </tbody>

@@ -1893,7 +1893,6 @@ function toggleLiveview()
 	size();
 
     localStorage.setItem("lvOpen", isLv);
-    console.log("[QM_DEBUG]", "ws?", wsOn, "lvId=", lvID, "DEADLINE?", isDeadline);
 }
 
 function toggleInfo()

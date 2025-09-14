@@ -84,7 +84,7 @@ void wsEvent(AsyncWebSocket * server, AsyncWebSocketClient * client, AwsEventTyp
                 client->text(F("{\"error\":\"DeadlineUsermod not initialized.\"}"));
                 return;
             }
-            if (root.containsKey("debug")) {
+            if (root.containsKey("debugUdp")) {
                 umDeadline->doOneVerboseDebugLogUdp = true;
             }
             auto deadlineMessage = umDeadline->buildSocketJson();
