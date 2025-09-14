@@ -312,7 +312,7 @@ extern byte realtimeMode;           // used in getMappedPixelIndex()
 #define FX_MODE_2DMETABALLS            154
 #define FX_MODE_FREQMAP                155
 #define FX_MODE_GRAVCENTER             156
-#define FX_MODE_GRAVCENTRIC            157
+// #define FX_MODE_GRAVCENTRIC            157
 #define FX_MODE_GRAVFREQ               158
 #define FX_MODE_DJLIGHT                159
 #define FX_MODE_2DFUNKYPLANK           160
@@ -324,10 +324,9 @@ extern byte realtimeMode;           // used in getMappedPixelIndex()
 #define FX_MODE_2DSUNRADIATION         166
 #define FX_MODE_2DCOLOREDBURSTS        167
 #define FX_MODE_2DJULIA                168
-#define FX_MODE_2DPOOLNOISE            169 //have been removed in WLED SR in the past because of low mem but should be added back
-#define FX_MODE_2DTWISTER              170 //have been removed in WLED SR in the past because of low mem but should be added back
-#define FX_MODE_2DCAELEMENTATY         171 //have been removed in WLED SR in the past because of low mem but should be added back
-// <-- qm210, lel, I enabled them again - let's see whether something catches fire
+//#define FX_MODE_2DPOOLNOISE            169 //have been removed in WLED SR in the past because of low mem but should be added back
+//#define FX_MODE_2DTWISTER              170 //have been removed in WLED SR in the past because of low mem but should be added back
+//#define FX_MODE_2DCAELEMENTATY         171 //have been removed in WLED SR in the past because of low mem but should be added back
 #define FX_MODE_2DGAMEOFLIFE           172
 #define FX_MODE_2DTARTAN               173
 #define FX_MODE_2DPOLARLIGHTS          174
@@ -728,7 +727,7 @@ class Segment {
     #ifndef WLED_DISABLE_2D
       if (is2D()) return virtualWidth() * virtualHeight();
     #endif
-      return virtualLength();    
+      return virtualLength();
     }
 
   #ifndef WLED_DISABLE_2D

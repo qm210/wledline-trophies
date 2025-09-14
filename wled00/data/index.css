@@ -265,8 +265,8 @@ button {
 }
 
 #liveview2D {
-	height: 90%;
-	width: 90%;
+	height: 98%;
+	width: 98%;
 	border: 0;
 	position: absolute;
 	top: 50%;
@@ -1448,7 +1448,7 @@ dialog {
 }
 
 .presin {
-	width: 100%; 
+	width: 100%;
 	box-sizing: border-box;
 }
 
@@ -1639,4 +1639,24 @@ dialog {
     display: flex;
     gap: 0.5rem;
     align-items: center;
+}
+
+
+.peek {
+    padding: 0;
+}
+
+.peek.right-align {
+    width: 40vw;
+    height: 80vh;
+    margin: auto 0 auto auto;
+}
+
+.peek.corner-box {
+    width: 60vh;
+    height: 60vh;
+    margin: auto 1rem 1rem auto;
+    border: 2px solid silver;
+    box-shadow: 1px 1px 3px inset #FFF4;
+    background-color: #181818;
 }

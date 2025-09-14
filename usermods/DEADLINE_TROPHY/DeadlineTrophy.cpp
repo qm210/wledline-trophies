@@ -130,5 +130,6 @@ namespace DeadlineTrophy {
         }
         logoInitialized = true;
         return logoCoordinates_;
-    };
+    }
+
 }

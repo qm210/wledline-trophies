@@ -87,8 +87,7 @@ void wsEvent(AsyncWebSocket * server, AsyncWebSocketClient * client, AwsEventTyp
             if (root.containsKey("debug")) {
                 umDeadline->doOneVerboseDebugLogUdp = true;
             }
-            // WebSocket sending of the temperature values etc (NOT the LED colors, these go via UDP):
-            auto deadlineMessage = umDeadline->buildControlLoopValues();
+            auto deadlineMessage = umDeadline->buildSocketJson();
             client->text(deadlineMessage);
             return;
         }
@@ -202,6 +201,11 @@ bool sendLiveLedsWs(uint32_t wsClient)
   AsyncWebSocketClient * wsc = ws.client(wsClient);
   if (!wsc || wsc->queueLength() > 0) return false; //only send if queue free
 
+#ifdef USERMOD_DEADLINE_TROPHY
+  // QM: as is QoMmon practice, need to do my own thing and no one can get me to stop
+  return GET_DEADLINE_USERMOD()->sendLiveview(wsc);
+#endif
+
   size_t used = strip.getLengthTotal();
 #ifdef ESP8266
   const size_t MAX_LIVE_LEDS_WS = 256U;
@@ -222,13 +226,6 @@ bool sendLiveLedsWs(uint32_t wsClient)
 #endif
   size_t bufSize = pos + (used/n)*3;
 
-#ifdef USERMOD_DEADLINE_TROPHY
-  // QM: as is QoMmon practice, we do our own thing and no one can get me to stop
-  // but in here, I try to keep my Übergrifflichkeiten all as localized as possible
-  n = 1;
-  bufSize = pos + 3 * DeadlineTrophy::N_LEDS_TOTAL;
-#endif
-
   AsyncWebSocketBuffer wsBuf(bufSize);
   if (!wsBuf) return false; //out of memory
   uint8_t* buffer = reinterpret_cast<uint8_t*>(wsBuf.data());
@@ -243,12 +240,6 @@ bool sendLiveLedsWs(uint32_t wsClient)
     buffer[3] = Segment::maxHeight/n;
   }
 #endif
-#ifdef USERMOD_DEADLINE_TROPHY
-  // QM also here: custom layout. these are the matrix dimensions, width of 16 is easiest to debug.
-  // (the first four lines are the base, then the logo comes consecutively until the single ones at the end.)
-  buffer[2] = 16;
-  buffer[3] = 11; // just enough so 16*11 = 176 > 172
-#endif
 
   for (size_t i = 0; pos < bufSize -2; i += n)
   {
@@ -260,29 +251,10 @@ bool sendLiveLedsWs(uint32_t wsClient)
     uint8_t g = G(c);
     uint8_t b = B(c);
     uint8_t w = W(c);
-#ifdef USERMOD_DEADLINE_TROPHY
-    if (i >= used) {
-        break;
-    }
-    // QM: yes, we fill it differently, i.e. in mapped index order (and ignore gaps, of course)
-    size_t index = strip.getMappedPixelIndex(i);
-
-    if (index >= DeadlineTrophy::N_LEDS_TOTAL) {
-        continue;
-    }
-    pos = 4 + 3 * index;
-#endif
-
     buffer[pos++] = bri ? qadd8(w, r) : 0; //R, add white channel to RGB channels as a simple RGBW -> RGB map
     buffer[pos++] = bri ? qadd8(w, g) : 0; //G
     buffer[pos++] = bri ? qadd8(w, b) : 0; //B
-
-#ifdef USERMOD_DEADLINE_TROPHY
-    // QM: cheat around the official Abbruchbedingung (must only be smaller than bufSize - 2)
-    //     but will be set in our use case to (4 + 3*index) anyway before next use.
-    pos = 0;
-#endif
-}
+  }
 
   wsc->binary(std::move(wsBuf));
   return true;

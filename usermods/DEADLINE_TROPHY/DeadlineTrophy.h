@@ -76,5 +76,4 @@ namespace DeadlineTrophy {
     extern const char* segmentName[N_SEGMENTS];
     extern const Segment segment[N_SEGMENTS];
     extern const uint8_t segmentCapabilities[N_SEGMENTS];
-
 }

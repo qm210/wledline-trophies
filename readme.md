@@ -29,6 +29,18 @@ If you hate using such build containers (because you feel irrationally smart or 
 
 Take PlatformIO (i.e. [PlatformIO for VSCode](https://platformio.org/install/ide?install=vscode)), download the repo, connect the controller via COM port, upload the shit via PlatformIO and tell me where it breaks.
 
+### Upload fails?
+* Always check that the USB cable supports Data, not only Charging.
+* with `serial.serialutil.SerialTimeoutException: Write timeout`
+  * Sometimes (not always) you have to explicitly enter Bootloader mode, i.e. keep the BOOT button pressed before the output says `Serial port COM5` / `Connecting.....`
+    * if it is then `Writing at ...`, you can stop pressing
+  * Is power supply sufficient?
+    * Try different USB ports on your machine
+  * is the upload speed too high? check `platformio_override.ini`
+    * `upload_speed = 115200` should work
+  * Check OS driver issues? (I admin I never had that, but people in that internet did so)
+  * might be multiple of the above.
+
 ### Uploading via help of what WLED already gives us
 If you have a new ESP32 without any WLED on it, you should be able to use the official WLED web installer https://install.wled.me/ that flashes the whole ESP32 with the usual, everyone has it, boring Non-Deadline-WLED (see also https://kno.wled.ge/basics/install-binary/)
 * and then set it up, and from the Settings -> Sync & Updates -> you can flash your binary Over-The-Air (OTA)

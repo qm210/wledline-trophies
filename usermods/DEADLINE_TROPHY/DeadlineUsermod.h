@@ -1,6 +1,7 @@
 #pragma once
 
 #include "WiFiUdp.h"
+#include "DeadlineTrophy.h"
 
 class DeadlineUsermod : public Usermod
 {
@@ -63,6 +64,8 @@ public:
     bool doDebugLogUdp = false;
     bool doOneVerboseDebugLogUdp = false;
 
+    bool sendLiveview(AsyncWebSocketClient*);
+
 private:
 
     IPAddress udpSenderIp = INADDR_NONE;
@@ -72,8 +75,11 @@ private:
     WiFiUDP udpSender;
     static const unsigned int MAX_UDP_SIZE = 1024;
     byte udpPacket[MAX_UDP_SIZE];
-
     void sendTrophyUdp();
+
+    static const unsigned int N_RGB_VALUES = 3 * DeadlineTrophy::N_LEDS_TOTAL;
+    byte rgbValues[N_RGB_VALUES];
+    void readRgbValues();
 
     float sendUdpInSec = 0;
 
@@ -81,7 +87,7 @@ private:
     unsigned long lastLoggedUdpAt = 0;
 
     // for the JSON to monitor the temperature values etc.
-    char controlLoopValues[255];
+    char jsonBuffer[400];
 
     // analog readings
     uint16_t val_logoTherm[AVERAGE_SAMPLES];
@@ -178,6 +184,7 @@ public:
         elapsedSec = 1e-3 * (now - justBefore);
         runningSec += elapsedSec;
 
+        readRgbValues();
         sendTrophyUdp();
 
         // qm210: below are the temperature control loops, once considered super-important
@@ -381,7 +388,7 @@ public:
         settingsScript.print(F("/* USERMOD DEADLINE */ "));
         settingsScript.print(F("d.DEADLINE_TROPHY_MOD = true;"));
         settingsScript.print(F("d.DEADLINE_VALUES = "));
-        settingsScript.print(buildControlLoopValues());
+        settingsScript.print(buildSocketJson());
         settingsScript.print(F(";"));
         settingsScript.print(F("/* END USERMOD DEADLINE */ "));
     }
@@ -437,17 +444,28 @@ public:
         return USERMOD_ID_DEADLINE_TROPHY;
     }
 
-    const char* buildControlLoopValues()
+    const char* buildSocketJson()
     {
         // is called every time the sensor values are requested by the WebSocket (i.e. often!)
-
         if (!hasEnoughSamples) {
-            sprintf(controlLoopValues, "{\"error\": \"not enough samples taken yet.\"}");
-            return controlLoopValues;
+            sprintf(jsonBuffer, "{\"error\": \"not enough samples taken yet.\"}");
+            return jsonBuffer;
         }
+
+        float busAmpere;
+        float totalAmpere = 0;
+        sprintf(jsonBuffer, "[");
+        for (int b = 0; b < BusManager::busses.size(); b++) {
+            DEBUG_PRINTF("ACCESS BUS %d", b);
+            busAmpere =  0.001f * BusManager::busses[b]->getUsedCurrent();
+            totalAmpere += busAmpere;
+            DEBUG_PRINTF("AMPS %fA %fA\n", busAmpere, totalAmpere);
+            sprintf(jsonBuffer, "%s%.2f%s", jsonBuffer, busAmpere, b == 0 ? "," : "]");
+        }
+        DEBUG_PRINTF("BUFFER NOW %s\n", jsonBuffer);
         sprintf(
-            controlLoopValues,
-            "{\"dl\": {\"T\": %.3f, \"minT\": %.3f, \"maxT\": %.3f, \"VCC\": %.3f, \"maxVCC\": %.3f, \"minVCC\": %.3f, \"adcT\": %.1f, \"adcV\": %.1f, \"att\": %.2f, \"aboveT\":%d, \"belowV\":%d, \"sec\": %.2f}}",
+            jsonBuffer,
+            "{\"dl\": {\"T\": %.3f, \"minT\": %.3f, \"maxT\": %.3f, \"VCC\": %.3f, \"maxVCC\": %.3f, \"minVCC\": %.3f, \"adcT\": %.1f, \"adcV\": %.1f, \"att\": %.2f, \"aboveT\":%d, \"belowV\":%d, \"sec\": %.2f, \"sumA\": %.3f \"busA\": %s}}",
             currentLogoTempKelvin - KELVIN_OFFSET,
             minLogoTempKelvin - KELVIN_OFFSET,
             maxLogoTempKelvin - KELVIN_OFFSET,
@@ -459,10 +477,12 @@ public:
             attenuateFactor,
             limit_becauseTooHot,
             limit_becauseVoltageDrop,
-            secondsSinceVoltageThresholdReached
+            secondsSinceVoltageThresholdReached,
+            totalAmpere,
+            jsonBuffer
         );
 
-        return controlLoopValues;
+        return jsonBuffer;
     }
 
 };

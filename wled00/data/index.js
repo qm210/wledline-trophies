@@ -42,8 +42,9 @@ var hol = [
 	//[2028, 3, 16, 2, "https://aircoookie.github.io/easter.png"],	// easter 2028
 	[0, 6, 4, 1, "https://images.alphacoders.com/516/516792.jpg"],	// 4th of July
 	[0, 0, 1, 1, "https://images.alphacoders.com/119/1198800.jpg"],	// new year
-    [0, 8, 13, 2, "https://satori-drinks.de/assets/backdrop-wled.png"]	// QM spielt rum (jahr oder 0, monat ab 0, tag ab 1, #tage)
-//    [2025, 9, 3, 3, "https://www.demoparty.berlin/wp-content/uploads/2024/07/..."]	// DEADLINE 2025 (3.-5. 10. 2025)
+    // DEADLINE 2025 (3.-5. 10. 2025): (jahr oder 0 jedes, monat ab 0, tag ab 1, #tage)
+    [2025, 8, 13, 1, "https://www.demoparty.berlin/wp-content/media/backdrop-wled.png"], // QM develt rum
+    [0, 9, 3, 4, "https://www.demoparty.berlin/wp-content/media/backdrop-wled.png"],
 ];
 
 var cpick = new iro.ColorPicker("#picker", {
@@ -978,11 +979,6 @@ function populateEffects()
 	}
 
 	gId('fxlist').innerHTML=html;
-
-    // if (isDeadline) {
-    //     console.log("[DEADLINE_TROPHY] expect this effect to be it's own:", effects[1]);
-    //     setFX(effects[1].id);
-    // }
 }
 
 function populatePalettes()
@@ -1460,6 +1456,10 @@ function makeWS() {
 		//ws.send("{'v':true}"); // unnecessary (https://github.com/wled/WLED/blob/master/wled00/ws.cpp#L18)
 		wsRpt = 0;
 		reqsLegal = true;
+
+        if(!isLv && localStorage.getItem("lvOpen") == "true") {
+            toggleLiveview();
+        }
 	}
 }
 
@@ -1868,18 +1868,32 @@ function toggleLiveview()
 	isLv = !isLv;
 	let wsOn = ws && ws.readyState === WebSocket.OPEN;
 
+    if (isDeadline) {
+        gId('mlv2D').classList.add("peek");
+        const inPcMode = gId('buttonPcm').classList.contains('active');
+		gId('mlv2D').classList.toggle("corner-box", window.innerWidth > 1100 && inPcMode);
+        gId('mlv2D').classList.toggle("right-align", !inPcMode);
+    }
+
 	var lvID = "liveview";
 	if (isM && wsOn) {
 		lvID += "2D";
 		if (isLv) gId('klv2D').innerHTML = `<iframe id="${lvID}" src="about:blank"></iframe>`;
-		gId('mlv2D').style.transform = (isLv) ? "translateY(0px)":"translateY(100%)";
+		gId('mlv2D').style.transform = (isLv) ? "translateY(0px)":"translateY(calc(100% + 2rem))";
 	}
-
-	gId(lvID).style.display = (isLv) ? "block":"none";
-	gId(lvID).src = (isLv) ? getURL("/" + lvID + ((wsOn) ? "?ws":"")):"about:blank";
+    const lv = gId(lvID);
+    if (lv) {
+        lv.style.display = (isLv) ? "block":"none";
+        lv.src = (isLv) ? getURL("/" + lvID + ((wsOn) ? "?ws":"")):"about:blank";
+    } else {
+        gId('klv2D').innerHTML = `<div>Websocket not ready, close & open Peek live view again</div>`;
+    }
 	gId('buttonSr').classList.toggle("active");
 	if (!isLv && wsOn) ws.send('{"lv":false}');
 	size();
+
+    localStorage.setItem("lvOpen", isLv);
+    console.log("[QM_DEBUG]", "ws?", wsOn, "lvId=", lvID, "DEADLINE?", isDeadline);
 }
 
 function toggleInfo()
@@ -1950,9 +1964,6 @@ function resetUtil(off=false)
 {
 	gId('segutil').innerHTML = `<div class="seg btn btn-s${off?' off':''}" style="padding:0;margin-bottom:12px;">`
 	+ '<label class="check schkl"><input type="checkbox" id="selall" onchange="selSegAll(this)"><span class="checkmark" title="Select all"></span></label>';
-    if (isDeadline) {
-        return;
-    }
 	+ `<div class="segname" ${off?'':'onclick="makeSeg()"'}><i class="icons btn-icon">&#xe18a;</i>Add segment</div>`
 	+ '<div class="pop hide" onclick="event.stopPropagation();">'
 	+ `<i class="icons g-icon" title="Select group" onclick="this.nextElementSibling.classList.toggle('hide');">&#xE34B;</i>`
