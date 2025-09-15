@@ -1869,10 +1869,7 @@ function toggleLiveview()
 	let wsOn = ws && ws.readyState === WebSocket.OPEN;
 
     if (isDeadline) {
-        gId('mlv2D').classList.add("peek");
-        const inPcMode = gId('buttonPcm').classList.contains('active');
-		gId('mlv2D').classList.toggle("corner-box", window.innerWidth > 1100 && inPcMode);
-        gId('mlv2D').classList.toggle("right-align", !inPcMode);
+		gId('mlv2D').className = (pcMode) ? "peek":"modal";
     }
 
 	var lvID = "liveview";
@@ -3193,7 +3190,7 @@ function size()
 	var h = gId('top').clientHeight;
 	sCol('--th', h + "px");
 	sCol('--bh', gId('bot').clientHeight + "px");
-	if (isLv) h -= 4;
+	if (isLv && !pcMode) h -= 4;
 	sCol('--tp', h + "px");
 	togglePcMode();
 	lastw = wW;
@@ -3215,6 +3212,9 @@ function togglePcMode(fromB = false)
 	gId('bot').style.height = (pcMode && !cfg.comp.pcmbot) ? "0":"auto";
 	sCol('--bh', gId('bot').clientHeight + "px");
 	_C.style.width = (pcMode || simplifiedUI)?'100%':'400%';
+    if (isDeadline && isLv) {
+		gId('mlv2D').className = pcMode ? "peek":"modal";
+    }	
 }
 
 function mergeDeep(target, ...sources)

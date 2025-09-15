@@ -1641,22 +1641,16 @@ dialog {
     align-items: center;
 }
 
-
 .peek {
     padding: 0;
-}
-
-.peek.right-align {
-    width: 40vw;
-    height: 80vh;
-    margin: auto 0 auto auto;
-}
-
-.peek.corner-box {
-    width: 60vh;
-    height: 60vh;
-    margin: auto 1rem 1rem auto;
-    border: 2px solid silver;
-    box-shadow: 1px 1px 3px inset #FFF4;
-    background-color: #181818;
+	width: 45vh;
+    height: 40vh;
+	bottom: 0;
+	right: 0;
+    margin: auto 2rem 0 auto;
+	position: fixed;
+	background-color: var(--c-o);
+	transform: translateY(100%);
+	transition: transform .4s;
+	overflow: hidden;
 }
