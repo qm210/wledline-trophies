@@ -804,12 +804,12 @@ function populateSegments(s)
 						`<div class="sel-p"><select class="sel-p" id="seg${i}m12" onchange="setM12(${i})">`+
 							`<option value="0" ${inst.m12==0?' selected':''}>Pixels</option>`+
 							`<option value="1" ${inst.m12==1?' selected':''}>Bar</option>`+
-							`<option value="2" ${inst.m12==2?' selected':''}>Arc</option>`+
-							`<option value="3" ${inst.m12==3?' selected':''}>Corner</option>`+
-							`<option value="4" ${inst.m12==4?' selected':''}>Pinwheel</option>`+
-						`</select></div>`+
+							`<option value="2" ${inst.m12==2?' selected':''}>Arc</option>`;
+							if (i !== 1) map2D += `<option value="3" ${inst.m12==3?' selected':''}>Corner</option>`+ // corner and pinwheel seems to be broken for the logo and cause resets
+							`<option value="4" ${inst.m12==4?' selected':''}>Pinwheel</option>`;
+						map2D += `</select></div>`+
 					`</div>`;
-		let blend = `<div class="lbl-l">Blend mode<br>`+
+		let blend = `<div class="lbl-l maybe-hide">Blend mode<br>`+
 						`<div class="sel-p"><select class="sel-ple" id="seg${i}bm" onchange="setBm(${i})">`+
 							`<option value="0" ${inst.bm==0?' selected':''}>Top/Default</option>`+
 							`<option value="1" ${inst.bm==1?' selected':''}>Bottom/None</option>`+
@@ -851,11 +851,11 @@ function populateSegments(s)
 					`</div> `+
 					`<i class="icons edit-icon flr ${smpl} maybe-hide" id="seg${i}nedit" title="Edit" onclick="tglSegn(${i})">&#xe2c6;</i>`+
 				`</div>`+
-				`<i class="icons e-icon flr maybe-hide ${smpl}" id="sege${i}" onclick="expand(${i})">&#xe395;</i>`+
+				`<i class="icons e-icon flr ${smpl}" id="sege${i}" onclick="expand(${i})">&#xe395;</i>`+
  				(cfg.comp.segpwr ? segp : '') +
 				`<div class="segin ${smpl}" id="seg${i}in">`+
 					`<input type="text" class="ptxt" id="seg${i}t" autocomplete="off" maxlength=${li.arch=="esp8266"?32:64} value="${inst.n?inst.n:""}" placeholder="Enter name..."/>`+
-					`<table class="infot segt">`+
+					`<table class="infot segt maybe-hide">`+
 					`<tr>`+
 						`<td>${isMSeg?'Start X':'Start LED'}</td>`+
 						`<td>${isMSeg?(cfg.comp.seglen?"Width":"Stop X"):(cfg.comp.seglen?"LED count":"Stop LED")}</td>`+
@@ -883,7 +883,7 @@ function populateSegments(s)
 						`<td><button class="btn btn-xs" title="Update" onclick="setSeg(${i})"><i class="icons btn-icon" id="segc${i}">&#xe390;</i></button></td>`+
 					`</tr>`+
 					`</table>`+
-					`<div class="h bp" id="seg${i}len"></div>`+
+					`<div class="h bp maybe-hide" id="seg${i}len"></div>`+
 					blend +
 					(!isMSeg ? rvXck : '') +
 					(isMSeg&&stoY-staY>1&&stoX-staX>1 ? map2D : '') +
@@ -894,7 +894,7 @@ function populateSegments(s)
 						'<input type="checkbox" id="seg'+i+'mi" onchange="setMi('+i+')" '+(inst.mi?"checked":"")+'>') +
 						`<span class="checkmark"></span>`+
 					`</label>`+
-					`<div class="del">`+
+					`<div class="del maybe-hide">`+
 						`<button class="btn btn-xs" id="segr${i}" title="Repeat until end" onclick="rptSeg(${i})"><i class="icons btn-icon">&#xe22d;</i></button>`+
 						`<button class="btn btn-xs" id="segd${i}" title="Delete" onclick="delSeg(${i})"><i class="icons btn-icon">&#xe037;</i></button>`+
 					`</div>`+

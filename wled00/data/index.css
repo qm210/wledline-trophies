@@ -1443,12 +1443,12 @@ dialog {
 /* segment & preset inner/expanded content */
 .segin,
 .presin {
+	width: 100%;
 	padding: 8px;
 	position: relative;
 }
 
 .presin {
-	width: 100%;
 	box-sizing: border-box;
 }
 
