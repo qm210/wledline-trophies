@@ -75,10 +75,12 @@ namespace DeadlineTrophy {
             PIN_FLOOR_SPOT
         ));
 
-        gammaCorrectBri = false;
-        gammaCorrectCol = true;
-        gammaCorrectVal = 1.0; // <-- messy suggested
-        NeoGammaWLEDMethod::calcGammaTable(gammaCorrectVal);
+        // QM: let's keep the gamma functioning right now,
+        // but we should fix it & communicate that before the compo
+        // gammaCorrectBri = false;
+        // gammaCorrectCol = true;
+        // gammaCorrectVal = 1.0; // <-- messy suggested, default was 2.7 or something
+        // NeoGammaWLEDMethod::calcGammaTable(gammaCorrectVal);
 
         #ifdef DEADLINE_INIT_BRIGHTNESS
             briS = DEADLINE_INIT_BRIGHTNESS;

@@ -1644,12 +1644,12 @@ dialog {
 .peek {
     padding: 0;
 	width: 45vh;
-    height: 40vh;
+    height: 45vh;
 	bottom: 0;
 	right: 0;
     margin: auto 2rem 0 auto;
 	position: fixed;
-	background-color: var(--c-o);
+	background-color: #181818;
 	transform: translateY(100%);
 	transition: transform .4s;
 	overflow: hidden;

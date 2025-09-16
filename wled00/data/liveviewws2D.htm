@@ -62,7 +62,7 @@
                         function drawPixel(n, x, y, r=1) {
 							ctx.fillStyle = `rgb(${leds[4+3*n]},${leds[5+3*n]},${leds[6+3*n]})`;
 							ctx.shadowColor = ctx.fillStyle;
-							ctx.shadowBlur = 0.3*pPL;
+							ctx.shadowBlur = 0.4*pPL;
 							ctx.beginPath();
 							ctx.arc(x*pPL+lOf, y*pPL, pPL*0.4*r, 0, 2 * Math.PI);
 							ctx.fill();
