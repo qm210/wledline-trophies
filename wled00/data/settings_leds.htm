@@ -773,7 +773,7 @@ Swap: <select id="xw${s}" name="XW${s}">
 			return opt;
 		}
         function applyDeadlineMod() {
-            ["able", "MA", "LAsel", "MS", "+", "-"]
+            ["LAsel", "si", "+", "-"]
                 .forEach(_id => {
                     const element = gId(_id);
                     if (!element) {
@@ -784,10 +784,11 @@ Swap: <select id="xw${s}" name="XW${s}">
                         element.style.display = "none";
                     }
                 });
-            d.querySelectorAll('#abl input').forEach(input=>{
+            d.querySelectorAll('#abl input, .iST input, .iST select').forEach(input=>{
                 input.disabled = true;
             });
-            ["L00", "L10", "L01", "L11", "L02", "L03"]
+            // ["L00", "L10", "L01", "L11", "L02", "L03"]
+            ["ABL", "MS", "CA"]
                 .forEach(name => {
                     const pinInput = d.querySelectorAll("input[name='" + name + "']")[0];
                     pinInput.disabled = true;
@@ -795,9 +796,9 @@ Swap: <select id="xw${s}" name="XW${s}">
             const info = gId("abl_info");
             if (!info) return;
             info.innerHTML = `
-                The Deadline Trophy has control over the automatic brightness limit.
+                The Deadline Trophy has fixed brightness limits (it can really destroy itself.)
                 <br/>
-                This is just for info.
+                These values here are just for info.
             `;
             info.style.fontWeight = "bold";
             info.style.color = "red";
@@ -813,10 +814,12 @@ Swap: <select id="xw${s}" name="XW${s}">
 		</div>
 		<h2>LED &amp; Hardware setup</h2>
 		Total LEDs: <span id="lc">?</span> <span id="pc"></span><br>
+        <div class="dl hide">
 		<i>Recommended power supply for brightest white:</i><br>
 		<b><span id="psu">?</span></b><br>
 		<span id="psu2"><br></span>
 		<br>
+        </div>
 		Enable automatic brightness limiter: <input type="checkbox" name="ABL" onchange="enABL()"><br>
         <div id="abl_info"></div> <!-- QM added -->
 		<div id="abl">
@@ -853,7 +856,7 @@ Swap: <select id="xw${s}" name="XW${s}">
 		Make a segment for each output: <input type="checkbox" name="MS"><br>
 		Custom bus start indices: <input type="checkbox" onchange="tglSi(this.checked)" id="si"><br>
 		<hr class="sml">
-		<div id="color_order_mapping">
+		<div id="color_order_mapping" class="hide">
 			Color Order Override:
 			<div id="com_entries"></div>
 			<hr class="sml">
