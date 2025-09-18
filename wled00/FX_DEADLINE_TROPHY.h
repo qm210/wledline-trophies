@@ -14,7 +14,7 @@ extern uint16_t mode_static(void);
  //////////////////////////
 
 
-const int DEBUG_LOG_EVERY_N_CALLS = 10000; // for printing debug output every ... steps (0 = no debug out)
+const int DEBUG_LOG_EVERY_N_CALLS = 0; // for printing debug output every ... steps (0 = no debug out)
 
 #define IS_DEBUG_STEP (DEBUG_LOG_EVERY_N_CALLS > 0 && (SEGENV.call % DEBUG_LOG_EVERY_N_CALLS) == 0)
 
@@ -43,11 +43,6 @@ inline void setPixel(size_t segmentIndex, int x, int y, uint32_t color) {
 }
 
 void setBase(size_t x, size_t y, uint32_t color) {
-    if (IS_DEBUG_STEP) {
-        DEBUG_PRINTF("[QM_DEBUG] %d, %d (%d) / %d - %d (%d %d %d %d) - is it? %d\n",
-            x, y, x + y*Segment::vWidth(), baseSize, color, R(color), G(color), B(color), W(color), !(x >= baseSize || y >= baseSize)
-        );
-    }
     if (x >= baseSize || y >= baseSize) {
         return;
     }

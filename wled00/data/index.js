@@ -804,8 +804,8 @@ function populateSegments(s)
 						`<div class="sel-p"><select class="sel-p" id="seg${i}m12" onchange="setM12(${i})">`+
 							`<option value="0" ${inst.m12==0?' selected':''}>Pixels</option>`+
 							`<option value="1" ${inst.m12==1?' selected':''}>Bar</option>`+
-							`<option value="2" ${inst.m12==2?' selected':''}>Arc</option>`;
-							if (i !== 1) map2D += `<option value="3" ${inst.m12==3?' selected':''}>Corner</option>`+ // corner and pinwheel seems to be broken for the logo and cause resets
+							`<option value="2" ${inst.m12==2?' selected':''}>Arc</option>` +
+                            `<option value="3" ${inst.m12==3?' selected':''}>Corner</option>`+
 							`<option value="4" ${inst.m12==4?' selected':''}>Pinwheel</option>`;
 						map2D += `</select></div>`+
 					`</div>`;
@@ -851,7 +851,7 @@ function populateSegments(s)
 					`</div> `+
 					`<i class="icons edit-icon flr ${smpl} maybe-hide" id="seg${i}nedit" title="Edit" onclick="tglSegn(${i})">&#xe2c6;</i>`+
 				`</div>`+
-				`<i class="icons e-icon flr ${smpl}" id="sege${i}" onclick="expand(${i})">&#xe395;</i>`+
+				`<i class="icons e-icon flr ${smpl} ${isDeadline && i > 1 ? "maybe-hide" : ""}" id="sege${i}" onclick="expand(${i})">&#xe395;</i>`+
  				(cfg.comp.segpwr ? segp : '') +
 				`<div class="segin ${smpl}" id="seg${i}in">`+
 					`<input type="text" class="ptxt" id="seg${i}t" autocomplete="off" maxlength=${li.arch=="esp8266"?32:64} value="${inst.n?inst.n:""}" placeholder="Enter name..."/>`+
@@ -3214,7 +3214,7 @@ function togglePcMode(fromB = false)
 	_C.style.width = (pcMode || simplifiedUI)?'100%':'400%';
     if (isDeadline && isLv) {
 		gId('mlv2D').className = pcMode ? "peek":"modal";
-    }	
+    }
 }
 
 function mergeDeep(target, ...sources)

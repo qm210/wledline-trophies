@@ -15,6 +15,7 @@
 
 #ifdef USERMOD_DEADLINE_TROPHY
 #include "../usermods/DEADLINE_TROPHY/DeadlineUsermod.h"
+bool qmBrokenDebug = false;
 #endif
 
 /*
@@ -733,8 +734,10 @@ void IRAM_ATTR_YN Segment::setPixelColor(int i, uint32_t col) const
         }
         break;
       case M12_pCorner:
-        for (int x = 0; x <= i; x++) setPixelColorRaw(XY(x, i), col);
-        for (int y = 0; y <  i; y++) setPixelColorRaw(XY(i, y), col);
+        for (int x = 0; x <= i; x++)
+            if (x < vW && i < vH) setPixelColorRaw(XY(x, i), col);
+        for (int y = 0; y <  i; y++)
+            if (i < vW && y < vH) setPixelColorRaw(XY(i, y), col);
         break;
       case M12_sPinwheel: {
         // Uses Bresenham's algorithm to place coordinates of two lines in arrays then draws between them
@@ -823,6 +826,12 @@ void IRAM_ATTR_YN Segment::setPixelColor(int i, uint32_t col) const
                   (!onLine2 && (!onLine1 || drawFirst))    // Middle pixels and line1 if drawFirst
                 ) {
                 setPixelColorXY(x, y, col);
+#ifdef DEBUG_PATTERN_CRASH
+                if (!qmBrokenDebug && !heap_caps_check_integrity_all(true)) {
+                    qmBrokenDebug = true;
+                    DEBUG_PRINTF("[QM_DEBUG_PATTERN_CRASH] PINWHEEL %d %d < %d %d?\n", x, y, vW, vH);
+                }
+#endif
               }
             }
           }
@@ -1244,6 +1253,12 @@ void WS2812FX::service() {
         // workaround for on/off transition to respect blending style
         frameDelay = (*_mode[seg.mode])();  // run new/current mode (needed for bri workaround)
         seg.call++;
+#ifdef DEBUG_PATTERN_CRASH
+        if (!qmBrokenDebug && !heap_caps_check_integrity_all(true)) {
+            qmBrokenDebug = true;
+            DEBUG_PRINTF("[QM_DEBUG_PATTERN_CRASH] BROKEN MODE %d (call %d)\n", seg.mode, seg.call);
+        }
+#endif
         // if segment is in transition and no old segment exists we don't need to run the old mode
         // (blendSegments() takes care of On/Off transitions and clipping)
         Segment *segO = seg.getOldSegment();

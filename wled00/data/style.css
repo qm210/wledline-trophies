@@ -63,6 +63,7 @@ button.sml {
 }
 .hide {
   display: none;
+  visibility: hidden;
 }
 .err {
   color: #f00;

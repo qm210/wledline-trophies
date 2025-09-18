@@ -1478,6 +1478,7 @@ dialog {
 }
 .hide, .expanded .segin.hide, .expanded .presin.hide, .expanded .sbs.hide, .expanded .frz, .expanded .g-icon {
 	display: none !important;
+    visibility: hidden;
 }
 
 .m6 {

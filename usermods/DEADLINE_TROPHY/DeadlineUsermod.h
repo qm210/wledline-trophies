@@ -146,7 +146,7 @@ public:
 
     void setup()
     {
-        DEBUG_PRINTF("[DEADLINE_TROPHY] QM watches you! (non-creepily.) Say Hi at qm@z10.info\n");
+        DEBUG_PRINTF("[DEADLINE_TROPHY] QM watches you! (non-creepily.) Say Hi to qm@z10.info\n");
 
 #ifdef DEADLINE_UDP_SENDER_IP
         // If the default (0.0.0.0) equals "broadcast", this is going to be WAY too slow, I suppose.
@@ -396,7 +396,7 @@ public:
     bool readFromConfig(JsonObject& root)
     {
         DEBUG_PRINTLN("[QM_DEBUG] DeadlineTrophy::readFromConfig");
-        serializeJsonPretty(root, Serial);
+        serializeJson(root, Serial);
         DEBUG_PRINTLN();
 
         JsonObject top = root[FPSTR("DeadlineTrophy")];
