@@ -68,9 +68,9 @@ namespace DeadlineTrophy {
         __, 31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, __, __, __, __, __, __, __, __, __,
     };
 
-    struct Coord { uint8_t x; uint8_t y; };
+    struct NormalizedCoord { float x; float y; };
 
-    std::array<Coord, N_LEDS_LOGO>& logoCoordinates();
+    std::array<NormalizedCoord, N_LEDS_LOGO>& logoCoordinates();
 
     static const size_t N_SEGMENTS = 4;
     extern const char* segmentName[N_SEGMENTS];

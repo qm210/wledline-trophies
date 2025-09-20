@@ -24,9 +24,6 @@ void DeadlineUsermod::readRgbValues(bool printDebug)
     uint8_t r = R(color);
     uint8_t g = G(color);
     uint8_t b = B(color);
-    if (printDebug) {
-        DEBUG_PRINTF("[QM_DEBUG_RGB] filling at (%d) pixel %d - (%d, %d, %d)", i, index, r, g, b);
-    }
     if (applyMasterBrightnessToRgbValues) {
         if (applyMasterBrightnessWithScaleVideo) {
             r = scale8_video(r, masterFader);
@@ -37,9 +34,6 @@ void DeadlineUsermod::readRgbValues(bool printDebug)
             g = scale8(g, masterFader);
             b = scale8(b, masterFader);
         }
-    }
-    if (printDebug) {
-        DEBUG_PRINTF(" - after scaling -> (%d, %d, %d)\n", r, g, b);
     }
     s = 3 * index;
     rgbValues[s++] = r;

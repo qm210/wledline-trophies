@@ -114,13 +114,17 @@ namespace DeadlineTrophy {
         SEG_CAPABILITY_W
     };
 
-    static std::array<Coord, N_LEDS_LOGO> logoCoordinates_;
+    static std::array<NormalizedCoord, N_LEDS_LOGO> logoCoordinates_;
     static bool logoInitialized = false;
 
-    std::array<Coord, N_LEDS_LOGO>& logoCoordinates() {
+    std::array<NormalizedCoord, N_LEDS_LOGO>& logoCoordinates() {
         if (logoInitialized) {
             return logoCoordinates_;
         }
+        float dx = 1. / static_cast<float>(logoW);
+        float dy = 1. / static_cast<float>(logoH);
+        float x0 = -0.5f + (logoW % 2 == 0 ? dx : 0.f);
+        float y0 = -0.5f + (logoH % 2 == 0 ? dy : 0.f);
         for (uint8_t x = 0; x < logoW; ++x)
         for (uint8_t y = 0; y < logoH; ++y) {
             uint8_t ledIndex = mappingTable[x + logoW * y];
@@ -128,7 +132,10 @@ namespace DeadlineTrophy {
             if (ledIndex > N_LEDS_TOTAL) {
                 continue;
             }
-            logoCoordinates_[ledIndexInLogo] = {x, y};
+            logoCoordinates_[ledIndexInLogo] = {
+                static_cast<float>(x) * dx + x0,
+                static_cast<float>(y) * dy + y0,
+            };
         }
         logoInitialized = true;
         return logoCoordinates_;
