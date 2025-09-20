@@ -73,7 +73,6 @@ _Unless you changed it_ (and in that case you're clearly not the audience for th
 | `WLED_AP_PASS`  | "deadline"     | --    |
 | `WLED_OTA_PASS` | "deadlota"     | is sometimes not asked, I wonder why |
 | `MDNS_NAME`     | "deadline"     | to use mDNS, your network must support it, and SCOtty told me he turned it off in the ORWOhaus. <br/>But _if_ you have it, you can access the Web UI then under `http://deadline.local` |
-|                 |                |
 
 #### Stuff to Change
 Obviously, no one can stop you from changing whatever you find here, but if you just want to develop a pattern of your own, look for
