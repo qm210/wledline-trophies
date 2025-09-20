@@ -437,7 +437,13 @@ void WLED::setup()
 
 #ifdef CLIENT_PASS
  // qm: didn't appear useful to me to just overwrite the defined config by the stored one
-  multiWiFi.push_back(WiFiConfig(CLIENT_SSID,CLIENT_PASS));
+  bool defined_wifi_configured = false;
+  for (const auto& wifi: multiWiFi) {
+    defined_wifi_configured |= (strcmp(wifi.clientSSID, CLIENT_SSID) == 0);
+  }
+  if (!defined_wifi_configured) {
+    multiWiFi.push_back(WiFiConfig(CLIENT_SSID,CLIENT_PASS));
+  }
 #endif
 
 #if defined(STATUSLED) && STATUSLED>=0

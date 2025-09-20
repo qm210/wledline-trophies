@@ -8,6 +8,8 @@ REGISTER_USERMOD(deadlineUsermod);
 
 void DeadlineUsermod::readRgbValues()
 {
+  // it seems that in the strip _pixels[], the segment opacity is cared for, but overall brightness is independent.
+  fract8 masterFader = static_cast<fract8>(bri);
   int s;
   // it seems that we can only use strip.getPixelColor(i), not just seg->getPixelColor or bus->getPixelColor()
   // that means, we loop over the whole matrix and skip the gaps there.
@@ -20,6 +22,9 @@ void DeadlineUsermod::readRgbValues()
     uint8_t r = R(color);
     uint8_t g = G(color);
     uint8_t b = B(color);
+    // r = scale8_video(r, masterFader);
+    // g = scale8_video(g, masterFader);
+    // b = scale8_video(b, masterFader);
     s = 3 * index;
     rgbValues[s++] = r;
     rgbValues[s++] = g;
@@ -102,4 +107,40 @@ bool DeadlineUsermod::sendLiveview(AsyncWebSocketClient *wsc)
 
     wsc->binary(std::move(wsBuf));
     return true;
+}
+
+bool DeadlineUsermod::parseNotifyPacket(const uint8_t *udpIn) {
+    bool changed = false;
+    if (udpIn[11] != DeadlineUsermod::customPacketVersion) {
+        return changed;
+    }
+
+    for (int i = 0; i < 24; i++) {
+        DEBUG_PRINTF("[QM_DL_UDP] Packet Byte %d = %d\n", i, udpIn[i]);
+    }
+
+    int brightness = udpIn[2];
+    int doReset = udpIn[3] == 1;
+
+    if (doReset) {
+        strip.suspend();
+        strip.waitForIt();
+        for (int s = 0; s < strip.getSegmentsNum(); s++) {
+            Segment seg = strip.getSegment(s);
+            seg.fill(BLACK);
+            seg.freeze = false;
+            seg.call = 0;
+            seg.step = 0; // <-- a custom variable, but probably used in that same sense
+        }
+        toggleOnOff();
+        strip.resume();
+        changed = true;
+    }
+    if (brightness != bri) {
+        bri = brightness;
+        changed = true;
+    }
+
+    DEBUG_PRINTF("[QM_DL_UDP] Did this change something? %d", changed);
+    return changed;
 }

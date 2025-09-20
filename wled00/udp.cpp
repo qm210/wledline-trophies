@@ -10,6 +10,10 @@
 #define UDP_IN_MAXSIZE 1472
 #define PRESUMED_NETWORK_DELAY 3 //how many ms could it take on avg to reach the receiver? This will be added to transmitted times
 
+#ifdef USERMOD_DEADLINE_TROPHY
+#include "../usermods/DEADLINE_TROPHY/DeadlineUsermod.h"
+#endif USERMOD_DEADLINE_TROPHY
+
 typedef struct PartialEspNowPacket {
   uint8_t magic;
   uint8_t packet;
@@ -214,6 +218,18 @@ static void parseNotifyPacket(const uint8_t *udpIn) {
   //compatibilityVersionByte:
   byte version = udpIn[11];
   DEBUG_PRINTF_P(PSTR("UDP packet version: %d\n"), (int)version);
+
+#ifdef USERMOD_DEADLINE_TROPHY
+  bool changed = GET_DEADLINE_USERMOD()->parseNotifyPacket(udpIn);
+  if (changed) {
+    stateUpdated(CALL_MODE_NOTIFICATION);
+    updateInterfaces(CALL_MODE_WS_SEND);
+    return;
+  }
+  receiveSegmentOptions = false;
+  receiveNotificationBrightness = true;
+  receiveNotificationEffects = true;
+#endif
 
   // if we are not part of any sync group ignore message
   if (version < 9) {
@@ -556,6 +572,19 @@ void handleNotifications()
     }
     return;
   }
+
+#ifdef USERMOD_DEADLINE_TROPHY
+  // qmuick hack
+  if (udpIn[0] == 0) {
+    DEBUG_PRINT("[QM_DEBUG] UDP INCOMING: |");
+    for (int i=0; i < 24; i++) {
+        DEBUG_PRINTF("%d=%d|", i, udpIn[i]);
+    }
+    DEBUG_PRINTLN();
+    // realtimeMode = false;
+    // receiveGroups = true;
+  }
+#endif
 
   //wled notifier, ignore if realtime packets active
   if (udpIn[0] == 0 && !realtimeMode && receiveGroups)

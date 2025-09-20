@@ -66,6 +66,10 @@ public:
 
     bool sendLiveview(AsyncWebSocketClient*);
 
+    // incoming UDP packets, using the built-ins made the firmware crash for reasons unknown
+    static const uint8_t customPacketVersion = 210;
+    bool parseNotifyPacket(const uint8_t *udpPacket);
+
 private:
 
     IPAddress udpSenderIp = INADDR_NONE;
