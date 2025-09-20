@@ -167,8 +167,8 @@ uint16_t mode_DeadlineTrophy(void) {
     }
 
     auto stepTime = fmod_t(strip.now, 2.0);
-    setBack(stepTime < 1.0 ? WHITE : BLACK);
-    setFloor(stepTime < 1.0 ? BLACK : WHITE);
+    setBack(stepTime < 1.0 ? WHITE : DARKSLATEGRAY);
+    setFloor(stepTime < 1.0 ? DARKSLATEGRAY : WHITE);
 
     return FRAMETIME;
 } // mode_DeadlineTrophy

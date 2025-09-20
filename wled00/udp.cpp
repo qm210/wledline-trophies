@@ -12,7 +12,7 @@
 
 #ifdef USERMOD_DEADLINE_TROPHY
 #include "../usermods/DEADLINE_TROPHY/DeadlineUsermod.h"
-#endif USERMOD_DEADLINE_TROPHY
+#endif
 
 typedef struct PartialEspNowPacket {
   uint8_t magic;

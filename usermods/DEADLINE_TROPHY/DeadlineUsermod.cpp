@@ -9,7 +9,9 @@ REGISTER_USERMOD(deadlineUsermod);
 void DeadlineUsermod::readRgbValues()
 {
   // it seems that in the strip _pixels[], the segment opacity is cared for, but overall brightness is independent.
+  // this is confusing, so let's implement it as flexible as we can for now, don't know what's good yet. sad.
   fract8 masterFader = static_cast<fract8>(bri);
+
   int s;
   // it seems that we can only use strip.getPixelColor(i), not just seg->getPixelColor or bus->getPixelColor()
   // that means, we loop over the whole matrix and skip the gaps there.
@@ -22,9 +24,17 @@ void DeadlineUsermod::readRgbValues()
     uint8_t r = R(color);
     uint8_t g = G(color);
     uint8_t b = B(color);
-    // r = scale8_video(r, masterFader);
-    // g = scale8_video(g, masterFader);
-    // b = scale8_video(b, masterFader);
+    if (applyMasterBrightnessToRgbValues) {
+        if (applyMasterBrightnessWithScaleVideo) {
+            r = scale8_video(r, masterFader);
+            g = scale8_video(g, masterFader);
+            b = scale8_video(b, masterFader);
+        } else {
+            r = scale8(r, masterFader);
+            g = scale8(g, masterFader);
+            b = scale8(b, masterFader);
+        }
+    }
     s = 3 * index;
     rgbValues[s++] = r;
     rgbValues[s++] = g;
@@ -143,4 +153,139 @@ bool DeadlineUsermod::parseNotifyPacket(const uint8_t *udpIn) {
 
     DEBUG_PRINTF("[QM_DL_UDP] Did this change something? %d", changed);
     return changed;
+}
+
+
+void DeadlineUsermod::addToJsonState(JsonObject& obj)
+{
+    JsonObject usermod = obj[FPSTR("DL")];
+    if (usermod.isNull()) {
+    usermod = obj.createNestedObject(FPSTR("DL"));
+    }
+    usermod["xBri"] = applyMasterBrightnessToRgbValues;
+    usermod["xVid"] = applyMasterBrightnessWithScaleVideo;
+}
+
+void DeadlineUsermod::readFromJsonState(JsonObject& obj)
+{
+    JsonObject usermod = obj[FPSTR("DL")];
+    if (!usermod.isNull()) {
+    auto xBri = usermod[FPSTR("xBri")];
+    bool aBri = xBri.is<bool>() ? xBri.as<bool>()
+        : applyMasterBrightnessToRgbValues;
+    auto xVid = usermod[FPSTR("xVid")];
+    bool aVid = xVid.is<bool>() ? xVid.as<bool>()
+        : applyMasterBrightnessWithScaleVideo;
+    if (aBri != applyMasterBrightnessToRgbValues || aVid != applyMasterBrightnessWithScaleVideo)
+        applyMasterBrightnessToRgbValues = aBri;
+        applyMasterBrightnessWithScaleVideo = aVid;
+        readRgbValues();
+    }
+}
+
+void DeadlineUsermod::addToConfig(JsonObject& doc)
+{
+    JsonObject top = doc.createNestedObject(F("DeadlineTrophy"));
+    // fun thing, fillUMPins() will look for entries in these "pin" arrays. deal with it.
+    auto pins = top.createNestedArray("pin");
+    pins.add(PIN_LOGOTHERM);
+    pins.add(PIN_INPUTVOLTAGE);
+
+    auto limV = top.createNestedObject("minVoltage");
+    limV[F("threshold")] = limit_inputVoltageThreshold;
+    limV[F("attenuate")] = attenuateByV_attackFactorWhenCritical;
+    limV[F("release")] = attenuateByV_releasePerSecond;
+    auto limT = top.createNestedObject("maxTemp");
+    limT[F("critical")] = limit_criticalTempDegC;
+    limT[F("attenuate")] = attenuateByT_attackFactorWhenCritical,
+    limT[F("release")] = attenuateByT_releasePerSecond;
+
+    // Where the Simulator listens for UDP messages
+    auto sim = top.createNestedObject("simulator");
+    sim["ip"] = static_cast<uint32_t>(udpSenderIp);
+    sim["port"] = udpSenderPort;
+}
+
+void DeadlineUsermod::appendConfigData(Print& settingsScript)
+{
+    settingsScript.print(F("let ipInputs = d.getElementsByName('DeadlineTrophy:simulator:ip');"));
+    auto ip = static_cast<uint32_t>(udpSenderIp);
+    settingsScript.printf_P(
+        "ipInputs[1].insertAdjacentHTML('afterend', \""
+            "<input name='DeadlineTrophy:simulator:ipOct1' type='number' class='s' min='0' max='255' value='%d' required>."
+            "<input name='DeadlineTrophy:simulator:ipOct2' type='number' class='s' min='0' max='255' value='%d' required>."
+            "<input name='DeadlineTrophy:simulator:ipOct3' type='number' class='s' min='0' max='255' value='%d' required>."
+            "<input name='DeadlineTrophy:simulator:ipOct4' type='number' class='s' min='0' max='255' value='%d' required>\");\n"
+        "ipInputs.forEach(e => {e.style.display = 'none';});\n",
+        ip & 0xFF,
+        (ip>>8) & 0xFF,
+        (ip>>16) & 0xFF,
+        (ip>>24) & 0xFF
+    );
+    settingsScript.print(F("addInfo('DeadlineTrophy:simulator:port',1,'0 = off');"));
+
+    settingsScript.print(F("addInfo('DeadlineTrophy:pin[]',0,'Logo Temperature','LogoTherm');"));
+    settingsScript.print(F("addInfo('DeadlineTrophy:pin[]',1,'Common Voltage','VCC');"));
+
+    settingsScript.print(F("addInfo('DeadlineTrophy:minVoltage:threshold',1,'required minimum V<sub>CC</sub>');"));
+    settingsScript.print(F("addInfo('DeadlineTrophy:minVoltage:attenuate',1,'dim by factor when below threshold');"));
+    settingsScript.print(F("addInfo('DeadlineTrophy:minVoltage:release',1,'slowly go back to 1 (perSec) if safe');"));
+
+    settingsScript.print(F("addInfo('DeadlineTrophy:maxTemp:critical',1,'critical Temperature in °C');"));
+    settingsScript.print(F("addInfo('DeadlineTrophy:maxTemp:attenuate',1,'dim by factor when above critical');"));
+    settingsScript.print(F("addInfo('DeadlineTrophy:maxTemp:release',1,'slowly go back to 1 (perSec) if safe');"));
+
+    // qm210: was hard in xml.cpp at first, but I guess this belongs rather here.
+    settingsScript.print(F("/* USERMOD DEADLINE */ "));
+    settingsScript.print(F("d.DEADLINE_TROPHY_MOD = true;"));
+    settingsScript.print(F("d.DEADLINE_VALUES = "));
+    settingsScript.print(buildSocketJson());
+    settingsScript.print(F(";"));
+    settingsScript.print(F("/* END USERMOD DEADLINE */ "));
+}
+
+bool DeadlineUsermod::readFromConfig(JsonObject& root)
+{
+    DEBUG_PRINTLN("[QM_DEBUG] DeadlineTrophy::readFromConfig");
+    serializeJson(root, Serial);
+    DEBUG_PRINTLN();
+
+    JsonObject top = root[FPSTR("DeadlineTrophy")];
+    if (top.isNull()) {
+        DEBUG_PRINTLN(F("DeadlineTrophy: No config found. (Using defaults.)"));
+        return false;
+    }
+
+    JsonObject sim = top["simulator"];
+    if (!sim.isNull()) {
+        udpSenderPort = sim["port"];
+
+        if (sim.containsKey("ipOct1")) {
+            // this is the WebUI implementation
+            udpSenderIp = IPAddress(
+                atoi(sim["ipOct1"]),
+                atoi(sim["ipOct2"]),
+                atoi(sim["ipOct3"]),
+                atoi(sim["ipOct4"])
+            );
+        } else {
+            // this is the persisted key
+            udpSenderIp = IPAddress(static_cast<uint32_t>(sim["ip"]));
+        }
+    }
+
+    JsonObject limV = top["minVoltage"];
+    if (!limV.isNull()) {
+        limit_inputVoltageThreshold = limV[F("threshold")] | limit_inputVoltageThreshold;
+        attenuateByV_attackFactorWhenCritical = limV[F("attenuate")] | attenuateByV_attackFactorWhenCritical;
+        attenuateByV_releasePerSecond = limV[F("release")] | attenuateByV_releasePerSecond;
+    }
+    JsonObject limT = top["maxTemp"];
+    if (!limT.isNull()) {
+        limit_criticalTempDegC =limT[F("critical")] | limit_criticalTempDegC;
+        attenuateByT_attackFactorWhenCritical = limT[F("attenuate")] | attenuateByT_attackFactorWhenCritical;
+        attenuateByT_releasePerSecond = limT[F("release")] | attenuateByT_releasePerSecond;
+    }
+
+    return true;
 }

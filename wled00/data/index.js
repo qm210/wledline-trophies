@@ -119,6 +119,18 @@ function tglTheme()
 	applyCfg();
 }
 
+function tglDeadlineBriMode()
+{
+    if (!isDeadline) return;
+    // switch whether the Deadline Usermod applies the master brightness to its RGB messages
+    var modeCls = gId("bri_label")?.classList;
+    var obj = modeCls?.contains("xVid")
+        ? {"DL": {xVid: false, xBri: false}}
+        : {"DL": {xVid: !!modeCls?.contains("xBri"), xBri: true}};
+    console.log("[QM_DEBUG] Bri Mode", modeCls, obj);
+	requestJson(andSave(obj));
+}
+
 function tglLabels()
 {
 	cfg.comp.labels = !cfg.comp.labels;
@@ -1519,6 +1531,13 @@ function readState(s,command=false)
             .forEach(elem =>
                 elem.classList.add("hide")
             );
+    }
+    const dlBriLabel = gId('bri_label');
+    if (s.DL && dlBriLabel) {
+        dlBriLabel.classList.toggle("xBri", s.DL.xBri);
+        dlBriLabel.classList.toggle("xVid", s.DL.xVid);
+        dlBriLabel.textContent = !s.DL.xBri ? "(ignored in packets)"
+            : ("\u2013 scales packets " + (s.DL.xVid ? "(V mode)" : ""));
     }
 
 	if (s.seg.length>2) d.querySelectorAll(".pop").forEach((e)=>{e.classList.remove("hide");});
