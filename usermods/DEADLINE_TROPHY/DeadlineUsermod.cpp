@@ -92,10 +92,10 @@ void DeadlineUsermod::sendTrophyUdp()
   // QM Note: Using DRGB protocol, i.e. limited to 490
   // This is enough for the DL Trophy (172 LEDs).
   // If this is decoupled and more are needed -> use DNRGB
-  const int packetSize = 2 + 3 * DeadlineTrophy::N_LEDS_TOTAL;
+  const int packetSize = 2 + DeadlineUsermod::N_RGB_VALUES;
   udpPacket[0] = 2; // protocol index (2 = DRGB, 4 = DNRGB)
   udpPacket[1] = 255; // timeout in ms = forever
-  memcpy(udpPacket + 2, rgbValues, DeadlineTrophy::N_LEDS_TOTAL);
+  memcpy(udpPacket + 2, rgbValues, DeadlineUsermod::N_RGB_VALUES);
 
   udpSender.beginPacket(udpSenderIp, udpSenderPort);
   udpSender.write(udpPacket, packetSize);

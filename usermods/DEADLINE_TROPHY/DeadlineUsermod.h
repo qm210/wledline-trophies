@@ -357,7 +357,8 @@ public:
 
     const char* buildSocketJson()
     {
-        // is called every time the sensor values are requested by the WebSocket (i.e. often!)
+        // QM is wondering -- should we use the requestJSONBufferLock here as well?
+
         if (!hasEnoughSamples) {
             sprintf(jsonBuffer, "{\"error\": \"not enough samples taken yet.\"}");
             return jsonBuffer;
@@ -384,7 +385,8 @@ public:
             totalAmpereMin,
             totalAmpereMax
         );
-        // inner iteration; REMEMBER: jsonBuffer can only be referenced in itself when as first parameter..!
+        // inner iteration; REMEMBER: jsonBuffer can only be referenced in itself,
+        // when passed as first parameter -- it overwrites itself otherwise..! true story.
         int nBusses = BusManager::busses.size();
         for (int b = 0; b < nBusses; b++) {
             sprintf(jsonBuffer, "%s%.2f%s",
