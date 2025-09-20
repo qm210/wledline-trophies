@@ -6,7 +6,7 @@
 static DeadlineUsermod deadlineUsermod;
 REGISTER_USERMOD(deadlineUsermod);
 
-void DeadlineUsermod::readRgbValues()
+void DeadlineUsermod::readRgbValues(bool printDebug)
 {
   // it seems that in the strip _pixels[], the segment opacity is cared for, but overall brightness is independent.
   // this is confusing, so let's implement it as flexible as we can for now, don't know what's good yet. sad.
@@ -24,6 +24,9 @@ void DeadlineUsermod::readRgbValues()
     uint8_t r = R(color);
     uint8_t g = G(color);
     uint8_t b = B(color);
+    if (printDebug) {
+        DEBUG_PRINTF("[QM_DEBUG_RGB] filling at (%d) pixel %d - (%d, %d, %d)", i, index, r, g, b);
+    }
     if (applyMasterBrightnessToRgbValues) {
         if (applyMasterBrightnessWithScaleVideo) {
             r = scale8_video(r, masterFader);
@@ -35,10 +38,22 @@ void DeadlineUsermod::readRgbValues()
             b = scale8(b, masterFader);
         }
     }
+    if (printDebug) {
+        DEBUG_PRINTF(" - after scaling -> (%d, %d, %d)\n", r, g, b);
+    }
     s = 3 * index;
     rgbValues[s++] = r;
     rgbValues[s++] = g;
     rgbValues[s++] = b;
+  }
+
+  if (printDebug) {
+    for (int s = 0; s < DeadlineUsermod::N_RGB_VALUES; s+=3) {
+        DEBUG_PRINTF("[QM_DEBUG_RGB] LED %d: (%d, %d, %d)\n", s / 3, rgbValues[s], rgbValues[s+1], rgbValues[s+2]);
+    }
+    DEBUG_PRINTF("[QM_DEBUG_RGB] was scaled? %d; with video-scaling? %d; Master Brightness %d\n",
+                 applyMasterBrightnessToRgbValues, applyMasterBrightnessWithScaleVideo, masterFader
+    );
   }
 }
 
@@ -121,37 +136,67 @@ bool DeadlineUsermod::sendLiveview(AsyncWebSocketClient *wsc)
 
 bool DeadlineUsermod::parseNotifyPacket(const uint8_t *udpIn) {
     bool changed = false;
-    if (udpIn[11] != DeadlineUsermod::customPacketVersion) {
+    int version = udpIn[11];
+    int subVersion = udpIn[12];
+    if (version != DeadlineUsermod::customPacketVersion) {
         return changed;
     }
-
-    for (int i = 0; i < 24; i++) {
-        DEBUG_PRINTF("[QM_DL_UDP] Packet Byte %d = %d\n", i, udpIn[i]);
+    if (subVersion != 0) {
+        DEBUG_PRINTF("[DEADLINE_TROPHY] Got a UDP package of our version %d but unknown subversion %d\n", version, subVersion);
+        return changed;
     }
 
     int brightness = udpIn[2];
     int doReset = udpIn[3] == 1;
+    int applyBrightness = udpIn[4] == 1;
+    int applyFxIndex = udpIn[5] == 1;
+    int applyFxSpeed = udpIn[6] == 1;
+    int applyAllWhite = udpIn[7] == 1;
+    // <-- ... could pack all these flags more smartly ...
+    //     that's why we have the subversion byte for, I suppose.
+    int fxIndex = udpIn[8];
+    int fxSpeed = udpIn[9];
+    int whiteValue = udpIn[10];
 
-    if (doReset) {
+    bool needsSuspension = doReset || applyFxIndex || applyFxSpeed || applyAllWhite;
+    if (needsSuspension) {
         strip.suspend();
         strip.waitForIt();
         for (int s = 0; s < strip.getSegmentsNum(); s++) {
             Segment seg = strip.getSegment(s);
-            seg.fill(BLACK);
-            seg.freeze = false;
-            seg.call = 0;
-            seg.step = 0; // <-- a custom variable, but probably used in that same sense
+            if (applyFxIndex) {
+                seg.mode = fxIndex;
+            }
+            if (applyFxSpeed) {
+                seg.speed = fxSpeed;
+            }
+            if (applyAllWhite) {
+                seg.freeze = true;
+                seg.fill(RGBW32(whiteValue, whiteValue, whiteValue, whiteValue));
+            } else {
+                seg.freeze = false;
+            }
+            if (doReset) {
+                seg.fill(BLACK);
+                seg.freeze = false;
+                seg.call = 0;
+                seg.step = 0; // <-- a custom variable, but probably used in that same sense
+            }
         }
-        toggleOnOff();
+        if (doReset) {
+            toggleOnOff();
+        }
         strip.resume();
         changed = true;
     }
-    if (brightness != bri) {
+
+    if (applyBrightness) {
         bri = brightness;
+        turnOnAtBoot = bri > 0;
         changed = true;
     }
 
-    DEBUG_PRINTF("[QM_DL_UDP] Did this change something? %d", changed);
+    DEBUG_PRINTF("[QM_DL_UDP] Did this change something? %d - and did it suspend? %d\n", changed, needsSuspension);
     return changed;
 }
 
@@ -169,17 +214,21 @@ void DeadlineUsermod::addToJsonState(JsonObject& obj)
 void DeadlineUsermod::readFromJsonState(JsonObject& obj)
 {
     JsonObject usermod = obj[FPSTR("DL")];
+    DEBUG_PRINTF("[QM_DEBUG] JSON null? %d\n", usermod.isNull());
     if (!usermod.isNull()) {
-    auto xBri = usermod[FPSTR("xBri")];
-    bool aBri = xBri.is<bool>() ? xBri.as<bool>()
-        : applyMasterBrightnessToRgbValues;
-    auto xVid = usermod[FPSTR("xVid")];
-    bool aVid = xVid.is<bool>() ? xVid.as<bool>()
-        : applyMasterBrightnessWithScaleVideo;
-    if (aBri != applyMasterBrightnessToRgbValues || aVid != applyMasterBrightnessWithScaleVideo)
-        applyMasterBrightnessToRgbValues = aBri;
-        applyMasterBrightnessWithScaleVideo = aVid;
-        readRgbValues();
+        auto xBri = usermod[FPSTR("xBri")];
+        bool aBri = xBri.is<bool>() ? xBri.as<bool>()
+            : applyMasterBrightnessToRgbValues;
+        auto xVid = usermod[FPSTR("xVid")];
+        bool aVid = xVid.is<bool>() ? xVid.as<bool>()
+            : applyMasterBrightnessWithScaleVideo;
+        DEBUG_PRINTF("[QM_DEBUG] readFromJsonState %d %d / %d %d\n",
+                     applyMasterBrightnessToRgbValues, applyMasterBrightnessWithScaleVideo, aBri, aVid);
+        if (aBri != applyMasterBrightnessToRgbValues || aVid != applyMasterBrightnessWithScaleVideo) {
+            applyMasterBrightnessToRgbValues = aBri;
+            applyMasterBrightnessWithScaleVideo = aVid;
+            readRgbValues(true);
+        }
     }
 }
 

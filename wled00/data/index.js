@@ -122,12 +122,11 @@ function tglTheme()
 function tglDeadlineBriMode()
 {
     if (!isDeadline) return;
-    // switch whether the Deadline Usermod applies the master brightness to its RGB messages
+    // the Deadline Trophy has different ways of applying the brightness to its packets
     var modeCls = gId("bri_label")?.classList;
     var obj = modeCls?.contains("xVid")
         ? {"DL": {xVid: false, xBri: false}}
         : {"DL": {xVid: !!modeCls?.contains("xBri"), xBri: true}};
-    console.log("[QM_DEBUG] Bri Mode", modeCls, obj);
 	requestJson(andSave(obj));
 }
 

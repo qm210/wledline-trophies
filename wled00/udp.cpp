@@ -581,8 +581,8 @@ void handleNotifications()
         DEBUG_PRINTF("%d=%d|", i, udpIn[i]);
     }
     DEBUG_PRINTLN();
-    // realtimeMode = false;
-    // receiveGroups = true;
+    realtimeMode = false;
+    receiveGroups = true;
   }
 #endif
 
