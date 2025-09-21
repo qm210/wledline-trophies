@@ -140,16 +140,15 @@ bool DeadlineUsermod::parseNotifyPacket(const uint8_t *udpIn) {
         return changed;
     }
 
-    int brightness = udpIn[2];
-    int doReset = udpIn[3] == 1;
-    int applyBrightness = udpIn[4] == 1;
+    // this is our definition of "subversion 0"
+    int doReset = udpIn[2] == 1;
+    int applyBrightness = udpIn[3] == 1;
+    int brightness = udpIn[4];
     int applyFxIndex = udpIn[5] == 1;
-    int applyFxSpeed = udpIn[6] == 1;
-    int applyAllWhite = udpIn[7] == 1;
-    // <-- ... could pack all these flags more smartly ...
-    //     that's why we have the subversion byte for, I suppose.
-    int fxIndex = udpIn[8];
-    int fxSpeed = udpIn[9];
+    int fxIndex = udpIn[6];
+    int applyFxSpeed = udpIn[7] == 1;
+    int fxSpeed = udpIn[8];
+    int applyAllWhite = udpIn[9] == 1;
     int whiteValue = udpIn[10];
 
     bool needsSuspension = doReset || applyFxIndex || applyFxSpeed || applyAllWhite;
@@ -289,10 +288,6 @@ void DeadlineUsermod::appendConfigData(Print& settingsScript)
 
 bool DeadlineUsermod::readFromConfig(JsonObject& root)
 {
-    DEBUG_PRINTLN("[QM_DEBUG] DeadlineTrophy::readFromConfig");
-    serializeJson(root, Serial);
-    DEBUG_PRINTLN();
-
     JsonObject top = root[FPSTR("DeadlineTrophy")];
     if (top.isNull()) {
         DEBUG_PRINTLN(F("DeadlineTrophy: No config found. (Using defaults.)"));

@@ -53,10 +53,6 @@ bool deserializeConfig(JsonObject doc, bool fromFS) {
 
   //long vid = doc[F("vid")]; // 2010020
 
-  DEBUG_PRINTF("[QM_DEBUG] deserializeConfig (fromFS=%d) full doc:\n", fromFS);
-  serializeJson(doc, Serial);
-  DEBUG_PRINTLN();
-
 #ifdef WLED_USE_ETHERNET
   JsonObject ethernet = doc[F("eth")];
   CJSON(ethernetType, ethernet["type"]);

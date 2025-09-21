@@ -22,19 +22,19 @@ namespace DeadlineTrophy {
     BusConfig createBus(uint8_t type, uint16_t count, uint16_t start, uint8_t pin1, uint8_t pin2 = 255);
 
     // Usermods usually only care about their own stuff, but:
-    // "You're remembered for the rules you break" - Stockton Rush (OceanGate CEO)
+    // "You're remembered for the rules you break" - Stockton Rush
     void overwriteConfig();
+
+    static const size_t N_SEGMENTS = 4;
+    extern const char* segmentName[N_SEGMENTS];
+    extern const Segment segment[N_SEGMENTS];
+    extern const uint8_t segmentCapabilities[N_SEGMENTS];
 
     const int logoW = 26;
     const int logoH = 12;
-    const int baseSize = 18; // edge length 16 + 2 of the adjacent edges
-
+    const int baseSize = 18;
     const int mappingSize = (logoW) * (logoH + baseSize);
     const uint16_t __ = (uint16_t)-1;
-    // <-- this masks the gaps for easier debugging / reading the code below
-
-    // this Matrix-Linear-Hybrid thing is not great, with the single LEDs shoe-horned in there, but that's what we have.
-    // (the empty lines are due to the actual non-equidistant lines in the logo)
     const uint16_t mappingTable[mappingSize] = {
         __, __, __, __, __, __, __, __,169, __, __,149, __,148,125, __,124,120, __, __, __, __, __, __, __, __,
         __, __, __, __, __, __, __,168, __, __,150, __,147,126, __,123,121, __,119, __, __, __, __, __, __, __,
@@ -72,8 +72,45 @@ namespace DeadlineTrophy {
 
     std::array<NormalizedCoord, N_LEDS_LOGO>& logoCoordinates();
 
-    static const size_t N_SEGMENTS = 4;
-    extern const char* segmentName[N_SEGMENTS];
-    extern const Segment segment[N_SEGMENTS];
-    extern const uint8_t segmentCapabilities[N_SEGMENTS];
+    // helpers for larger bars of the logo
+    const size_t nOuterLeft = 10;
+    const size_t nLeft = 35;
+    const size_t nBottom = 36;
+    const size_t nUpperRight = 17;
+    const size_t nOuterRight = 27;
+
+    // the bars in the Logo
+    const int barOuterLeft[nOuterLeft] = {
+        161, 162, 163, 164, 165, 166, 167, 168, 169,
+        160
+    };
+    const int barLeft[nLeft] = {
+        156, 155, 154, 153, 152, 151, 150, 149,
+        140, 141, 142, 143, 144, 145, 146, 147, 148,
+        133, 132, 131, 130, 129, 128, 127, 126
+    };
+    const int barBottom[nBottom] = {
+        137, 136, 64, 69, 79, 70, 75, 76, 81, 82, 99, 100,
+        159, 138, 135, 65, 68, 71, 74, 77, 80, 83, 98, 101,
+        158, 139, 134, 66, 67, 72, 73, 78, 79, 84, 97, 102
+    };
+    const int barUpperRight[nUpperRight] = {
+        111, 116, 117, 122, 123, 125,
+        110, 112, 115, 118, 121, 124,
+        109, 113, 114, 119, 120
+    };
+    const int barOuterRight[nOuterRight] = {
+        85, 86, 87, 88, 89, 90,
+        96, 95, 94, 93, 92, 91,
+        103, 104, 105, 106, 107, 108
+    };
+
+    const size_t nBars = 5;
+    const int nInBar[] = {
+        nOuterLeft,
+        nLeft,
+        nBottom,
+        nUpperRight,
+        nOuterRight
+    };
 }

@@ -14,6 +14,7 @@ extern uint16_t mode_static(void);
  //////////////////////////
 
 
+
 const int DEBUG_LOG_EVERY_N_CALLS = 0; // for printing debug output every ... steps (0 = no debug out)
 
 #define IS_DEBUG_STEP (DEBUG_LOG_EVERY_N_CALLS > 0 && (SEGENV.call % DEBUG_LOG_EVERY_N_CALLS) == 0)
@@ -107,12 +108,14 @@ uint16_t mode_DeadlineTrophy(void) {
         );
     }
 
+    float bpm = static_cast<float>(SEGMENT.speed);
+    float beat = bpm/60. * static_cast<float>(strip.now) / 1000.;
+
     if (IS_LOGO_SEGMENT) {
         // circling piece of shit
         float phi = TWO_PI * fmod_t(0.0005 * strip.now, 1.);
 
         float center_x = (0.6 + 0.2 * sin_t(phi)) * logoW;
-        float center_y = (0.5 + 0.2 * cos_t(phi)) * logoH;
         const float size = 13.;
 
         for (const auto& coord : DeadlineTrophy::logoCoordinates()) {
@@ -158,6 +161,9 @@ uint16_t mode_DeadlineTrophy(void) {
                 color.sat = 0;
             } else {
                 color.sat = 100;
+                // try something with the "speed" parameter as BPM:
+                float shape = exp(-2.10 * fmodf(beat, 1.));
+                color.sat = 200 - static_cast<int>(200. * shape);
             }
 
             color.val = ((strip.now % 16000) > (i * 1000)) ? 255 : 20;
@@ -175,6 +181,11 @@ uint16_t mode_DeadlineTrophy(void) {
 
 
 static const char _data_FX_MODE_DEADLINE_TROPHY[] PROGMEM =
-    "DEADLINE TROPHY@;;!;1";
-    // <-- TODO: find out how the parameters are encoded here. default is "name@;;!;1"
-
+    "DEADLINE TROPHY@BPM,param1,param2,param3;!,!;!;2;sx=110";
+// cf. https://kno.wled.ge/interfaces/json-api/#effect-metadata
+// <Effect parameters>;<Colors>;<Palette>;<Flags>;<Defaults>
+// <Colors> = !,! = Two Defaults
+// <Palette> = ! = Default enabled (Empty would disable palette selection)
+// <Flags> = 2 for "it needs the 2D matrix", add "v" and/or "f" for AudioReactive volume and frequency.
+// <Defaults>: <ParameterCode>=<Value>
+//             si=0 is "sound interaction" (for AudioReactive),

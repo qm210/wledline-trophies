@@ -43,7 +43,7 @@ var hol = [
 	[0, 6, 4, 1, "https://images.alphacoders.com/516/516792.jpg"],	// 4th of July
 	[0, 0, 1, 1, "https://images.alphacoders.com/119/1198800.jpg"],	// new year
     // DEADLINE 2025 (3.-5. 10. 2025): (jahr oder 0 jedes, monat ab 0, tag ab 1, #tage)
-    [2025, 8, 13, 1, "https://www.demoparty.berlin/wp-content/media/backdrop-wled.png"], // QM develt rum
+    [2025, 8, 22, 12, "https://www.demoparty.berlin/wp-content/media/backdrop-wled.png"], // until Deadline'2025
     [0, 9, 3, 4, "https://www.demoparty.berlin/wp-content/media/backdrop-wled.png"],
 ];
 
