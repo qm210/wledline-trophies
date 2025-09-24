@@ -68,19 +68,32 @@ namespace DeadlineTrophy {
         __, 31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, __, __, __, __, __, __, __, __, __,
     };
 
+    struct Vec2 {
+        float x;
+        float y;
+
+        Vec2 rotated(float phi) {
+            float c = cos_approx(phi);
+            float s = sin_approx(phi);
+            return {
+                c * x - s * y,
+                s * x + c * y
+            };
+        }
+    };
+
     struct Coord {
         // indices for matrix
         uint8_t x;
         uint8_t y;
         // normalized coordinates
-        float uvX;
-        float uvY;
-        // for reference, the pixel index
+        Vec2 uv;
+        // for reference, pixel index within its segment
         int index;
 
         float sdLine(float x1, float y1, float x2, float y2) const {
-            float px = uvX - x1;
-            float py = uvY - y1;
+            float px = uv.x - x1;
+            float py = uv.y - y1;
             float dx = x2 - x1;
             float dy = y2 - y1;
             float h = constrain((px*dx + py*dy) / (dx*dx + dy*dy), 0.f, 1.f);
@@ -88,11 +101,62 @@ namespace DeadlineTrophy {
             float ly = py - dy * h;
             return sqrtf(lx*lx + ly*ly);
         }
+
+        // helpers for the base (don't make any sense for the Logo)
+        // side 0=right, 1=front, 2=left, 3=back
+        inline int indexOfSide() const { return index / 16; }
+        inline int indexInSide() const { return index % 16; }
     };
 
     std::array<Coord, N_LEDS_LOGO>& logoCoordinates();
+    std::array<Coord, N_LEDS_BASE>& baseCoordinates();
+
+    namespace FxHelpers {
+
+        inline void setPixel(size_t segmentIndex, int x, int y, uint32_t color) {
+            if (strip.getCurrSegmentId() != segmentIndex) {
+                return;
+            }
+            color = color & 0x00FFFFFF; // <-- remove white. Trophy hasn't.
+            SEGMENT.setPixelColorXY(x, y, color);
+        }
+
+        inline void setBase(size_t x, size_t y, uint32_t color) {
+            if (x >= baseSize || y >= baseSize) {
+                return;
+            }
+            setPixel(0, x, y, color);
+        }
+
+        inline void setLogo(size_t x, size_t y, uint32_t color) {
+            if (x >= logoW || y >= logoH) {
+                return;
+            }
+            setPixel(1, x, y, color);
+        }
+
+        inline void setBack(uint32_t color) {
+            setPixel(2, baseSize, logoH, color);
+        }
+
+        inline void setFloor(uint32_t color) {
+            setPixel(3, baseSize, logoH + 1, color);
+        }
+
+        inline void setBaseHSV(size_t x, size_t y, CHSV color) { setBase(x, y, uint32_t(CRGB(color))); }
+        inline void setLogoHSV(size_t x, size_t y, CHSV color) { setLogo(x, y, uint32_t(CRGB(color))); }
+
+        uint32_t float_hsv(float hue, float sat, float val);
+        uint8_t mix8(uint8_t a, uint8_t b, float t);
+
+        inline float beatNow(float bpm) {
+            return bpm/60. * static_cast<float>(strip.now) * 1e-3;
+        }
+
+    }
 
     namespace LogoBars {
+
         // helpers for larger bars of the logo
         const size_t nOuterLeft = 10;
         const size_t nLeft = 35;
@@ -101,26 +165,26 @@ namespace DeadlineTrophy {
         const size_t nOuterRight = 27;
 
         // the bars in the Logo
-        const int barOuterLeft[nOuterLeft] = {
+        const int OuterLeft[nOuterLeft] = {
             161, 162, 163, 164, 165, 166, 167, 168, 169,
             160
         };
-        const int barLeft[nLeft] = {
+        const int Left[nLeft] = {
             156, 155, 154, 153, 152, 151, 150, 149,
             140, 141, 142, 143, 144, 145, 146, 147, 148,
             133, 132, 131, 130, 129, 128, 127, 126
         };
-        const int barBottom[nBottom] = {
+        const int Bottom[nBottom] = {
             137, 136, 64, 69, 79, 70, 75, 76, 81, 82, 99, 100,
             159, 138, 135, 65, 68, 71, 74, 77, 80, 83, 98, 101,
             158, 139, 134, 66, 67, 72, 73, 78, 79, 84, 97, 102
         };
-        const int barUpperRight[nUpperRight] = {
+        const int UpperRight[nUpperRight] = {
             111, 116, 117, 122, 123, 125,
             110, 112, 115, 118, 121, 124,
             109, 113, 114, 119, 120
         };
-        const int barOuterRight[nOuterRight] = {
+        const int OuterRight[nOuterRight] = {
             85, 86, 87, 88, 89, 90,
             96, 95, 94, 93, 92, 91,
             103, 104, 105, 106, 107, 108
@@ -135,4 +199,11 @@ namespace DeadlineTrophy {
             nOuterRight
         };
     }
+
 }
+
+#define IS_BASE_SEGMENT (strip.getCurrSegmentId() == 0)
+#define IS_LOGO_SEGMENT (strip.getCurrSegmentId() == 1)
+
+const int DEBUG_LOG_EVERY_N_CALLS = 1000; // for printing debug output every ... steps (0 = no debug out)
+#define IS_DEBUG_STEP (DEBUG_LOG_EVERY_N_CALLS > 0 && (SEGENV.call % DEBUG_LOG_EVERY_N_CALLS) == 0)

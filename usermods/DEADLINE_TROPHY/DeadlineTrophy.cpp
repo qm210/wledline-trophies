@@ -116,6 +116,8 @@ namespace DeadlineTrophy {
 
     static std::array<Coord, N_LEDS_LOGO> logoCoordinates_;
     static bool logoInitialized = false;
+    static std::array<Coord, N_LEDS_BASE> baseCoordinates_;
+    static bool baseInitialized = false;
 
     std::array<Coord, N_LEDS_LOGO>& logoCoordinates() {
         if (logoInitialized) {
@@ -135,13 +137,59 @@ namespace DeadlineTrophy {
             logoCoordinates_[ledIndexInLogo] = {
                 x,
                 y,
-                static_cast<float>(x) * dx + x0,
-                -(static_cast<float>(y) * dy + y0),
-                ledIndexInLogo,
+                {
+                    static_cast<float>(x) * dx + x0,
+                    -(static_cast<float>(y) * dy + y0),
+                },
+                ledIndexInLogo
             };
         }
         logoInitialized = true;
         return logoCoordinates_;
+    }
+
+    std::array<Coord, N_LEDS_BASE>& baseCoordinates() {
+        if (baseInitialized) {
+            return baseCoordinates_;
+        }
+        float ds = 1. / static_cast<float>(baseSize - 1);
+        for (uint8_t x = 0; x < baseSize; ++x)
+        for (uint8_t y = 0; y < baseSize; ++y) {
+            uint8_t ledIndex = mappingTable[x + logoW * (y + logoH)];
+            if (ledIndex > N_LEDS_TOTAL) {
+                continue;
+            }
+            baseCoordinates_[ledIndex] = {
+                x,
+                y,
+                {
+                    static_cast<float>(x) * ds - 0.5f,
+                    -(static_cast<float>(y) * ds - 0.5f),
+                },
+                ledIndex,
+            };
+        }
+        baseInitialized = true;
+        return baseCoordinates_;
+    }
+
+    namespace FxHelpers {
+
+        uint32_t float_hsv(float hue, float sat, float val) {
+            // parameters in [0, 255] but as float
+            uint32_t color = uint32_t(CRGB(CHSV(
+                static_cast<uint8_t>(hue),
+                static_cast<uint8_t>(sat),
+                static_cast<uint8_t>(val)
+            )));
+            // remove the specific "white" that might be in the color (or shouldn't we?)
+            return color & 0x00FFFFFF;
+        }
+
+        uint8_t mix8(uint8_t a, uint8_t b, float t) {
+            return a + static_cast<uint8_t>(static_cast<float>(b - a) * t);
+        }
+
     }
 
 }

@@ -2,92 +2,30 @@
 
 #include "FX.h"
 #include "../usermods/DEADLINE_TROPHY/DeadlineTrophy.h"
-
- ///////////////////////////////////////
- // DEV INFO: cf. DEV INFO in FX.cpp! //
- ///////////////////////////////////////
-
+using namespace DeadlineTrophy::FxHelpers;
+using DeadlineTrophy::Vec2;
 extern uint16_t mode_static(void);
 
  //////////////////////////
  //  Deadline Trophy FX  //
  //////////////////////////
+ // There's a lot of useful stuff in
+ // FX.cpp -> see the DEV INFO, also, other FX for "inspiration" :)
+ // wled_math.cpp
+ // util.cpp
+ // -- you can also reinvent the wheel, but don't always have to.
+ //////////////////////////
 
-const int DEBUG_LOG_EVERY_N_CALLS = 1000; // for printing debug output every ... steps (0 = no debug out)
-
-#define IS_DEBUG_STEP (DEBUG_LOG_EVERY_N_CALLS > 0 && (SEGENV.call % DEBUG_LOG_EVERY_N_CALLS) == 0)
-
-using DeadlineTrophy::logoW;
-using DeadlineTrophy::logoH;
-using DeadlineTrophy::baseSize;
-
-// could do: Umrechnungsfunktionen in DeadlineTrophy.h schieben.
-inline void setPixel(size_t segmentIndex, int x, int y, uint32_t color) {
-    if (strip.getCurrSegmentId() != segmentIndex) {
-        return;
-    }
-    color = color & 0x00FFFFFF; // <-- again: remove white. we don't have.
-    SEGMENT.setPixelColorXY(x, y, color);
-}
-
-void setBase(size_t x, size_t y, uint32_t color) {
-    if (x >= baseSize || y >= baseSize) {
-        return;
-    }
-    setPixel(0, x, y, color);
-}
-
-void setLogo(size_t x, size_t y, uint32_t color) {
-    if (x >= logoW || y >= logoH) {
-        return;
-    }
-    setPixel(1, x, y, color);
-}
-
-void setBack(uint32_t color) {
-    setPixel(2, baseSize, logoH, color);
-}
-
-void setFloor(uint32_t color) {
-    setPixel(3, baseSize, logoH + 1, color);
-}
-
-void setBaseHSV(size_t x, size_t y, CHSV color) { setBase(x, y, uint32_t(CRGB(color))); }
-void setLogoHSV(size_t x, size_t y, CHSV color) { setLogo(x, y, uint32_t(CRGB(color))); }
-
-#define IS_BASE_SEGMENT (strip.getCurrSegmentId() == 0)
-#define IS_LOGO_SEGMENT (strip.getCurrSegmentId() == 1)
-
-const int baseX0[4] = {17, 16, 0, 1};
-const int baseY0[4] = {1, 17, 16, 0};
-const int baseDX[4] = {0, -1, 0, +1};
-const int baseDY[4] = {+1, 0, -1, 0};
-
-uint32_t float_hsv(float hue, float sat, float val) {
-    // parameters in [0, 255] but as float
-    uint32_t color = uint32_t(CRGB(CHSV(
-        static_cast<uint8_t>(hue),
-        static_cast<uint8_t>(sat),
-        static_cast<uint8_t>(val)
-    )));
-    // remove the specific "white" that might be in the color (or shouldn't we?)
-    return color & 0x00FFFFFF;
-}
-
-uint8_t mix8(uint8_t a, uint8_t b, float t) {
-    return a + static_cast<uint8_t>(static_cast<float>(b - a) * t);
-}
-
-// do some measurement of efficiency
+// to do some measurement of efficiency
 int64_t t0, t1;
 
 uint16_t mode_DeadlineTrophy(void) {
-    size_t i, x, y;
     uint32_t col = SEGCOLOR(0);
+    float bpm = static_cast<float>(SEGMENT.speed);
     CHSV color = rgb2hsv_approximate(CRGB(col));
     CHSV color_(color);
 
-    bool measurePerformance = SEGENV.call % 9999 == 0;
+    bool measurePerformance = SEGENV.call % 999 == 0;
 
     if (SEGENV.call == 0) {
         DEBUG_PRINTF("[DEADLINE_TROPHY] FX was called, now initialized for segment %d (%s) :)\n", strip.getCurrSegmentId(), SEGMENT.name);
@@ -99,9 +37,6 @@ uint16_t mode_DeadlineTrophy(void) {
             strip.getCurrSegmentId(), col, R(col), G(col), B(col), color.hue, color.sat, color.val
         );
     }
-
-    float bpm = static_cast<float>(SEGMENT.speed);
-    float beat = bpm/60. * static_cast<float>(strip.now) / 1000.;
 
     if (measurePerformance) {
         t0 = esp_timer_get_time();
@@ -120,21 +55,21 @@ uint16_t mode_DeadlineTrophy(void) {
         }
 
         for (const auto& coord : DeadlineTrophy::logoCoordinates()) {
-            float dist_x = (coord.uvX - centerX) / width;
-            float dist_y = (coord.uvY - centerY) / width;
+            float dist_x = (coord.uv.x - centerX) / width;
+            float dist_y = (coord.uv.y - centerY) / width;
             float intensity = exp(-(dist_x*dist_x + dist_y*dist_y));
 
             color.hue = color_.hue - 90. * (1. - intensity);
             color.sat = color_.sat;
             color.val = static_cast<uint8_t>(255.f * intensity);
 
-            if (IS_DEBUG_STEP) {
-                DEBUG_PRINTF("[QM_DEBUG_LOGO_COORD] %.3f/%.3f = %d/%d -- %.3f x %.3f -> %.3f [h=%d, s=%d, v=%d]\n",
-                    coord.uvX, coord.uvY, coord.x, coord.y, dist_x, dist_y, intensity, color.hue, color.sat, color.val
-                );
-            }
+            // if (IS_DEBUG_STEP) {
+            //     DEBUG_PRINTF("[QM_DEBUG_LOGO_COORD] %.3f/%.3f = %d/%d -- %.3f x %.3f -> %.3f [h=%d, s=%d, v=%d]\n",
+            //         coord.uv.x, coord.uv.y, coord.x, coord.y, dist_x, dist_y, intensity, color.hue, color.sat, color.val
+            //     );
+            // }
 
-            float d = coord.sdLine(-0.5, -0.5, +0.5, +0.5);
+            float d = coord.sdLine(-0.4, -0.5, +0.1, +0.5);
             intensity = exp(-5.*d);
             color.sat = mix8(color.sat, 0, intensity);
             color.val = mix8(color.val, 255, intensity);
@@ -150,32 +85,35 @@ uint16_t mode_DeadlineTrophy(void) {
     }
 
     if (IS_BASE_SEGMENT) {
-        for (int s = 0; s < 4; s++)
-        for (i = 0; i < 16; i++) {
-            x = baseX0[s] + baseDX[s] * i;
-            y = baseY0[s] + baseDY[s] * i;
+        // "state variables"
+        static float phi = 0.;
+        static float omega = 1.7;
+        float beat = beatNow(bpm);
+        int wholeBeat = static_cast<int>(beat);
+        float fractBeat = fmodf(beat, 1.);
+        float hue = static_cast<float>(color.hue);
+        for (const auto& coord : DeadlineTrophy::baseCoordinates()) {
+            // wandering light with the bpm
+            int whiteIndex = wholeBeat % 16;
+            color.sat = (coord.indexInSide() == whiteIndex) ? 0 : 255;
 
-            // strip.now is millisec uint32_t, so this will overflow ~ every 49 days. who shits a give.
-            float wave = sin_t(PI / 15. * (static_cast<float>(i) - 0.007 * strip.now));
-            float abs_wave = (wave > 0. ? wave : -wave);
+            // and some hue dancing with the beat
+            color.hue = static_cast<uint8_t>(hue + 30. * fractBeat);
 
-            color.hue = color_.hue - 20. * wave * abs_wave;
+            phi = 0.25 * beat * omega;
+            Vec2 corner{1, 1};
+            Vec2 end = corner.rotated(phi);
+            float d = coord.sdLine(-end.x, -end.y, end.x, end.y);
+            color.val = mix8(255, 100, exp(-d*3.2));
 
-            color.hue = s == 0 ? 0 : s == 1 ? 90 : s == 2 ? 180 : 210;
+            // if (IS_DEBUG_STEP) {
+            //     DEBUG_PRINTF("[QM_DEBUG_BASE] coord %d (%d,%d) (%.3f,%.3f) [%d,%d] = H%d|S%d|V%d\n",
+            //         coord.index, coord.x, coord.y, coord.uv.x, coord.uv.y,
+            //         s, i, color.hue, color.sat, color.val
+            //     );
+            // }
 
-            if (i == 0) {
-                // first is always white
-                color.sat = 0;
-            } else {
-                color.sat = 100;
-                // try something with the "speed" parameter as BPM:
-                float shape = exp(-2.10 * fmodf(beat, 1.));
-                color.sat = 200 - static_cast<int>(200. * shape);
-            }
-
-            color.val = ((strip.now % 16000) > (i * 1000)) ? 255 : 20;
-
-            setBaseHSV(x, y, color);
+            setBaseHSV(coord.x, coord.y, color);
         }
 
         if (measurePerformance) {
@@ -195,9 +133,18 @@ uint16_t mode_DeadlineTrophy(void) {
 static const char _data_FX_MODE_DEADLINE_TROPHY[] PROGMEM =
     "DEADLINE TROPHY@BPM,param1,param2,param3;!,!;!;2;sx=110";
 // cf. https://kno.wled.ge/interfaces/json-api/#effect-metadata
-// <Effect parameters>;<Colors>;<Palette>;<Flags>;<Defaults>
+// <EffectParameters>;<Colors>;<Palette>;<Flags>;<Defaults>
 // <Colors> = !,! = Two Defaults
 // <Palette> = ! = Default enabled (Empty would disable palette selection)
 // <Flags> = 2 for "it needs the 2D matrix", add "v" and/or "f" for AudioReactive volume and frequency.
 // <Defaults>: <ParameterCode>=<Value>
 //             si=0 is "sound interaction" (for AudioReactive),
+// <EffectParameters>: These are then read by (if defined, comma-separated)
+//   sx = SEGMENT.speed (int 0-255)
+//   ix = SEGMENT.intensity (int 0-255)
+//   c1 = SEGMENT.custom1 (int 0-255)
+//   c2 = SEGMENT.custom2 (int 0-255)
+//   c3 = SEGMENT.custom3 (int 0-31)
+//   o1 = SEGMENT.check1 (bool)
+//   o2 = SEGMENT.check2 (bool)
+//   o3 = SEGMENT.check3 (bool)
