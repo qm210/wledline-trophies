@@ -10672,6 +10672,9 @@ void WS2812FX::setupEffectData() {
     _modeData.push_back(_data_RESERVED);
   }
   // now replace all pre-allocated effects
+#ifdef USERMOD_DEADLINE_TROPHY
+  addEffect(FX_MODE_DEADLINE_TROPHY, &mode_DeadlineTrophy, _data_FX_MODE_DEADLINE_TROPHY);
+#endif
   addEffect(FX_MODE_COPY, &mode_copy_segment, _data_FX_MODE_COPY);
   // --- 1D non-audio effects ---
   addEffect(FX_MODE_BLINK, &mode_blink, _data_FX_MODE_BLINK);
@@ -10889,10 +10892,6 @@ void WS2812FX::setupEffectData() {
   addEffect(FX_MODE_PARTICLEGALAXY, &mode_particlegalaxy, _data_FX_MODE_PARTICLEGALAXY);
 #endif // WLED_DISABLE_PARTICLESYSTEM2D
 #endif // WLED_DISABLE_2D
-
-#ifdef USERMOD_DEADLINE_TROPHY
-  addEffect(FX_MODE_DEADLINE_TROPHY, &mode_DeadlineTrophy, _data_FX_MODE_DEADLINE_TROPHY);
-#endif
 
 #ifndef WLED_DISABLE_PARTICLESYSTEM1D
 addEffect(FX_MODE_PSDRIP, &mode_particleDrip, _data_FX_MODE_PARTICLEDRIP);

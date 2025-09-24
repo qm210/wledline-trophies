@@ -175,7 +175,7 @@ namespace DeadlineTrophy {
 
     namespace FxHelpers {
 
-        uint32_t float_hsv(float hue, float sat, float val) {
+        uint32_t floatHSVG(float hue, float sat, float val) {
             // parameters in [0, 255] but as float
             uint32_t color = uint32_t(CRGB(CHSV(
                 static_cast<uint8_t>(hue),
@@ -186,10 +186,22 @@ namespace DeadlineTrophy {
             return color & 0x00FFFFFF;
         }
 
-        uint8_t mix8(uint8_t a, uint8_t b, float t) {
-            return a + static_cast<uint8_t>(static_cast<float>(b - a) * t);
+        CRGB palette(float t, float aR, float aG, float aB, float bR, float bG, float bB, float cR, float cG, float cB, float dR, float dG, float dB) {
+            // useful tool right here: https://dev.thi.ng/gradients/
+            float r = aR + bR * cos_approx(M_TWOPI * (cR * t + dR));
+            float g = aG + bG * cos_approx(M_TWOPI * (cG * t + dG));
+            float b = aB + bB * cos_approx(M_TWOPI * (cB * t + dB));
+            return CRGB(
+                static_cast<uint8_t>(255. * r),
+                static_cast<uint8_t>(255. * g),
+                static_cast<uint8_t>(255. * b)
+            );
         }
 
+        uint8_t mix8(uint8_t a, uint8_t b, float t) {
+            // do not constrain on purpose, as it might be wasteful
+            return a + static_cast<uint8_t>(static_cast<float>(b - a) * t);
+        }
     }
 
 }

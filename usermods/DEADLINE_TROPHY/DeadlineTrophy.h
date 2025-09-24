@@ -72,13 +72,31 @@ namespace DeadlineTrophy {
         float x;
         float y;
 
-        Vec2 rotated(float phi) {
+        Vec2 shifted(float dx, float dy) const {
+            return {
+                x + dx,
+                y + dy
+            };
+        };
+
+        Vec2 rotated(float phi) const {
             float c = cos_approx(phi);
             float s = sin_approx(phi);
             return {
                 c * x - s * y,
                 s * x + c * y
             };
+        }
+
+        Vec2 scaled(float factorX, float factorY) const {
+            return {
+                factorX * x,
+                factorY * y
+            };
+        }
+
+        float length() const {
+            return sqrtf(x * x + y * y);
         }
     };
 
@@ -135,6 +153,13 @@ namespace DeadlineTrophy {
             setPixel(1, x, y, color);
         }
 
+        inline void setSingle(uint8_t white) {
+            uint32_t color = RGBW32(white, white, white, white);
+            // just matches our matrix for back (segment id 2) and floor (segment id 3)
+            int pixelY = logoH + strip.getCurrSegmentId() - 2;
+            SEGMENT.setPixelColorXY(baseSize, pixelY, color);
+        }
+
         inline void setBack(uint32_t color) {
             setPixel(2, baseSize, logoH, color);
         }
@@ -146,13 +171,22 @@ namespace DeadlineTrophy {
         inline void setBaseHSV(size_t x, size_t y, CHSV color) { setBase(x, y, uint32_t(CRGB(color))); }
         inline void setLogoHSV(size_t x, size_t y, CHSV color) { setLogo(x, y, uint32_t(CRGB(color))); }
 
-        uint32_t float_hsv(float hue, float sat, float val);
-        uint8_t mix8(uint8_t a, uint8_t b, float t);
-
+        inline float secondNow() {
+            return static_cast<float>(strip.now) * 1e-3;
+        }
         inline float beatNow(float bpm) {
-            return bpm/60. * static_cast<float>(strip.now) * 1e-3;
+            return bpm/60. * secondNow();
         }
 
+        inline float clip(float x) {
+            return constrain(x, 0., 1.);
+        }
+
+        uint32_t floatHSV(float hue, float sat, float val);
+        CRGB palette(float t, float aR, float aG, float aB, float bR, float bG, float bB,
+                     float cR, float cG, float cB, float dR, float dG, float dB);
+                    // <-- usually given as four vec3, but for now, just do this.
+        uint8_t mix8(uint8_t a, uint8_t b, float t);
     }
 
     namespace LogoBars {
@@ -204,6 +238,7 @@ namespace DeadlineTrophy {
 
 #define IS_BASE_SEGMENT (strip.getCurrSegmentId() == 0)
 #define IS_LOGO_SEGMENT (strip.getCurrSegmentId() == 1)
+#define IS_BACK_LED     (strip.getCurrSegmentId() == 2)
+#define IS_FLOOR_LED    (strip.getCurrSegmentId() == 3)
 
-const int DEBUG_LOG_EVERY_N_CALLS = 1000; // for printing debug output every ... steps (0 = no debug out)
-#define IS_DEBUG_STEP (DEBUG_LOG_EVERY_N_CALLS > 0 && (SEGENV.call % DEBUG_LOG_EVERY_N_CALLS) == 0)
+#define EVERY_NTH_STEP(x) if (SEGENV.call % x == 0)
