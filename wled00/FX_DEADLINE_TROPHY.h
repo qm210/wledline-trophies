@@ -13,22 +13,9 @@ extern uint16_t mode_static(void);
  //  Deadline Trophy FX  //
  //////////////////////////
 
-
-
-const int DEBUG_LOG_EVERY_N_CALLS = 0; // for printing debug output every ... steps (0 = no debug out)
+const int DEBUG_LOG_EVERY_N_CALLS = 1000; // for printing debug output every ... steps (0 = no debug out)
 
 #define IS_DEBUG_STEP (DEBUG_LOG_EVERY_N_CALLS > 0 && (SEGENV.call % DEBUG_LOG_EVERY_N_CALLS) == 0)
-
-const size_t nOuterLeft = 10;
-const size_t nLeft = 35;
-const size_t nBottom = 36;
-const size_t nUpperRight = 17;
-const size_t nOuterRight = 27;
-
-const int hueSpread = 4.;
-const int valSpread = 2.;
-const float satDecay = 0.5;
-const float satSpawnChance = 0.001;
 
 using DeadlineTrophy::logoW;
 using DeadlineTrophy::logoH;
@@ -87,15 +74,20 @@ uint32_t float_hsv(float hue, float sat, float val) {
     return color & 0x00FFFFFF;
 }
 
-uint16_t mode_DeadlineTrophy(void) {
-    // official way to get the AudioReactive data, but we try our UDP route in our own Usermod
-    // um_data_t *um_data = getAudioData();
-    // uint8_t *fftResult = (uint8_t*)um_data->u_data[2];
+uint8_t mix8(uint8_t a, uint8_t b, float t) {
+    return a + static_cast<uint8_t>(static_cast<float>(b - a) * t);
+}
 
+// do some measurement of efficiency
+int64_t t0, t1;
+
+uint16_t mode_DeadlineTrophy(void) {
     size_t i, x, y;
     uint32_t col = SEGCOLOR(0);
     CHSV color = rgb2hsv_approximate(CRGB(col));
     CHSV color_(color);
+
+    bool measurePerformance = SEGENV.call % 9999 == 0;
 
     if (SEGENV.call == 0) {
         DEBUG_PRINTF("[DEADLINE_TROPHY] FX was called, now initialized for segment %d (%s) :)\n", strip.getCurrSegmentId(), SEGMENT.name);
@@ -111,32 +103,49 @@ uint16_t mode_DeadlineTrophy(void) {
     float bpm = static_cast<float>(SEGMENT.speed);
     float beat = bpm/60. * static_cast<float>(strip.now) / 1000.;
 
-    if (IS_LOGO_SEGMENT) {
-        // circling piece of shit
-        float phi = TWO_PI * fmod_t(0.0005 * strip.now, 1.);
+    if (measurePerformance) {
+        t0 = esp_timer_get_time();
+    }
 
-        float center_x = (0.6 + 0.2 * sin_t(phi)) * logoW;
-        const float size = 13.;
+    if (IS_LOGO_SEGMENT) {
+        float width = exp2f((static_cast<float>(SEGMENT.intensity) - 192.) / 64.);
+        float centerX = (static_cast<float>(SEGMENT.custom1) - 128.) / 256.;
+        float centerY = (static_cast<float>(SEGMENT.custom2) - 128.) / 256.;
+
+        if (IS_DEBUG_STEP) {
+            DEBUG_PRINTF("[QM_DEBUG_LOGO] params %d %d %d %d -> w=%.3f, x=%.3f, y=%.3f\n",
+                SEGMENT.speed, SEGMENT.intensity, SEGMENT.custom1, SEGMENT.custom2,
+                width, centerX, centerY
+            );
+        }
 
         for (const auto& coord : DeadlineTrophy::logoCoordinates()) {
-            x = coord.x;
-            y = coord.y;
+            float dist_x = (coord.uvX - centerX) / width;
+            float dist_y = (coord.uvY - centerY) / width;
+            float intensity = exp(-(dist_x*dist_x + dist_y*dist_y));
 
-            //just a line sweep
-            center_x = fmod_t(0.0005 * (strip.now % 2000), 1.) * (logoW + 2. * size) - size;
-            center_x = logoW - center_x;
+            color.hue = color_.hue - 90. * (1. - intensity);
+            color.sat = color_.sat;
+            color.val = static_cast<uint8_t>(255.f * intensity);
 
-            float dist_x = float(x) - center_x;
-            float dist_y = 0.;
-            float intensity = exp(- (dist_x*dist_x)/size - (dist_y*dist_y)/size);
+            if (IS_DEBUG_STEP) {
+                DEBUG_PRINTF("[QM_DEBUG_LOGO_COORD] %.3f/%.3f = %d/%d -- %.3f x %.3f -> %.3f [h=%d, s=%d, v=%d]\n",
+                    coord.uvX, coord.uvY, coord.x, coord.y, dist_x, dist_y, intensity, color.hue, color.sat, color.val
+                );
+            }
 
-            intensity = dist_x > 0 ? exp(-dist_x / size) : 0.;
-            color.hue = color_.hue - 90. * intensity;
-            color.sat = color_.sat * intensity;
-            // some annoying blinking, for now.
-            color.val = static_cast<uint8_t>(255.f * exp(-0.003 * (strip.now % 2000)));
+            float d = coord.sdLine(-0.5, -0.5, +0.5, +0.5);
+            intensity = exp(-5.*d);
+            color.sat = mix8(color.sat, 0, intensity);
+            color.val = mix8(color.val, 255, intensity);
 
-            setLogoHSV(x, y, color);
+            setLogoHSV(coord.x, coord.y, color);
+        }
+
+        if (measurePerformance) {
+            t1 = esp_timer_get_time();
+            DEBUG_PRINTF("[QM_DEBUG_PERFORMANCE] Logo: took %" PRId64 "µs\n", t1-t0);
+            t0 = esp_timer_get_time();
         }
     }
 
@@ -149,10 +158,8 @@ uint16_t mode_DeadlineTrophy(void) {
             // strip.now is millisec uint32_t, so this will overflow ~ every 49 days. who shits a give.
             float wave = sin_t(PI / 15. * (static_cast<float>(i) - 0.007 * strip.now));
             float abs_wave = (wave > 0. ? wave : -wave);
-            float slow_wave = 0.7 + 0.3 * sin_t(TWO_PI / 10000. * strip.now);
 
             color.hue = color_.hue - 20. * wave * abs_wave;
-            // color.val = color_.val * abs_wave * slow_wave;
 
             color.hue = s == 0 ? 0 : s == 1 ? 90 : s == 2 ? 180 : 210;
 
@@ -169,6 +176,11 @@ uint16_t mode_DeadlineTrophy(void) {
             color.val = ((strip.now % 16000) > (i * 1000)) ? 255 : 20;
 
             setBaseHSV(x, y, color);
+        }
+
+        if (measurePerformance) {
+            t1 = esp_timer_get_time();
+            DEBUG_PRINTF("[QM_DEBUG_PERFORMANCE] Base: took %" PRId64 "µs\n", t1-t0);
         }
     }
 

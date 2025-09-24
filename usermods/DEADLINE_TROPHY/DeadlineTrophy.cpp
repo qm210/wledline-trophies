@@ -114,10 +114,10 @@ namespace DeadlineTrophy {
         SEG_CAPABILITY_W
     };
 
-    static std::array<NormalizedCoord, N_LEDS_LOGO> logoCoordinates_;
+    static std::array<Coord, N_LEDS_LOGO> logoCoordinates_;
     static bool logoInitialized = false;
 
-    std::array<NormalizedCoord, N_LEDS_LOGO>& logoCoordinates() {
+    std::array<Coord, N_LEDS_LOGO>& logoCoordinates() {
         if (logoInitialized) {
             return logoCoordinates_;
         }
@@ -133,8 +133,11 @@ namespace DeadlineTrophy {
                 continue;
             }
             logoCoordinates_[ledIndexInLogo] = {
+                x,
+                y,
                 static_cast<float>(x) * dx + x0,
-                static_cast<float>(y) * dy + y0,
+                -(static_cast<float>(y) * dy + y0),
+                ledIndexInLogo,
             };
         }
         logoInitialized = true;

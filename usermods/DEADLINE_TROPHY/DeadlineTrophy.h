@@ -68,49 +68,71 @@ namespace DeadlineTrophy {
         __, 31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, __, __, __, __, __, __, __, __, __,
     };
 
-    struct NormalizedCoord { float x; float y; };
+    struct Coord {
+        // indices for matrix
+        uint8_t x;
+        uint8_t y;
+        // normalized coordinates
+        float uvX;
+        float uvY;
+        // for reference, the pixel index
+        int index;
 
-    std::array<NormalizedCoord, N_LEDS_LOGO>& logoCoordinates();
-
-    // helpers for larger bars of the logo
-    const size_t nOuterLeft = 10;
-    const size_t nLeft = 35;
-    const size_t nBottom = 36;
-    const size_t nUpperRight = 17;
-    const size_t nOuterRight = 27;
-
-    // the bars in the Logo
-    const int barOuterLeft[nOuterLeft] = {
-        161, 162, 163, 164, 165, 166, 167, 168, 169,
-        160
-    };
-    const int barLeft[nLeft] = {
-        156, 155, 154, 153, 152, 151, 150, 149,
-        140, 141, 142, 143, 144, 145, 146, 147, 148,
-        133, 132, 131, 130, 129, 128, 127, 126
-    };
-    const int barBottom[nBottom] = {
-        137, 136, 64, 69, 79, 70, 75, 76, 81, 82, 99, 100,
-        159, 138, 135, 65, 68, 71, 74, 77, 80, 83, 98, 101,
-        158, 139, 134, 66, 67, 72, 73, 78, 79, 84, 97, 102
-    };
-    const int barUpperRight[nUpperRight] = {
-        111, 116, 117, 122, 123, 125,
-        110, 112, 115, 118, 121, 124,
-        109, 113, 114, 119, 120
-    };
-    const int barOuterRight[nOuterRight] = {
-        85, 86, 87, 88, 89, 90,
-        96, 95, 94, 93, 92, 91,
-        103, 104, 105, 106, 107, 108
+        float sdLine(float x1, float y1, float x2, float y2) const {
+            float px = uvX - x1;
+            float py = uvY - y1;
+            float dx = x2 - x1;
+            float dy = y2 - y1;
+            float h = constrain((px*dx + py*dy) / (dx*dx + dy*dy), 0.f, 1.f);
+            float lx = px - dx * h;
+            float ly = py - dy * h;
+            return sqrtf(lx*lx + ly*ly);
+        }
     };
 
-    const size_t nBars = 5;
-    const int nInBar[] = {
-        nOuterLeft,
-        nLeft,
-        nBottom,
-        nUpperRight,
-        nOuterRight
-    };
+    std::array<Coord, N_LEDS_LOGO>& logoCoordinates();
+
+    namespace LogoBars {
+        // helpers for larger bars of the logo
+        const size_t nOuterLeft = 10;
+        const size_t nLeft = 35;
+        const size_t nBottom = 36;
+        const size_t nUpperRight = 17;
+        const size_t nOuterRight = 27;
+
+        // the bars in the Logo
+        const int barOuterLeft[nOuterLeft] = {
+            161, 162, 163, 164, 165, 166, 167, 168, 169,
+            160
+        };
+        const int barLeft[nLeft] = {
+            156, 155, 154, 153, 152, 151, 150, 149,
+            140, 141, 142, 143, 144, 145, 146, 147, 148,
+            133, 132, 131, 130, 129, 128, 127, 126
+        };
+        const int barBottom[nBottom] = {
+            137, 136, 64, 69, 79, 70, 75, 76, 81, 82, 99, 100,
+            159, 138, 135, 65, 68, 71, 74, 77, 80, 83, 98, 101,
+            158, 139, 134, 66, 67, 72, 73, 78, 79, 84, 97, 102
+        };
+        const int barUpperRight[nUpperRight] = {
+            111, 116, 117, 122, 123, 125,
+            110, 112, 115, 118, 121, 124,
+            109, 113, 114, 119, 120
+        };
+        const int barOuterRight[nOuterRight] = {
+            85, 86, 87, 88, 89, 90,
+            96, 95, 94, 93, 92, 91,
+            103, 104, 105, 106, 107, 108
+        };
+
+        const size_t nBars = 5;
+        const int nInBar[] = {
+            nOuterLeft,
+            nLeft,
+            nBottom,
+            nUpperRight,
+            nOuterRight
+        };
+    }
 }
