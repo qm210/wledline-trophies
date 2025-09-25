@@ -213,17 +213,18 @@ void notify(byte callMode, bool followUp)
 static void parseNotifyPacket(const uint8_t *udpIn) {
   //ignore notification if received within a second after sending a notification ourselves
   if (millis() - notificationSentTime < 1000) return;
-  if (udpIn[1] > 199) return; //do not receive custom versions
+  auto callMode = udpIn[1];
+  if (callMode > 199) return; //do not receive custom versions
 
   //compatibilityVersionByte:
   byte version = udpIn[11];
   DEBUG_PRINTF_P(PSTR("UDP packet version: %d\n"), (int)version);
 
 #ifdef USERMOD_DEADLINE_TROPHY
-  bool changed = GET_DEADLINE_USERMOD()->parseNotifyPacket(udpIn);
-  if (changed) {
-    stateUpdated(CALL_MODE_NOTIFICATION);
-    updateInterfaces(CALL_MODE_WS_SEND);
+  stateChanged |= GET_DEADLINE_USERMOD()->parseNotifyPacket(udpIn);
+  if (stateChanged) {
+    stateUpdated(callMode);
+    updateInterfaces(callMode);
     return;
   }
   receiveSegmentOptions = false;

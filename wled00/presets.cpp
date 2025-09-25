@@ -181,6 +181,11 @@ void handlePresets()
   }
   fdo = pDoc->as<JsonObject>();
 
+  if (presetErrFlag != ERR_NONE && tmpPreset == bootPreset) {
+    bootPreset = 0; // QM: unclear to me why we would just keep annoying the user
+    configNeedsWrite = true;
+  }
+
   // only reset errorflag if previous error was preset-related
   if ((errorFlag == ERR_NONE) || (errorFlag == ERR_FS_PLOAD)) errorFlag = presetErrFlag;
 

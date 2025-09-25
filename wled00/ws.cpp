@@ -184,6 +184,12 @@ void sendDataWs(AsyncWebSocketClient * client)
   }
   serializeJson(*pDoc, (char *)buffer.data(), len);
 
+  #ifdef WLED_DEBUG_WS
+    DEBUG_PRINTLN("[QM_DEBUG_WEBSOCKET] Serialized JSON:");
+    serializeJson(*pDoc, Serial);
+    DEBUG_PRINTLN();
+  #endif
+
   DEBUG_PRINT(F("Sending WS data "));
   if (client) {
     DEBUG_PRINTLN(F("to a single client."));

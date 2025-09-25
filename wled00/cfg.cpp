@@ -815,6 +815,12 @@ bool deserializeConfigFromFS() {
   JsonObject root = pDoc->as<JsonObject>();
   bool needsSave = deserializeConfig(root, true);
 
+  #ifdef WLED_DEBUG_FS
+    DEBUG_PRINTF("[QM_DEBUG_CONFIG] Did deserializeConfig(), needsSave=%d\n", needsSave);
+    serializeJson(root, Serial);
+    DEBUG_PRINTLN();
+  #endif
+
   DEBUG_PRINTF("[QM_DEBUG] WiFiConfigs: %d\n", multiWiFi.size());
   for (int i = 0; i < multiWiFi.size(); i++)
     DEBUG_PRINTF("[QM_DEBUG] -- \"%s\":\"%s\"\n", multiWiFi[i].clientSSID, multiWiFi[i].clientPass);
