@@ -197,9 +197,9 @@ namespace DeadlineTrophy {
 
         CRGB paletteRGB(float t, float aR, float aG, float aB, float bR, float bG, float bB, float cR, float cG, float cB, float dR, float dG, float dB) {
             // useful tool right here: https://dev.thi.ng/gradients/
-            float r = aR + bR * cos_approx(M_TWOPI * (cR * t + dR));
-            float g = aG + bG * cos_approx(M_TWOPI * (cG * t + dG));
-            float b = aB + bB * cos_approx(M_TWOPI * (cB * t + dB));
+            float r = aR + bR * cos_t(M_TWOPI * (cR * t + dR));
+            float g = aG + bG * cos_t(M_TWOPI * (cG * t + dG));
+            float b = aB + bB * cos_t(M_TWOPI * (cB * t + dB));
             return CRGB(
                 static_cast<uint8_t>(255. * r),
                 static_cast<uint8_t>(255. * g),
@@ -211,6 +211,21 @@ namespace DeadlineTrophy {
             // do not constrain on purpose, as it might be wasteful
             return a + static_cast<uint8_t>(static_cast<float>(b - a) * t);
         }
+
+        float invSqrt(float x) {
+            // the Quake III Arena implementation, to compare against direct sqrtf() and/or sqrt32_bw() with casting
+            uint32_t i;
+            float x2, y;
+            const float threehalfs = 1.5F;
+            x2 = x * 0.5F;
+            y = x;
+            memcpy(&i, &y, sizeof(float)); // i = *(long*)&y;
+            i = 0x5f3759df - (i >> 1);
+            memcpy(&y, &i, sizeof(uint32_t)); // y = *(float*)&i;
+            y = y * (threehalfs - (x2 * y * y));
+            return y;
+        }
+
     }
 
 }

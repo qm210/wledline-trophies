@@ -143,16 +143,20 @@ bool DeadlineUsermod::parseNotifyPacket(const uint8_t *udpIn) {
     // this is our definition of "subversion 0"
     bool doReset = udpIn[2] == 1;
     bool applyBrightness = udpIn[3] == 1;
-    int brightness = udpIn[4];
-    bool applyFxIndex = udpIn[5] == 1;
-    int fxIndex = udpIn[6];
-    bool applyFxSpeed = udpIn[7] == 1;
-    int fxSpeed = udpIn[8];
-    // 9 and 10 are unused currently, as well as anything > 12
+    uint8_t brightness = udpIn[4];
+    uint8_t applySegmentOpacityTo = udpIn[5];
+    uint8_t segmentOpacity = udpIn[6];
+    uint8_t applyFxIndexTo = udpIn[7];
+    uint8_t fxIndex = udpIn[8];
+    uint8_t applyFxSpeedTo = udpIn[9];
+    uint8_t fxSpeed = udpIn[10];
 
-    bool changesToSegment = applyFxIndex || applyFxSpeed;
+    bool changesToSegments =
+        applySegmentOpacityTo > 0 ||
+        applyFxIndexTo > 0 ||
+        applyFxSpeedTo > 0;
 
-    if (!(doReset || changesToSegment || applyBrightness)) {
+    if (!(doReset || changesToSegments || applyBrightness)) {
         return false;
     }
 
@@ -160,27 +164,39 @@ bool DeadlineUsermod::parseNotifyPacket(const uint8_t *udpIn) {
         bri = brightness;
         turnOnAtBoot = bri > 0;
     }
-
-    if (doReset) {
-        strip.restartRuntime();
-    } else if (changesToSegment) {
+    if (changesToSegments) {
+        if (currentPlaylist >= 0) {
+            unloadPlaylist();
+        }
         strip.suspend();
         strip.waitForIt();
         for (int s = 0; s < strip.getSegmentsNum(); s++) {
-            Segment seg = strip.getSegment(s);
+            uint8_t isAffected = 1 << s;
+            bool applySegmentOpacity = applySegmentOpacityTo & isAffected;
+            bool applyFxIndex = applyFxIndexTo & isAffected;
+            bool applyFxSpeed = applyFxSpeedTo & isAffected;
+            Segment& seg = strip.getSegment(s);
+            seg.on = true;
             seg.freeze = false;
+            if (applySegmentOpacity) {
+                seg.setOpacity(segmentOpacity);
+            }
             if (applyFxIndex) {
-                seg.mode = fxIndex;
+                seg.setMode(fxIndex);
             }
             if (applyFxSpeed) {
                 seg.speed = fxSpeed;
             }
         }
+        strip.trigger();
         strip.resume();
-        stateChanged = true;
     }
 
-    DEBUG_PRINTF("[QM_DL_UDP] Reached End; got FX (%d @ %d), was Segment change? %d, was reset? %d; stateChanged = %d\n", fxIndex, fxSpeed, changesToSegment, doReset, stateChanged);
+    if (doReset) {
+        strip.resetTimebase(); // <-- QM: do I need that? got it from led.cpp stateUpdated()
+        strip.restartRuntime();
+    }
+
     return true;
 }
 

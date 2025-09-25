@@ -34,7 +34,7 @@ uint16_t mode_DeadlineTrophy(void) {
 
     if (SEGENV.call == 0) {
         // sanity check
-        DEBUG_PRINTF("[DEADLINE_TROPHY] FX was called, now initialized for segment %d (%s) :)\n", strip.getCurrSegmentId(), SEGMENT.name);
+        // DEBUG_PRINTF("[DEADLINE_TROPHY] FX was called, now initialized for segment %d (%s) :)\n", strip.getCurrSegmentId(), SEGMENT.name);
         SEGMENT.fill(BLACK);
     }
 
@@ -49,7 +49,7 @@ uint16_t mode_DeadlineTrophy(void) {
         for (const auto& coord : DeadlineTrophy::logoCoordinates()) {
             Vec2 distance = coord.uv - center;
             float d = distance.length();
-            d = sin_approx(M_TWOPI * d * k);
+            d = sin_t(M_TWOPI * (d * k - beat));
             d *= d;
             d = 0.02 / d;
 
@@ -61,34 +61,30 @@ uint16_t mode_DeadlineTrophy(void) {
             //     }
             // }
 
+            // NOTE: as this is a loop, we need to set color.hue, color.sat, color.val as absolute at first,
+            //       from then on, relative changes are ok, but otherwise we mix different pixels: seldom useful.
             color.hue = color_.hue;
             color.sat = color_.sat;
             color.val = static_cast<uint8_t>(255. * clip(d));
 
             /*
-            // NOTE: as this is a loop, we need to set color.hue, color.sat, color.val as absolute at first,
-            //       from then on, relative changes are ok, but otherwise we mix different pixels; seldom useful.
             color.hue = color_.hue - 90. * (1. - intensity);
             color.sat = color_.sat;
             color.val = static_cast<uint8_t>(255.f * intensity);
+            */
 
             float every16Beats = fmodf(beat, 16.) / 16.;
-            float d = coord.sdLine(-0.4, -0.5, +0.1, +0.5);
-            intensity = exp(-5.*d);
-            intensity *= exp(-10. * pow(every16Beats - 15., 2.)); // is a swell at each 15th of 16 beats
-            color.sat = mix8(color.sat, 0, intensity);
-            color.val = mix8(color.val, 255, intensity);
+            d = coord.sdLine({-0.4, -0.5}, {+0.1, +0.5});
+            d = exp(-5.*d);
+            d *= exp(-10. * pow(every16Beats - 15., 2.)); // is a swell at each 15th of 16 beats
+            color.sat = mix8(color.sat, 0, d);
+            color.val = mix8(color.val, 255, d);
 
             // purple flash because hue 210 is so nicey, for reasons
-            float norm = coord.uv
-                .shifted(-0.1, 0.0)
-                .scaled(1, 0.4)
-                .length();
-                // <-- für Kreis-nicht-Ellipse um Zentrum des Dreiecks (nicht exakt Zentrum der LEDs bisher)
-            d = sin_approx(-4.*norm + time);
+            float norm = coord.uv.length();
+            d = sin_t(-4.*norm + time);
             float d2 = clip(abs(d));
             color.hue = mix8(color.hue, 210, d2);
-            */
 
             setLogoHSV(coord.x, coord.y, color);
         }
