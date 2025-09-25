@@ -25,7 +25,7 @@ var pN = "", pI = 0, pNum = 0;
 var pmt = 1, pmtLS = 0, pmtLast = 0;
 var lastinfo = {};
 var isM = false, mw = 0, mh=0;
-var isDeadline = false, hideFixed = false;
+var isDeadline = false, deadlineFX = null, hideFixed = false;
 var ws, wsRpt=0;
 var cfg = {
 	theme:{base:"dark", bg:{url:"", rnd: false, rndGrayscale: false, rndBlur: false}, alpha:{bg:0.6,tab:0.8}, color:{bg:""}},
@@ -949,15 +949,24 @@ function populateEffects()
 {
 	var effects = eJson;
 	var html = "";
-
 	effects.shift(); // temporary remove solid
+    let deadlineIndex = -1; // qm: DEADLINE_USERMOD also arranges the FX_DEADLINE_TROPHY at the second-top
 	for (let i = 0; i < effects.length; i++) {
 		effects[i] = {
 			id: effects[i][0],
-			name:effects[i][1]
+			name: effects[i][1]
 		};
+        if (effects[i].name.includes('DEADLINE')) {
+            deadlineIndex = i;
+        }
 	}
+    if (deadlineIndex > -1) {
+        deadlineFX = effects.splice(deadlineIndex, 1)[0];
+    }
 	effects.sort((a,b) => (a.name).localeCompare(b.name));
+    if (deadlineFX) {
+        effects.unshift(deadlineFX);
+    }
 	effects.unshift({
 		"id": 0,
 		"name": "Solid"
@@ -1382,10 +1391,10 @@ function updateSelectedFx()
 		setEffectParameters(selectedFx);
 		// hide non-0D effects if segment only has 1 pixel (0D)
 		parent.querySelectorAll('.lstI').forEach((fx)=>{
-			let ds = fx.dataset;
+            let ds = fx.dataset;
 			if (ds.opt) {
 				let opts = ds.opt.split(";");
-				if (ds.id>0) {
+				if (ds.id>0 && ds.id !== deadlineFX?.id) {
 					if (segLmax==0) fx.classList.add('hide'); // none of the segments selected (hide all effects)
 					else {
 						if ((segLmax==1 && (!opts[3] || opts[3].indexOf("0")<0)) || (!has2D && opts[3] && ((opts[3].indexOf("2")>=0 && opts[3].indexOf("1")<0)))) fx.classList.add('hide');

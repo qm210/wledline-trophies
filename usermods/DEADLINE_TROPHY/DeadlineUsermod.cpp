@@ -129,68 +129,59 @@ bool DeadlineUsermod::sendLiveview(AsyncWebSocketClient *wsc)
 }
 
 bool DeadlineUsermod::parseNotifyPacket(const uint8_t *udpIn) {
-    bool changed = false;
+    // version is on 11 because at least _this_ matches the common WLED packets (as well as the first two bytes)
     int version = udpIn[11];
     int subVersion = udpIn[12];
     if (version != DeadlineUsermod::customPacketVersion) {
-        return changed;
+        return false;
     }
     if (subVersion != 0) {
         DEBUG_PRINTF("[DEADLINE_TROPHY] Got a UDP package of our version %d but unknown subversion %d\n", version, subVersion);
-        return changed;
+        return false;
     }
 
     // this is our definition of "subversion 0"
-    int doReset = udpIn[2] == 1;
-    int applyBrightness = udpIn[3] == 1;
+    bool doReset = udpIn[2] == 1;
+    bool applyBrightness = udpIn[3] == 1;
     int brightness = udpIn[4];
-    int applyFxIndex = udpIn[5] == 1;
+    bool applyFxIndex = udpIn[5] == 1;
     int fxIndex = udpIn[6];
-    int applyFxSpeed = udpIn[7] == 1;
+    bool applyFxSpeed = udpIn[7] == 1;
     int fxSpeed = udpIn[8];
-    int applyAllWhite = udpIn[9] == 1;
-    int whiteValue = udpIn[10];
+    // 9 and 10 are unused currently, as well as anything > 12
 
-    bool needsSuspension = doReset || applyFxIndex || applyFxSpeed || applyAllWhite;
-    if (needsSuspension) {
+    bool changesToSegment = applyFxIndex || applyFxSpeed;
+
+    if (!(doReset || changesToSegment || applyBrightness)) {
+        return false;
+    }
+
+    if (applyBrightness) {
+        bri = brightness;
+        turnOnAtBoot = bri > 0;
+    }
+
+    if (doReset) {
+        strip.restartRuntime();
+    } else if (changesToSegment) {
         strip.suspend();
         strip.waitForIt();
         for (int s = 0; s < strip.getSegmentsNum(); s++) {
             Segment seg = strip.getSegment(s);
+            seg.freeze = false;
             if (applyFxIndex) {
                 seg.mode = fxIndex;
             }
             if (applyFxSpeed) {
                 seg.speed = fxSpeed;
             }
-            if (applyAllWhite) {
-                seg.freeze = true;
-                seg.fill(RGBW32(whiteValue, whiteValue, whiteValue, whiteValue));
-            } else {
-                seg.freeze = false;
-            }
-            if (doReset) {
-                seg.fill(BLACK);
-                seg.freeze = false;
-                seg.call = 0;
-                seg.step = 0; // <-- a custom variable, but probably used in that same sense
-            }
-        }
-        if (doReset) {
-            toggleOnOff();
         }
         strip.resume();
-        changed = true;
+        stateChanged = true;
     }
 
-    if (applyBrightness) {
-        bri = brightness;
-        turnOnAtBoot = bri > 0;
-        changed = true;
-    }
-
-    DEBUG_PRINTF("[QM_DL_UDP] Did this change something? %d - and did it suspend? %d\n", changed, needsSuspension);
-    return changed;
+    DEBUG_PRINTF("[QM_DL_UDP] Reached End; got FX (%d @ %d), was Segment change? %d, was reset? %d; stateChanged = %d\n", fxIndex, fxSpeed, changesToSegment, doReset, stateChanged);
+    return true;
 }
 
 

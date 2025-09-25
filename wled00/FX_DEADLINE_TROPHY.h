@@ -39,15 +39,33 @@ uint16_t mode_DeadlineTrophy(void) {
     }
 
     if (IS_LOGO_SEGMENT) {
-        float width = exp2f((static_cast<float>(SEGMENT.intensity) - 192.) / 64.);
-        float centerX = (static_cast<float>(SEGMENT.custom1) - 128.) / 256.;
-        float centerY = (static_cast<float>(SEGMENT.custom2) - 128.) / 256.;
+        // QM: that with is useful for a point with exp(-r*r/w/w), values go from [1/8..1]
+        // float width = exp2f((static_cast<float>(SEGMENT.intensity) - 192.) / 64.);
+        // mapping 0..255 to [1/4 .. 4] with centered 128 = 1:
+        float k = exp2f((static_cast<float>(SEGMENT.intensity) - 128.) / 32.);
+
+        auto center = Vec2::fromParameters(SEGMENT.custom1, SEGMENT.custom2);
 
         for (const auto& coord : DeadlineTrophy::logoCoordinates()) {
-            float dist_x = (coord.uv.x - centerX) / width;
-            float dist_y = (coord.uv.y - centerY) / width;
-            float intensity = exp(-(dist_x*dist_x + dist_y*dist_y));
+            Vec2 distance = coord.uv - center;
+            float d = distance.length();
+            d = sin_approx(M_TWOPI * d * k);
+            d *= d;
+            d = 0.02 / d;
 
+            // EVERY_NTH_STEP(990) {
+            //     if (abs(coord.uv.y) < 0.05) {
+            //         DEBUG_PRINTF("[QM_DEBUG_VEC2] %.3f %.3f vs. %.2f %.2f| %.3f -> (%.3f,%.3f) - %.3f - %.3f > val = %d\n",
+            //             coord.uv.x, coord.uv.y, center.x, center.y, k, distance.x, distance.y, r_, sine, sintensity
+            //         );
+            //     }
+            // }
+
+            color.hue = color_.hue;
+            color.sat = color_.sat;
+            color.val = static_cast<uint8_t>(255. * clip(d));
+
+            /*
             // NOTE: as this is a loop, we need to set color.hue, color.sat, color.val as absolute at first,
             //       from then on, relative changes are ok, but otherwise we mix different pixels; seldom useful.
             color.hue = color_.hue - 90. * (1. - intensity);
@@ -63,19 +81,14 @@ uint16_t mode_DeadlineTrophy(void) {
 
             // purple flash because hue 210 is so nicey, for reasons
             float norm = coord.uv
-                .shifted(0.02, 0.02)
+                .shifted(-0.1, 0.0)
                 .scaled(1, 0.4)
                 .length();
                 // <-- für Kreis-nicht-Ellipse um Zentrum des Dreiecks (nicht exakt Zentrum der LEDs bisher)
-            d = sin_approx(4.*norm + time);
+            d = sin_approx(-4.*norm + time);
             float d2 = clip(abs(d));
             color.hue = mix8(color.hue, 210, d2);
-
-            // EVERY_NTH_STEP(500) {
-            //     DEBUG_PRINTF("[QM_DEBUG_TIME] %.2f %.2f |%.3f| - %.3f - %.3f - %.3f -> hue = %d\n",
-            //         coord.uv.x, coord.uv.y, norm, time, d, d2, color.hue
-            //     );
-            // }
+            */
 
             setLogoHSV(coord.x, coord.y, color);
         }
@@ -86,19 +99,33 @@ uint16_t mode_DeadlineTrophy(void) {
         static float phi = 0.;
         static float omega = 1.7;
         float hue = static_cast<float>(color.hue);
-        for (const auto& coord : DeadlineTrophy::baseCoordinates()) {
-            // wandering light with the bpm
-            int whiteIndex = wholeBeat % 16;
-            color.sat = (coord.indexInSide() == whiteIndex) ? 0 : 255;
 
-            // and some hue dancing with the beat
-            color.hue = static_cast<uint8_t>(hue - 50. * fractBeat);
+        for (const auto& coord : DeadlineTrophy::baseCoordinates()) {
+
+            // some wandering light with the bpm
+
+            // but first, take a color from a palette
+            color = rgb2hsv_approximate(paletteRGB(
+                0.2 * time - 0.25 * static_cast<float>(coord.indexInSide()),
+                0.5, 0.5, 0.5,
+                0.5, 0.5, 0.5,
+                0.5, 0.5, 0.5,
+                0.263, 0.416, 0.557
+            ));
+
+            // then some slight bpm-dancing
+            color.hue = static_cast<uint8_t>(hue - 30. * fractBeat);
+
+            int whiteIndex = wholeBeat % 16;
+            if (coord.indexInSide() == whiteIndex) {
+                color.sat = 255;
+            }
 
             phi = 0.25 * beat * omega;
-            Vec2 corner{1, 1};
-            Vec2 end = corner.rotated(phi);
+            Vec2 end{1, 1};
+            end.rotate(phi);
             float d = coord.sdLine(-end.x, -end.y, end.x, end.y);
-            color.val = mix8(255, 100, exp(-2.*d));
+            color.val = mix8(255, 20, exp(-2.5*d));
 
             setBaseHSV(coord.x, coord.y, color);
         }
@@ -106,21 +133,13 @@ uint16_t mode_DeadlineTrophy(void) {
     }
 
     uint8_t whiteBeat = beatsin8_t(SEGMENT.speed, 0, 255);
-    uint8_t annoyingBlink = fractBeat < 0.25 ? 255 : 0;
-
-    EVERY_NTH_STEP(62) {
-        int segId = strip.getCurrSegmentId();
-        DEBUG_PRINTF("[QM_DEBUG_WHITE %d] %.3f / %.3f / %.3f -> white %d, annoying %d, color %d, pixelY %d\n",
-            segId, time, beat, fractBeat, whiteBeat, annoyingBlink,
-            RGBW32(whiteBeat, whiteBeat, whiteBeat, whiteBeat), DeadlineTrophy::logoH + segId - 2
-        );
-    }
+    uint8_t annoyingBlink = mix8(255, 0, exp(-fractBeat));
 
     if (IS_BACK_LED) {
         setSingle(annoyingBlink);
 
     } else if (IS_FLOOR_LED) {
-        setSingle(255);
+        setSingle(whiteBeat);
 
     }
 
@@ -128,7 +147,7 @@ uint16_t mode_DeadlineTrophy(void) {
 }
 
 static const char _data_FX_MODE_DEADLINE_TROPHY[] PROGMEM =
-    "DEADLINE TROPHY@BPM,param1,param2,param3;!,!;!;2;sx=110";
+    "DEADLINE Trophy@BPM,param1,param2,param3;!,!;!;2;sx=110";
 // <-- cf. https://kno.wled.ge/interfaces/json-api/#effect-metadata
 // <EffectParameters>;<Colors>;<Palette>;<Flags>;<Defaults>
 // <Colors> = !,! = Two Defaults

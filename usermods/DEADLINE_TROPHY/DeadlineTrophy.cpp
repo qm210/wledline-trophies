@@ -123,10 +123,10 @@ namespace DeadlineTrophy {
         if (logoInitialized) {
             return logoCoordinates_;
         }
-        float dx = 1. / static_cast<float>(logoW);
-        float dy = 1. / static_cast<float>(logoH);
-        float x0 = -0.5f + (logoW % 2 == 0 ? dx : 0.f);
-        float y0 = -0.5f + (logoH % 2 == 0 ? dy : 0.f);
+        float ds = 1. / static_cast<float>(logoH - 1);
+        float x0 = 0, y0 = 0;
+        const uint8_t ledWithCenterX = 126;
+        const uint8_t ledWithCenterY = 87;
         for (uint8_t x = 0; x < logoW; ++x)
         for (uint8_t y = 0; y < logoH; ++y) {
             uint8_t ledIndex = mappingTable[x + logoW * y];
@@ -138,11 +138,20 @@ namespace DeadlineTrophy {
                 x,
                 y,
                 {
-                    static_cast<float>(x) * dx + x0,
-                    -(static_cast<float>(y) * dy + y0),
+                    +static_cast<float>(x) * ds,
+                    -static_cast<float>(y) * ds,
                 },
                 ledIndexInLogo
             };
+            if (ledIndex == ledWithCenterX) {
+                x0 = -logoCoordinates_[ledIndexInLogo].uv.x;
+            }
+            if (ledIndex == ledWithCenterY) {
+                y0 = -logoCoordinates_[ledIndexInLogo].uv.y;
+            }
+        }
+        for (uint8_t i = 0; i < N_LEDS_LOGO; i++) {
+            logoCoordinates_[i].uv.shift(x0, y0);
         }
         logoInitialized = true;
         return logoCoordinates_;
@@ -175,7 +184,7 @@ namespace DeadlineTrophy {
 
     namespace FxHelpers {
 
-        uint32_t floatHSVG(float hue, float sat, float val) {
+        uint32_t floatHSV(float hue, float sat, float val) {
             // parameters in [0, 255] but as float
             uint32_t color = uint32_t(CRGB(CHSV(
                 static_cast<uint8_t>(hue),
@@ -186,7 +195,7 @@ namespace DeadlineTrophy {
             return color & 0x00FFFFFF;
         }
 
-        CRGB palette(float t, float aR, float aG, float aB, float bR, float bG, float bB, float cR, float cG, float cB, float dR, float dG, float dB) {
+        CRGB paletteRGB(float t, float aR, float aG, float aB, float bR, float bG, float bB, float cR, float cG, float cB, float dR, float dG, float dB) {
             // useful tool right here: https://dev.thi.ng/gradients/
             float r = aR + bR * cos_approx(M_TWOPI * (cR * t + dR));
             float g = aG + bG * cos_approx(M_TWOPI * (cG * t + dG));

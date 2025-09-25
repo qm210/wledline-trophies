@@ -72,31 +72,59 @@ namespace DeadlineTrophy {
         float x;
         float y;
 
-        Vec2 shifted(float dx, float dy) const {
-            return {
-                x + dx,
-                y + dy
-            };
-        };
-
-        Vec2 rotated(float phi) const {
-            float c = cos_approx(phi);
-            float s = sin_approx(phi);
-            return {
-                c * x - s * y,
-                s * x + c * y
-            };
+        Vec2 operator-(const Vec2& other) const {
+            return {x - other.x, y - other.y};
         }
 
-        Vec2 scaled(float factorX, float factorY) const {
-            return {
-                factorX * x,
-                factorY * y
-            };
+        Vec2 operator+(const Vec2& other) const {
+            return {x + other.x, y + other.y};
+        }
+
+        Vec2 operator*(float factor) const {
+            return {factor * x, factor * y};
+        }
+
+        static float dot(const Vec2& a, const Vec2 b) {
+            return a.x * b.x + a.y * b.y;
         }
 
         float length() const {
             return sqrtf(x * x + y * y);
+        }
+
+        Vec2& shift(float dx, float dy) {
+            x += dx;
+            y += dy;
+            return *this;
+        };
+
+        Vec2& rotate(float phi) {
+            float c = cos_approx(phi);
+            float s = sin_approx(phi);
+            float rotX = c * x - s * y;
+            float rotY = s * x + c * y;
+            x = rotX;
+            y = rotY;
+            return *this;
+        }
+
+        Vec2& scale(float factorX, float factorY) {
+            x *= factorX;
+            y *= factorY;
+            return *this;
+        }
+
+        float distance(const Vec2& other) const {
+            return (other - (*this)).length();
+        }
+
+        static Vec2 fromParameters(uint8_t x = 128, uint8_t y = 128) {
+            // will then reach from [-0.5, +0.496] on both axes
+            const float inv256 = 3.906e-3;
+            return {
+                (static_cast<float>(x) - 128.f) * inv256,
+                (static_cast<float>(y) - 128.f) * inv256
+            };
         }
     };
 
@@ -155,17 +183,7 @@ namespace DeadlineTrophy {
 
         inline void setSingle(uint8_t white) {
             uint32_t color = RGBW32(white, white, white, white);
-            // just matches our matrix for back (segment id 2) and floor (segment id 3)
-            int pixelY = logoH + strip.getCurrSegmentId() - 2;
-            SEGMENT.setPixelColorXY(baseSize, pixelY, color);
-        }
-
-        inline void setBack(uint32_t color) {
-            setPixel(2, baseSize, logoH, color);
-        }
-
-        inline void setFloor(uint32_t color) {
-            setPixel(3, baseSize, logoH + 1, color);
+            SEGMENT.setPixelColorXY(0, 0, color);
         }
 
         inline void setBaseHSV(size_t x, size_t y, CHSV color) { setBase(x, y, uint32_t(CRGB(color))); }
@@ -183,9 +201,12 @@ namespace DeadlineTrophy {
         }
 
         uint32_t floatHSV(float hue, float sat, float val);
-        CRGB palette(float t, float aR, float aG, float aB, float bR, float bG, float bB,
-                     float cR, float cG, float cB, float dR, float dG, float dB);
-                    // <-- usually given as four vec3, but for now, just do this.
+
+        CRGB paletteRGB(float t,
+            float aR, float aG, float aB, float bR, float bG, float bB,
+            float cR, float cG, float cB, float dR, float dG, float dB
+        ); // <-- usually given as four vec3, but for now, just do this.
+
         uint8_t mix8(uint8_t a, uint8_t b, float t);
     }
 
