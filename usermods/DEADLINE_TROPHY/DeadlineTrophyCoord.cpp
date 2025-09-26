@@ -93,7 +93,7 @@ namespace DeadlineTrophy {
 
     float Coord::gaussAt(Vec2 center, float width, float circleRadius) const {
         float expo = ((uv - center).length() - circleRadius) / width;
-        return exp(-expo*expo);
+        return exp(-sq(expo));
     }
 
     FloatRgb FloatRgb::fromCRGB(const CRGB& color) {
@@ -102,6 +102,19 @@ namespace DeadlineTrophy {
             255.f * static_cast<float>(color.g),
             255.f * static_cast<float>(color.b),
         };
+    }
+
+    CRGB FloatRgb::toCRGB() const {
+        // assumes that the floats are in [0..1]
+        return CRGB(
+            static_cast<uint8_t>(255.f * r),
+            static_cast<uint8_t>(255.f * g),
+            static_cast<uint8_t>(255.f * b)
+        );
+    }
+
+    CHSV FloatRgb::toCHSV() const {
+        return rgb2hsv_approximate(toCRGB());
     }
 
     FloatRgb::operator uint32_t() const {
@@ -119,9 +132,9 @@ namespace DeadlineTrophy {
     }
 
     FloatRgb& FloatRgb::grade(float exponent) {
-        r = exp(exponent * logf(r));
-        g = exp(exponent * logf(g));
-        b = exp(exponent * logf(b));
+        r = r <= 0. ? 0. : exp(exponent * logf(r));
+        g = g <= 0. ? 0. : exp(exponent * logf(g));
+        b = b <= 0. ? 0. : exp(exponent * logf(b));
         return *this;
     }
 }

@@ -94,7 +94,9 @@ namespace DeadlineTrophy {
         FloatRgb& scale(float factor);
         FloatRgb& grade(float exponent);
         static FloatRgb fromCRGB(const CRGB& color);
-        operator uint32_t () const;
+        CRGB toCRGB() const;
+        CHSV toCHSV() const;
+        operator uint32_t() const;
     };
 
     struct Coord {
@@ -108,7 +110,7 @@ namespace DeadlineTrophy {
 
         float sdLine(float x1, float y1, float x2, float y2) const;
         float sdLine(Vec2 p1, Vec2 p2) const;
-        float gaussAt(Vec2 p, float width = 0.05, float circleRadius = 0.) const;
+        float gaussAt(Vec2 p, float width = 0.1, float circleRadius = 0.) const;
 
         // helpers for the base (don't make any sense for the Logo)
         // side 0=right, 1=front, 2=left, 3=back
@@ -134,12 +136,12 @@ namespace DeadlineTrophy {
             99, 82, 81, 76, 75, 70, 69, 64, 136, 137,
             159,
         }};
-        const std::array<uint8_t, 23> InnerTriangle = {{
+        const std::array<uint8_t, 21> InnerTriangle = {{
             134, 133, 132, 131, 130, 129, 128, 127,
             122, 117, 116, 111,
             86, 85, 84, 79, 78, 73, 72, 67, 66
         }};
-        const std::array<uint8_t, 29> MiddleTriangle = {{
+        const std::array<uint8_t, 31> MiddleTriangle = {{
             137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147,
             126, 123, 121, 118, 115, 112, 110, 94,
             95, 96, 97, 98,
@@ -216,8 +218,8 @@ namespace DeadlineTrophy {
             SEGMENT.setPixelColorXY(0, 0, color);
         }
 
-        inline void setBaseHSV(size_t x, size_t y, CHSV color) { setBase(x, y, uint32_t(CRGB(color))); }
-        inline void setLogoHSV(size_t x, size_t y, CHSV color) { setLogo(x, y, uint32_t(CRGB(color))); }
+        inline void setBase(size_t x, size_t y, CHSV color) { setBase(x, y, uint32_t(CRGB(color))); }
+        inline void setLogo(size_t x, size_t y, CHSV color) { setLogo(x, y, uint32_t(CRGB(color))); }
 
         inline float secondNow() {
             return static_cast<float>(strip.now) * 1e-3;

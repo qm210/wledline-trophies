@@ -13,6 +13,8 @@ extern uint16_t mode_static(void);
 // wled_math.cpp
 // util.cpp
 // -- you can also reinvent the wheel.
+// I have never tested how efficient we really _HAVE_ to be,
+// thus all the helper functions. ..qm
 //////////////////////////////////////////////////////////
 //
 // Notes:
@@ -34,9 +36,20 @@ uint16_t mode_DeadlineTrophy(void) {
     float time = secondNow();
 
     if (SEGENV.call == 0) {
-        // sanity check
         // DEBUG_PRINTF("[DEADLINE_TROPHY] FX was called, now initialized for segment %d (%s) :)\n", strip.getCurrSegmentId(), SEGMENT.name);
         SEGMENT.fill(BLACK);
+        // we use SEGENV.aux0 as a internal store for the random-flashes, but for no particular reason - stop me if you care
+        SEGMENT.aux0 = 0;
+    }
+
+    // Idea is, that every 4 beats random numbers are drawn, then maybe some flashing effect shown.
+    // (this demonstrates random numbers and how to use the palette).
+    static float randomTakenAtBeat = 0.;
+    CRGBW lastRandomColor;
+    if (beat > randomTakenAtBeat + 4.) {
+        SEGMENT.aux0 = hw_random8();
+        randomTakenAtBeat = floor_t(beat);
+        lastRandomColor = ColorFromPalette(SEGPALETTE, hw_random8(), 255, LINEARBLEND_NOWRAP);
     }
 
     // just example for using measureMicros(), it's the same function for start and end.
@@ -50,7 +63,7 @@ uint16_t mode_DeadlineTrophy(void) {
         // this is useful to get a point in there:
         auto center = Vec2::fromParameters(SEGMENT.custom1, SEGMENT.custom2);
         // custom3 is only 5bit (0..31)
-        float w = exp2f((static_cast<float>(SEGMENT.custom3) - 24.) / 8.);
+        float w = exp2f((static_cast<float>(SEGMENT.custom3) - 16.) / 8.);
 
         EVERY_NTH_CALL(2100) {
             DEBUG_PRINTF("[QM_DEBUG_FX] Params %.3f (%.3f %.3f) %.3f / Raw sx=%d ix=%d c1=%d c2=%d c3=%d\n",
@@ -64,9 +77,17 @@ uint16_t mode_DeadlineTrophy(void) {
             d *= d;
             d = 0.02 / d;
 
-            // nach Polarwinkel unterdrücken
+            // nach Polarwinkel unterdrücken...
             float theta = coord.uv.polarAngleFrom({0, 0}, 0.25 * beat * M_TWOPI);
-            d *= exp(-(theta));
+            // aber reicht alle 8 Takte mal.
+            float every8Beats = fmodf(beat, 8.) / 8.;
+            float gaussCurveExponent = (every8Beats - 6.) / 1.5;
+            float swirlIntensity = exp(-gaussCurveExponent*gaussCurveExponent);
+            d *= exp(-theta * swirlIntensity);
+
+            color.hue = color_.hue;
+            color.sat = color_.sat;
+            color.val = static_cast<uint8_t>(255. * clip(d));
 
             // EVERY_NTH_CALL(990) {
             //     if (abs(coord.uv.y) < 0.05) {
@@ -75,20 +96,6 @@ uint16_t mode_DeadlineTrophy(void) {
             //         );
             //     }
             // }
-
-            // NOTE: as this is a loop, we need to set color.hue, color.sat, color.val as absolute at first,
-            //       from then on, relative changes are ok, but otherwise we mix different pixels: seldom useful.
-            color.hue = color_.hue;
-            color.sat = color_.sat;
-            color.val = static_cast<uint8_t>(255. * clip(d));
-
-            // pinwheel color hue
-
-            /*
-            color.hue = color_.hue - 90. * (1. - intensity);
-            color.sat = color_.sat;
-            color.val = static_cast<uint8_t>(255.f * intensity);
-            */
 
             /*
             float every16Beats = fmodf(beat, 16.) / 16.;
@@ -107,24 +114,42 @@ uint16_t mode_DeadlineTrophy(void) {
             color.hue = mix8(color.hue, 210, d2);
             */
 
+            // as an example of controlling the parameters. draws a gauss curve / circle around teh given point, white.
             uint8_t current_val = color.val;
             uint8_t current_sat = color.sat;
-
-            // and to find the coordinates of the logo corners, one spot
             d = 255. * coord.gaussAt(center, 0.01);
             color.val = max(color.val, static_cast<uint8_t>(d));
             color.sat = min(color.sat, static_cast<uint8_t>(255. - d));
 
-            setLogoHSV(coord.x, coord.y, color);
+            EVERY_NTH_CALL(831) {
+                DEBUG_PRINTF("[QM_DEBUG_LOGO] %0.3f %0.3f vs %.3f %.3f: d=%.4f made S go %d->%d and V %d->%d\n",
+                    coord.x, coord.y, center.x, center.y, d, current_sat, color.sat, current_val, color.val
+                );
+            }
+
+            setLogo(coord.x, coord.y, color);
         }
 
-        // Example of using the area (arrays of pixel indices) in the Logo namespace:
+        // Example of using one of the Logo::... areas (array of pixel indices)
+        /*
         auto area = Logo::InnerTriangle;
         for (int i = 0; i < area.size(); i++) {
             auto coord = Logo::coord(area[i]);
             // could also use coord.uv for some calculation, of course.
-            setLogo(coord.x, coord.y, 0xF069FF);
+            setLogo(coord.x, coord.y, CRGB(150, 250, 50));
         }
+        */
+
+        // now the reacting to the random draws from above
+        if (SEGMENT.aux0 > 120) {
+        float lastExpPeakAt = fractBeat < 0.125 ? 0. : 0.125;
+        float exponent = fractBeat < 0.125 ? 5. : 1.4;
+        /*
+        float randomFlashIntensity = // supposed to be two exp-decay directly after each other
+            exp(-exponent * (fractBeat-lastExpPeakat) * static_cast<float>(fractbeat >= lastExpPeakAt));
+        */
+        }
+
 
         EVERY_NTH_CALL(1111) {
             DEBUG_PRINTF("[QM_DEBUG_FX] Logo took %ld µs to compute.\n", measureMicros());
@@ -142,76 +167,48 @@ uint16_t mode_DeadlineTrophy(void) {
         for (const auto& coord : baseCoordinates()) {
             FloatRgb col0 = cosinePalette(
                 0.2 * time,
-                {0.402,	0.877, 0.265},
-                {0.566, -0.261, 0.782},
-                {0.127,  0.992, 0.018},
-                {0.014,  0.144, 0.990}
+                {0.29, 0.22, 0.5},
+                {0.43, 0.74, 0.74},
+                {1.3, 0.7, 1.2},
+                {0.85, 0.14, 0.83}
             );
-            // read the "uvS" coordinate as == 0 in the middle of every side, becoming (-)0.5 towards the corners
-            float uvS = min(abs(coord.uv.x), abs(coord.uv.y));
-            float d = 1. - cos_t(M_PI * (uvS - 0.16 * time))
-                * (1. - cos_t(M_PI * (3. * uvS - 0.74 * time)));
-            // col.r = scale8(col.r, col.g); // <-- not required now that we have the FloatRgb helper
-            col0.scale(0.1 / d);
-            col0.grade(1.8);
-            col0.r = col0.r * col0.g;
-            float cornerShape = 1. - cos_t(M_PI * uvS);
-            col0.scale(cornerShape);
-
+            FloatRgb col1 = col0;
+            // read the "uvS" coordinate as s == 0 in the middle of every side, becoming (-)0.5 towards the corners
+            float uvs = min(abs(coord.uv.x), abs(coord.uv.y));
+            /*
+            my shader was:
+            float uvm = min(abs(uv.x), abs(uv.y));
+            col *= (1. - cos(pi * 5. * uvm)) * (0.6 + 0.4 * sin(0.2*iTime));
+            col = pow(col, vec3(0.8));
+            col *= (1. - cos(pi * uvm));
+            */
+            float d = (1. - cos_t(M_PI * 5. * uvs)) * (0.6 + 0.4 * sin_t(M_TWOPI * 0.125 * beat));
+            col0.scale(d); // maybe d*d?
+            col0.grade(0.8);
+            float focusCorners = 1. - 0.8 * cos(M_PI * uvs);
+            col0.scale(focusCorners);
 
             EVERY_NTH_CALL(431) {
-                DEBUG_PRINTF("[QM_DEBUG_BASE] %d @ %.3f, %.3f - and for fun: %d & %d\n",
-                    coord.index, coord.uv.x, coord.uv.y,
-                uint32_t(CRGB(150, 250, 50)), 0xF0F8FF);
-            }
-    /*
-    // my shadercode
-    col = ourpalette(0.2*iTime);
-
-    float uvm = min(abs(uv.x), abs(uv.y));
-    col *= 1. - cos(pi * (uvm - 0.16 * iTime)) * (1. - cos(pi * (3. * uvm - 0.74 * iTime)));
-    col = 0.1 / col;
-
-    col = pow(col, vec3(1.8));
-    col.r *= col.g;
-
-    // dim midpoints of each edge
-    col *= (1. - cos(pi * uvm));
-    */
-    /*
-
-            // then some slight bpm-dancing
-            // color.hue = static_cast<uint8_t>(hue - 30. * fractBeat);
-
-            // some wandering light with the bpm
-            int wanderIndex = wholeBeat % 16;
-            bool skipPixel = coord.indexInSide() != wanderIndex;
-            if (skipPixel) {
-                continue;
+                DEBUG_PRINTF("[QM_DEBUG_BASE] %d @ %.3f, %.3f => uvS=%.3f - t=%.3f; col1 (%.2f/%.2f/%.2f), d=%.4f, corner=%.3f - col0 (%.2f/%.2f/%.2f)\n",
+                    coord.index, coord.uv.x, coord.uv.y, uvs, beat, col1.r, col1.g, col1.b, d, focusCorners, col0.r, col0.g, col0.b
+                );
             }
 
-            // take a color from a palette
-            color = rgb2hsv_approximate(paletteRGB(
-                0.2 * time - 0.25 * static_cast<float>(coord.indexInSide()),
-                0.5, 0.5, 0.5,
-                0.5, 0.5, 0.5,
-                2.0, 1.0, 0.0,
-                0.5, 0.2, 0.25
-            ));
-            color.val = 255;
-
+            // now add a rotating line, showing the use of SDF geometry
             phi = 0.25 * beat * omega;
             Vec2 end{1, 1};
             end.rotate(phi);
-            float d = coord.sdLine(-end, end);
+            d = coord.sdLine(-end, end);
             d = exp(-2.5*d);
+
+            color = col0.toCHSV();
             color.sat = mix8(255, 20, d);
-*/
-            setBase(coord.x, coord.y, uint32_t(col0));
+            color.val = max(color.val, static_cast<uint8_t>(255.*d));
+            setBase(coord.x, coord.y, color);
         }
 
         EVERY_NTH_CALL(1111) {
-            DEBUG_PRINTF("[QM_DEBUG_FX] Base took %d µs to compute.\n", measureMicros());
+            DEBUG_PRINTF("[QM_DEBUG_FX] Base took %ld µs to compute.\n", measureMicros());
         }
     }
 

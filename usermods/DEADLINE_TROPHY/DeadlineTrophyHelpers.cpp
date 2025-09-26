@@ -20,7 +20,7 @@ namespace DeadlineTrophy {
             float r = offset.r + scale.r * cos_t(M_TWOPI * (frequency.r * t + phase.r));
             float g = offset.g + scale.g * cos_t(M_TWOPI * (frequency.g * t + phase.g));
             float b = offset.b + scale.b * cos_t(M_TWOPI * (frequency.b * t + phase.b));
-            return {r, g, b};
+            return {clip(r), clip(g), clip(b)};
         }
 
         float invSqrt(float x) {
