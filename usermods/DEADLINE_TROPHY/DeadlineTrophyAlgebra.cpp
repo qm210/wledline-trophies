@@ -137,4 +137,5 @@ namespace DeadlineTrophy {
         b = b <= 0. ? 0. : exp(exponent * logf(b));
         return *this;
     }
+
 }

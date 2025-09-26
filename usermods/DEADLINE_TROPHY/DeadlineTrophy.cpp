@@ -152,7 +152,6 @@ namespace DeadlineTrophy {
         }
         for (uint8_t i = 0; i < N_LEDS_LOGO; i++) {
             logoCoordinates_[i].uv.shift(x0, y0);
-            DEBUG_PRINTF("LOGO COORD,%d, %d, %.4f, %.4f\n", i, i + 64, logoCoordinates_[i].uv.x, logoCoordinates_[i].uv.y);
         }
         logoInitialized = true;
         return logoCoordinates_;

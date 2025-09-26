@@ -1,6 +1,7 @@
 #pragma once
 
 #include "wled.h"
+#include "DeadlineTrophyAlgebra.h"
 
 const int PIN_LOGO_DATA = 21;
 const int PIN_LOGO_CLOCK = 3;
@@ -66,56 +67,6 @@ namespace DeadlineTrophy {
         33, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, 14, __, __, __, __, __, __, __, __,
         32, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, 15, __, __, __, __, __, __, __, __,
         __, 31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, __, __, __, __, __, __, __, __, __,
-    };
-
-    struct Vec2 {
-        float x;
-        float y;
-
-        Vec2 operator-(const Vec2& other) const;
-        Vec2 operator+(const Vec2& other) const;
-        Vec2 operator*(float factor) const;
-        Vec2 operator-() const;
-        static float dot(const Vec2& a, const Vec2 b);
-        float length() const;
-        Vec2& shift(float dx, float dy);
-        Vec2& rotate(float phi);
-        Vec2& scale(float factorX, float factorY);
-        float distance(const Vec2& other) const;
-        float polarAngleFrom(const Vec2& center, float offsetAngle) const;
-        static Vec2 fromParameters(uint8_t x, uint8_t y);
-    };
-
-    struct FloatRgb {
-        float r;
-        float g;
-        float b;
-
-        FloatRgb& scale(float factor);
-        FloatRgb& grade(float exponent);
-        static FloatRgb fromCRGB(const CRGB& color);
-        CRGB toCRGB() const;
-        CHSV toCHSV() const;
-        operator uint32_t() const;
-    };
-
-    struct Coord {
-        // indices for matrix
-        uint8_t x;
-        uint8_t y;
-        // normalized coordinates
-        Vec2 uv;
-        // for reference, pixel index within its segment
-        int index;
-
-        float sdLine(float x1, float y1, float x2, float y2) const;
-        float sdLine(Vec2 p1, Vec2 p2) const;
-        float gaussAt(Vec2 p, float width = 0.1, float circleRadius = 0.) const;
-
-        // helpers for the base (don't make any sense for the Logo)
-        // side 0=right, 1=front, 2=left, 3=back
-        inline int indexOfSide() const { return index / 16; }
-        inline int indexInSide() const { return index % 16; }
     };
 
     std::array<Coord, N_LEDS_LOGO>& logoCoordinates();
@@ -241,11 +192,25 @@ namespace DeadlineTrophy {
         FloatRgb cosinePalette(float t, FloatRgb, FloatRgb, FloatRgb, FloatRgb);
         float invSqrt(float value);
         uint8_t mix8(uint8_t a, uint8_t b, float t);
+        uint32_t mixRgb(uint32_t c1, uint32_t c2, float t);
         uint8_t pow8(uint8_t base, float exponent);
         uint8_t scale8f(uint8_t val, float factor);
         CRGB& scale(CRGB& color, float factor);
         CRGB& grade(CRGB& color, float exponent);
         long measureMicros();
+
+        template <size_t N>
+        void fillLogoArray(const std::array<uint8_t, N>& pixels, uint32_t color, float mixing = 1.)
+        {
+            for (int i = 0; i < pixels.size(); i++) {
+                auto coord = Logo::coord(pixels[i]);
+                if (mixing != 1.) {
+                    uint32_t current = SEGMENT.getPixelColorXY(coord.x, coord.y);
+                    color = mixRgb(current, color, mixing);
+                }
+                setLogo(coord.x, coord.y, color);
+            }
+        }
 
     }
 

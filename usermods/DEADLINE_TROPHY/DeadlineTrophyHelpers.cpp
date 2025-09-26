@@ -41,6 +41,14 @@ namespace DeadlineTrophy {
             return a + static_cast<uint8_t>(static_cast<float>(b - a) * t);
         }
 
+        uint32_t mixRgb(uint32_t color1, uint32_t color2, float t) {
+            // yes, RGB mixing is ugly, but that's the easiest to get right here
+            uint8_t r = mix8(R(color1), R(color2), t);
+            uint8_t g = mix8(G(color1), G(color2), t);
+            uint8_t b = mix8(B(color1), B(color2), t);
+            return (r << 16) | (g << 8) | b;
+        }
+
         uint8_t pow8(uint8_t base, float exponent) {
             if (base == 0) {
                 return 0;
