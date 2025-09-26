@@ -152,6 +152,7 @@ namespace DeadlineTrophy {
         }
         for (uint8_t i = 0; i < N_LEDS_LOGO; i++) {
             logoCoordinates_[i].uv.shift(x0, y0);
+            DEBUG_PRINTF("LOGO COORD,%d, %d, %.4f, %.4f\n", i, i + 64, logoCoordinates_[i].uv.x, logoCoordinates_[i].uv.y);
         }
         logoInitialized = true;
         return logoCoordinates_;
@@ -180,52 +181,6 @@ namespace DeadlineTrophy {
         }
         baseInitialized = true;
         return baseCoordinates_;
-    }
-
-    namespace FxHelpers {
-
-        uint32_t floatHSV(float hue, float sat, float val) {
-            // parameters in [0, 255] but as float
-            uint32_t color = uint32_t(CRGB(CHSV(
-                static_cast<uint8_t>(hue),
-                static_cast<uint8_t>(sat),
-                static_cast<uint8_t>(val)
-            )));
-            // remove the specific "white" that might be in the color (or shouldn't we?)
-            return color & 0x00FFFFFF;
-        }
-
-        CRGB paletteRGB(float t, float aR, float aG, float aB, float bR, float bG, float bB, float cR, float cG, float cB, float dR, float dG, float dB) {
-            // useful tool right here: https://dev.thi.ng/gradients/
-            float r = aR + bR * cos_t(M_TWOPI * (cR * t + dR));
-            float g = aG + bG * cos_t(M_TWOPI * (cG * t + dG));
-            float b = aB + bB * cos_t(M_TWOPI * (cB * t + dB));
-            return CRGB(
-                static_cast<uint8_t>(255. * r),
-                static_cast<uint8_t>(255. * g),
-                static_cast<uint8_t>(255. * b)
-            );
-        }
-
-        uint8_t mix8(uint8_t a, uint8_t b, float t) {
-            // do not constrain on purpose, as it might be wasteful
-            return a + static_cast<uint8_t>(static_cast<float>(b - a) * t);
-        }
-
-        float invSqrt(float x) {
-            // the Quake III Arena implementation, to compare against direct sqrtf() and/or sqrt32_bw() with casting
-            uint32_t i;
-            float x2, y;
-            const float threehalfs = 1.5F;
-            x2 = x * 0.5F;
-            y = x;
-            memcpy(&i, &y, sizeof(float)); // i = *(long*)&y;
-            i = 0x5f3759df - (i >> 1);
-            memcpy(&y, &i, sizeof(uint32_t)); // y = *(float*)&i;
-            y = y * (threehalfs - (x2 * y * y));
-            return y;
-        }
-
     }
 
 }

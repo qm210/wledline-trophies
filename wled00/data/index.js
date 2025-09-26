@@ -1544,8 +1544,8 @@ function readState(s,command=false)
     if (s.DL && dlBriLabel) {
         dlBriLabel.classList.toggle("xBri", s.DL.xBri);
         dlBriLabel.classList.toggle("xVid", s.DL.xVid);
-        dlBriLabel.textContent = !s.DL.xBri ? "(ignored in packets)"
-            : ("\u2013 scales packets " + (s.DL.xVid ? "(V mode)" : ""));
+        dlBriLabel.textContent = !s.DL.xBri ? "(ignored for UDP)"
+            : ("" + (s.DL.xVid ? "(scales in V mode)" : ""));
     }
 
 	if (s.seg.length>2) d.querySelectorAll(".pop").forEach((e)=>{e.classList.remove("hide");});

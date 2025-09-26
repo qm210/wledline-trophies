@@ -100,9 +100,9 @@
 #define WLED_DEBUG_NO_JSON_LOCKS
 #endif
 
-#ifndef WLED_DEBUG_NO_SLOW_WARNINGS
-#define WLED_DEBUG_NO_SLOW_WARNINGS
-#endif
+// #ifndef WLED_DEBUG_NO_SLOW_WARNINGS
+// #define WLED_DEBUG_NO_SLOW_WARNINGS
+// #endif
 
 // these are just annoying during development, and unused in the trophy anyway.
 #ifdef WLED_MAX_BUTTONS

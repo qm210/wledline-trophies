@@ -18,6 +18,10 @@ namespace DeadlineTrophy {
         return vec * factor;
     }
 
+    Vec2 Vec2::operator-() const {
+        return {-x, -y};
+    };
+
     float Vec2::dot(const Vec2& a, const Vec2 b) {
         return a.x * b.x + a.y * b.y;
     }
@@ -52,6 +56,12 @@ namespace DeadlineTrophy {
         return (other - (*this)).length();
     }
 
+    float Vec2::polarAngleFrom(const Vec2& center, float offsetAngle) const {
+        // i.e. the angle between (line to center) and (+x axis), counter-clockwise ascending and within [0, 2pi]
+        float theta = atan2f(y - center.y, x - center.x);
+        return fmod_t(theta - offsetAngle + M_TWOPI, M_TWOPI);
+    }
+
     Vec2 Vec2::fromParameters(uint8_t x, uint8_t y) {
         // will then reach from [-0.5, +0.496] on both axes
         const float inv256 = 3.906e-3;
@@ -62,17 +72,18 @@ namespace DeadlineTrophy {
     }
 
     float Coord::sdLine(float x1, float y1, float x2, float y2) const {
-            float px = uv.x - x1;
-            float py = uv.y - y1;
-            float dx = x2 - x1;
-            float dy = y2 - y1;
-            float h = constrain((px*dx + py*dy) / (dx*dx + dy*dy), 0.f, 1.f);
-            float lx = px - dx * h;
-            float ly = py - dy * h;
-            return sqrtf(lx*lx + ly*ly);
+        // QM TO-MAYBE-DO: could maybe remove this since I have the Vec2 version, but maybe check sameness & efficiency first
+        float px = uv.x - x1;
+        float py = uv.y - y1;
+        float dx = x2 - x1;
+        float dy = y2 - y1;
+        float h = constrain((px*dx + py*dy) / (dx*dx + dy*dy), 0.f, 1.f);
+        float lx = px - dx * h;
+        float ly = py - dy * h;
+        return sqrtf(lx*lx + ly*ly);
     }
 
-    float Coord::sdLine(Vec2 p1, Vec2 p2) const { // QM TOMAYBEDO: for now, implement both, but check the footprint later
+    float Coord::sdLine(Vec2 p1, Vec2 p2) const {
         Vec2 p = uv - p1;
         Vec2 d = p2 - p1;
         float h = constrain(Vec2::dot(p,d) / Vec2::dot(d,d), 0.f, 1.f);
@@ -80,4 +91,37 @@ namespace DeadlineTrophy {
         return l.length();
     }
 
+    float Coord::gaussAt(Vec2 center, float width, float circleRadius) const {
+        float expo = ((uv - center).length() - circleRadius) / width;
+        return exp(-expo*expo);
+    }
+
+    FloatRgb FloatRgb::fromCRGB(const CRGB& color) {
+        return {
+            255.f * static_cast<float>(color.r),
+            255.f * static_cast<float>(color.g),
+            255.f * static_cast<float>(color.b),
+        };
+    }
+
+    FloatRgb::operator uint32_t() const {
+        uint8_t R = static_cast<uint8_t>(r);
+        uint8_t G = static_cast<uint8_t>(g);
+        uint8_t B = static_cast<uint8_t>(b);
+        return (R << 16) | (G << 8) | B;
+    }
+
+    FloatRgb& FloatRgb::scale(float factor) {
+        r *= factor;
+        g *= factor;
+        b *= factor;
+        return *this;
+    }
+
+    FloatRgb& FloatRgb::grade(float exponent) {
+        r = exp(exponent * logf(r));
+        g = exp(exponent * logf(g));
+        b = exp(exponent * logf(b));
+        return *this;
+    }
 }

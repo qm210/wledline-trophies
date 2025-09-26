@@ -75,14 +75,26 @@ namespace DeadlineTrophy {
         Vec2 operator-(const Vec2& other) const;
         Vec2 operator+(const Vec2& other) const;
         Vec2 operator*(float factor) const;
+        Vec2 operator-() const;
         static float dot(const Vec2& a, const Vec2 b);
         float length() const;
         Vec2& shift(float dx, float dy);
         Vec2& rotate(float phi);
         Vec2& scale(float factorX, float factorY);
         float distance(const Vec2& other) const;
-
+        float polarAngleFrom(const Vec2& center, float offsetAngle) const;
         static Vec2 fromParameters(uint8_t x, uint8_t y);
+    };
+
+    struct FloatRgb {
+        float r;
+        float g;
+        float b;
+
+        FloatRgb& scale(float factor);
+        FloatRgb& grade(float exponent);
+        static FloatRgb fromCRGB(const CRGB& color);
+        operator uint32_t () const;
     };
 
     struct Coord {
@@ -96,6 +108,7 @@ namespace DeadlineTrophy {
 
         float sdLine(float x1, float y1, float x2, float y2) const;
         float sdLine(Vec2 p1, Vec2 p2) const;
+        float gaussAt(Vec2 p, float width = 0.05, float circleRadius = 0.) const;
 
         // helpers for the base (don't make any sense for the Logo)
         // side 0=right, 1=front, 2=left, 3=back
@@ -105,6 +118,73 @@ namespace DeadlineTrophy {
 
     std::array<Coord, N_LEDS_LOGO>& logoCoordinates();
     std::array<Coord, N_LEDS_BASE>& baseCoordinates();
+
+    namespace Logo {
+
+        inline Coord coord(uint8_t index) {
+            return logoCoordinates()[index - N_LEDS_BASE];
+        }
+
+        // some pre-figured-out areas in the Logo for easier iteration
+        const std::array<uint8_t, 53> Contour = {{
+            169, 168, 167, 166, 165, 164, 163, 162, 161, 160,
+            158, 157, 156, 155, 154, 153, 152, 151, 150, 149, 148, 125, 124, 120,
+            119, 114, 113, 109, 88, 89, 90, 91,
+            108, 107, 106, 105, 104, 103, 102, 101,100,
+            99, 82, 81, 76, 75, 70, 69, 64, 136, 137,
+            159,
+        }};
+        const std::array<uint8_t, 23> InnerTriangle = {{
+            134, 133, 132, 131, 130, 129, 128, 127,
+            122, 117, 116, 111,
+            86, 85, 84, 79, 78, 73, 72, 67, 66
+        }};
+        const std::array<uint8_t, 29> MiddleTriangle = {{
+            137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147,
+            126, 123, 121, 118, 115, 112, 110, 94,
+            95, 96, 97, 98,
+            83, 80, 77, 74, 71, 68, 65, 135
+        }};
+        const std::array<uint8_t, 36> OuterTriangle = {{
+            159, 158, 157, 156, 155, 154, 153, 152, 151, 150, 149,
+            148, 125, 124, 120,
+            119, 114, 113, 109, 88, 94,
+            104, 103, 102, 101, 100,
+            99, 82, 81, 76, 75, 70, 69, 64, 136, 137
+        }};
+        const std::array<uint8_t, 10> LeftmostLine = {{
+            160, 161, 162, 163, 164, 165, 166, 167, 168, 169
+        }};
+        const std::array<uint8_t, 35> LeftBar = {{
+            159, 158, 157,
+            156, 155, 154, 153, 152, 151, 150, 149,
+            137, 138, 139,
+            140, 141, 142, 143, 144, 145, 146, 147, 148,
+            136, 135, 134,
+            133, 132, 131, 130, 129, 128, 127, 126
+        }};
+        const std::array<uint8_t, 35> UpperLeftBar = {{
+            159 ,158, 157,
+            156, 155, 154, 153, 152, 151, 150, 149,
+            140, 141, 142, 143, 144, 145, 146, 147, 148,
+            133, 132, 131, 130, 129, 128, 127, 126
+        }};
+        const std::array<uint8_t, 36> BottomBar = {{
+            137, 136, 64, 69, 79, 70, 75, 76, 81, 82, 99, 100,
+            159, 138, 135, 65, 68, 71, 74, 77, 80, 83, 98, 101,
+            158, 139, 134, 66, 67, 72, 73, 78, 79, 84, 97, 102
+        }};
+        const std::array<uint8_t, 17> UpperRightBar = {{
+            111, 116, 117, 122, 123, 125,
+            110, 112, 115, 118, 121, 124,
+            109, 113, 114, 119, 120
+        }};
+        const std::array<uint8_t, 27> RightmostBar = {{
+            85, 86, 87, 88, 89, 90,
+            96, 95, 94, 93, 92, 91,
+            103, 104, 105, 106, 107, 108
+        }};
+    }
 
     namespace FxHelpers {
 
@@ -151,61 +231,20 @@ namespace DeadlineTrophy {
             return constrain(x, 0., 1.);
         }
 
+        inline float step(float x) {
+            return x < 0 ? 0.f : 1.f;
+        }
+
         uint32_t floatHSV(float hue, float sat, float val);
-
-        CRGB paletteRGB(float t,
-            float aR, float aG, float aB, float bR, float bG, float bB,
-            float cR, float cG, float cB, float dR, float dG, float dB
-        ); // <-- usually given as four vec3, but we don't have these yet
-
+        FloatRgb cosinePalette(float t, FloatRgb, FloatRgb, FloatRgb, FloatRgb);
+        float invSqrt(float value);
         uint8_t mix8(uint8_t a, uint8_t b, float t);
+        uint8_t pow8(uint8_t base, float exponent);
+        uint8_t scale8f(uint8_t val, float factor);
+        CRGB& scale(CRGB& color, float factor);
+        CRGB& grade(CRGB& color, float exponent);
+        long measureMicros();
 
-        float invSqrt(float x);
-    }
-
-    namespace LogoBars {
-
-        // helpers for larger bars of the logo
-        const size_t nOuterLeft = 10;
-        const size_t nLeft = 35;
-        const size_t nBottom = 36;
-        const size_t nUpperRight = 17;
-        const size_t nOuterRight = 27;
-
-        // the bars in the Logo
-        const int OuterLeft[nOuterLeft] = {
-            161, 162, 163, 164, 165, 166, 167, 168, 169,
-            160
-        };
-        const int Left[nLeft] = {
-            156, 155, 154, 153, 152, 151, 150, 149,
-            140, 141, 142, 143, 144, 145, 146, 147, 148,
-            133, 132, 131, 130, 129, 128, 127, 126
-        };
-        const int Bottom[nBottom] = {
-            137, 136, 64, 69, 79, 70, 75, 76, 81, 82, 99, 100,
-            159, 138, 135, 65, 68, 71, 74, 77, 80, 83, 98, 101,
-            158, 139, 134, 66, 67, 72, 73, 78, 79, 84, 97, 102
-        };
-        const int UpperRight[nUpperRight] = {
-            111, 116, 117, 122, 123, 125,
-            110, 112, 115, 118, 121, 124,
-            109, 113, 114, 119, 120
-        };
-        const int OuterRight[nOuterRight] = {
-            85, 86, 87, 88, 89, 90,
-            96, 95, 94, 93, 92, 91,
-            103, 104, 105, 106, 107, 108
-        };
-
-        const size_t nBars = 5;
-        const int nInBar[] = {
-            nOuterLeft,
-            nLeft,
-            nBottom,
-            nUpperRight,
-            nOuterRight
-        };
     }
 
 }
@@ -215,4 +254,4 @@ namespace DeadlineTrophy {
 #define IS_BACK_LED     (strip.getCurrSegmentId() == 2)
 #define IS_FLOOR_LED    (strip.getCurrSegmentId() == 3)
 
-#define EVERY_NTH_STEP(x) if (SEGENV.call % x == 0)
+#define EVERY_NTH_CALL(x) if (SEGENV.call % x == 0)
