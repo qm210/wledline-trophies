@@ -193,7 +193,7 @@ bool DeadlineUsermod::parseNotifyPacket(const uint8_t *udpIn) {
     }
 
     if (doReset) {
-        strip.resetTimebase(); // <-- QM: do I need that? got it from led.cpp stateUpdated()
+        strip.resetTimebase();
         strip.restartRuntime();
     }
 

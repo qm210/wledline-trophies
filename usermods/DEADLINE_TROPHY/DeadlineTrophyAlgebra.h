@@ -6,10 +6,13 @@ namespace DeadlineTrophy {
         float x;
         float y;
 
-        Vec2 operator-(const Vec2& other) const;
         Vec2 operator+(const Vec2& other) const;
-        Vec2 operator*(float factor) const;
+        Vec2& operator+=(const Vec2& other);
+        Vec2& operator-=(const Vec2& other);
+        Vec2 operator-(const Vec2& other) const;
         Vec2 operator-() const;
+        template <typename T> Vec2 operator*(T factor) const;
+        template <typename T> Vec2& operator*=(T factor);
         static float dot(const Vec2& a, const Vec2 b);
         float length() const;
         Vec2& shift(float dx, float dy);
@@ -19,6 +22,10 @@ namespace DeadlineTrophy {
         float polarAngleFrom(const Vec2& center, float offsetAngle) const;
         static Vec2 fromParameters(uint8_t x, uint8_t y);
     };
+
+    template <typename T> Vec2 operator*(T factor, const Vec2& vec) {
+        return vec * factor;
+    }
 
     struct FloatRgb {
         float r;

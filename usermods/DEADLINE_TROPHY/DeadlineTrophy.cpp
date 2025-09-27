@@ -89,10 +89,6 @@ namespace DeadlineTrophy {
             briS = 96;
             turnOnAtBoot = true;
         #endif
-
-        transitionDelayDefault = 100;
-        transitionDelay = transitionDelayDefault;
-        blendingStyle = 0;
     }
 
     const char* segmentName[] = {
@@ -134,7 +130,7 @@ namespace DeadlineTrophy {
             if (ledIndex > N_LEDS_TOTAL) {
                 continue;
             }
-            logoCoordinates_[ledIndexInLogo] = {
+            Coord coord = {
                 x,
                 y,
                 {
@@ -143,16 +139,18 @@ namespace DeadlineTrophy {
                 },
                 ledIndexInLogo
             };
+            logoCoordinates_[ledIndexInLogo] = coord;
             if (ledIndex == ledWithCenterX) {
-                x0 = -logoCoordinates_[ledIndexInLogo].uv.x;
+                x0 = -coord.uv.x;
             }
             if (ledIndex == ledWithCenterY) {
-                y0 = -logoCoordinates_[ledIndexInLogo].uv.y;
+                y0 = -coord.uv.y;
             }
         }
         for (uint8_t i = 0; i < N_LEDS_LOGO; i++) {
             logoCoordinates_[i].uv.shift(x0, y0);
         }
+        Logo::initConstants(logoCoordinates_, ds);
         logoInitialized = true;
         return logoCoordinates_;
     }
@@ -182,4 +180,25 @@ namespace DeadlineTrophy {
         return baseCoordinates_;
     }
 
+    namespace Logo {
+        float stepSize = 0.;
+        Vec2 tiltLeft{};
+        Vec2 tiltRight{};
+
+        void initConstants(const std::array<Coord, N_LEDS_LOGO>& coords, float yStepSize) {
+            // will be called by the logoCoordinates() initialization
+            // -> i.e. cannot use before the first logoCoordinates() call, but that should do it
+            stepSize = yStepSize;
+
+            const uint8_t ledForRightTiltBottom = 160 - N_LEDS_BASE;
+            const uint8_t ledForRightTiltTop = 169 - N_LEDS_BASE;
+            const uint8_t ledForLeftTiltBottom = 104 - N_LEDS_BASE;
+            const uint8_t ledForLeftTiltTop = 120 - N_LEDS_BASE;
+            tiltLeft = coords[ledForLeftTiltTop].uv - coords[ledForLeftTiltBottom].uv;
+            tiltLeft *= stepSize / tiltLeft.y;
+            tiltRight = coords[ledForRightTiltTop].uv - coords[ledForRightTiltBottom].uv;
+            tiltRight *= stepSize / tiltRight.y;
+        }
+
+    }
 }

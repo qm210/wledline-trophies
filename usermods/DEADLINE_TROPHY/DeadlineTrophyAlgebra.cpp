@@ -2,25 +2,44 @@
 
 namespace DeadlineTrophy {
 
-    Vec2 Vec2::operator-(const Vec2& other) const {
-        return {x - other.x, y - other.y};
-    }
-
     Vec2 Vec2::operator+(const Vec2& other) const {
         return {x + other.x, y + other.y};
     }
 
-    Vec2 Vec2::operator*(float factor) const {
-        return {factor * x, factor * y};
+    Vec2& Vec2::operator+=(const Vec2& other) {
+        *this = *this + other;
+        return *this;
     }
 
-    Vec2 operator*(float factor, const Vec2& vec) {
-        return vec * factor;
+    Vec2 Vec2::operator-(const Vec2& other) const {
+        return {x - other.x, y - other.y};
+    }
+
+    Vec2& Vec2::operator-=(const Vec2& other) {
+        *this = *this - other;
+        return *this;
     }
 
     Vec2 Vec2::operator-() const {
         return {-x, -y};
     };
+
+    template <typename T>
+    Vec2 Vec2::operator*(T factor) const {
+        return {static_cast<float>(factor) * x, static_cast<float>(factor) * y};
+    }
+    template Vec2 Vec2::operator*<float>(float) const;
+    template Vec2 Vec2::operator*<double>(double) const;
+    template Vec2 Vec2::operator*<int>(int) const;
+
+    template <typename T>
+    Vec2& Vec2::operator*=(T factor) {
+        *this = *this * factor;
+        return *this;
+    }
+    template Vec2& Vec2::operator*=<float>(float);
+    template Vec2& Vec2::operator*=<double>(double);
+    template Vec2& Vec2::operator*=<int>(int);
 
     float Vec2::dot(const Vec2& a, const Vec2 b) {
         return a.x * b.x + a.y * b.y;
@@ -64,10 +83,9 @@ namespace DeadlineTrophy {
 
     Vec2 Vec2::fromParameters(uint8_t x, uint8_t y) {
         // will then reach from [-0.5, +0.496] on both axes
-        const float inv256 = 3.906e-3;
         return {
-            (static_cast<float>(x) - 128.f) * inv256,
-            (static_cast<float>(y) - 128.f) * inv256
+            (static_cast<float>(x) - 128.f) / 128.f,
+            (static_cast<float>(y) - 128.f) / 128.f
         };
     }
 

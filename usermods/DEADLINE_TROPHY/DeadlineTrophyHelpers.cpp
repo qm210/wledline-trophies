@@ -49,6 +49,19 @@ namespace DeadlineTrophy {
             return (r << 16) | (g << 8) | b;
         }
 
+        CHSV mixHsv(CHSV c1, CHSV c2, float t) {
+            float hue1 = static_cast<float>(c1.hue);
+            float hue2 = static_cast<float>(c2.hue);
+            float deltaH = hue2 - hue1;
+            if (deltaH > 128) deltaH -= 256;
+            else if (deltaH < -128) deltaH += 256;
+            return CHSV(
+                static_cast<uint8_t>(hue1 + t * deltaH),
+                mix8(c1.sat, c2.sat, t),
+                mix8(c1.val, c2.val, t)
+            );
+        }
+
         uint8_t pow8(uint8_t base, float exponent) {
             if (base == 0) {
                 return 0;
@@ -84,6 +97,18 @@ namespace DeadlineTrophy {
             }
             t0 = esp_timer_get_time();
             return delta;
+        }
+
+        void fillLogoArray(const uint8_t* pixels, size_t nPixels, uint32_t color, float opacity)
+        {
+            for (int i = 0; i < nPixels; i++) {
+                auto coord = Logo::coord(pixels[i]);
+                if (opacity != 1.) {
+                    uint32_t current = SEGMENT.getPixelColorXY(coord.x, coord.y);
+                    color = mixRgb(current, color, opacity);
+                }
+                setLogo(coord.x, coord.y, color);
+            }
         }
     }
 

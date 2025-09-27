@@ -69,8 +69,8 @@ namespace DeadlineTrophy {
         __, 31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, __, __, __, __, __, __, __, __, __,
     };
 
-    std::array<Coord, N_LEDS_LOGO>& logoCoordinates();
     std::array<Coord, N_LEDS_BASE>& baseCoordinates();
+    std::array<Coord, N_LEDS_LOGO>& logoCoordinates();
 
     namespace Logo {
 
@@ -137,12 +137,16 @@ namespace DeadlineTrophy {
             96, 95, 94, 93, 92, 91,
             103, 104, 105, 106, 107, 108
         }};
+
+        extern float stepSize;
+        extern Vec2 tiltLeft;
+        extern Vec2 tiltRight;
+        void initConstants(const std::array<Coord, N_LEDS_LOGO>& coords, float yStepSize);
     }
 
     namespace FxHelpers {
 
         inline void setPixel(size_t segmentIndex, int x, int y, uint32_t color) {
-            // QM TO-MAYBE-DO: check whether it is worth removing these sanity checks for speed
             if (strip.getCurrSegmentId() != segmentIndex) {
                 return;
             }
@@ -193,25 +197,13 @@ namespace DeadlineTrophy {
         float invSqrt(float value);
         uint8_t mix8(uint8_t a, uint8_t b, float t);
         uint32_t mixRgb(uint32_t c1, uint32_t c2, float t);
+        CHSV mixHsv(CHSV c1, CHSV c2, float t);
         uint8_t pow8(uint8_t base, float exponent);
         uint8_t scale8f(uint8_t val, float factor);
         CRGB& scale(CRGB& color, float factor);
         CRGB& grade(CRGB& color, float exponent);
         long measureMicros();
-
-        template <size_t N>
-        void fillLogoArray(const std::array<uint8_t, N>& pixels, uint32_t color, float mixing = 1.)
-        {
-            for (int i = 0; i < pixels.size(); i++) {
-                auto coord = Logo::coord(pixels[i]);
-                if (mixing != 1.) {
-                    uint32_t current = SEGMENT.getPixelColorXY(coord.x, coord.y);
-                    color = mixRgb(current, color, mixing);
-                }
-                setLogo(coord.x, coord.y, color);
-            }
-        }
-
+        void fillLogoArray(const uint8_t* pixels, size_t nPixels, uint32_t color, float mixing = 1.);
     }
 
 }
