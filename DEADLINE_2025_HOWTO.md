@@ -71,5 +71,5 @@ Damage to the Trophy hardware can only occur for overly bright LEDs over a perio
 > This part might contain the pre-existing functions / useful tools / good-to-know implementation details
 > to help you make great Trophy FX, but can only do so when we know what you actually need to know.
 >
->  For now, the stuff that is used in the existing `FX_DEADLINE_TROPHY.h` can be considered an okayish starting point. Have fun! ☆( ＾◡＾)っ
+>  For now, the stuff that is used in the existing `FX_DEADLINE_TROPHY.h` can be considered an okayish starting point. Have fun! Ꮷ( ＾◡＾)っ
 

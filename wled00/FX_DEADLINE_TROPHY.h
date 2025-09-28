@@ -93,7 +93,7 @@ uint16_t mode_DeadlineTrophy(void) {
 
             color.hue = static_cast<uint8_t>(hue - 3. * theta);
             color.sat = color_.sat;
-            color.val = static_cast<uint8_t>(100. * clip(d));
+            color.val = static_cast<uint8_t>(50. * clip(d));
 
             // as an example of controlling the parameters. draws a gauss curve / circle around teh given point, white.
             /*
@@ -103,16 +103,16 @@ uint16_t mode_DeadlineTrophy(void) {
             */
 
             // draw one triangle to show usage of left/right tilt vectors
-            CHSV triangleColor = CHSV(230, 200, 100);
-            Vec2 pointForLeft = triangleLeft + 4.f * perlin1D(10. * beat) * Logo::xUnit;
+            CHSV triangleColor = CHSV(230, 200, 170);
+            Vec2 pointForLeft = triangleLeft + 8.f * perlin1D(10. * beat) * Logo::xUnit;
             d = coord.sdLine(pointForLeft - 10. * Logo::tiltRight, pointForLeft + 10. * Logo::tiltRight);
-            color = mixHsv(color, triangleColor, exp(-5. * d));
-            Vec2 pointForRight = triangleRight - 5.f * perlin1D(10. * beat + 4.) * Logo::xUnit;
+            color = mixHsv(color, triangleColor, exp(-6. * d));
+            Vec2 pointForRight = triangleRight - 5.f * perlin1D(10.1 * beat + 4.) * Logo::xUnit;
             d = coord.sdLine(pointForRight - 10. * Logo::tiltLeft, pointForRight + 10. * Logo::tiltLeft);
-            color = mixHsv(color, triangleColor, exp(-3. * d));
-            float bottomLineHeight = triangleLeft.y + Logo::unit * 6.f * perlin1D(12. * beat + 100.);
+            color = mixHsv(color, triangleColor, exp(-5. * d));
+            float bottomLineHeight = triangleLeft.y + Logo::unit * (3.f + 6.f * perlin1D(9. * beat + 100.));
             d = coord.sdLine({-10., bottomLineHeight}, {10., bottomLineHeight});
-            color = mixHsv(color, triangleColor, exp(-4. * d));
+            color = mixHsv(color, triangleColor, exp(-5. * d));
 
             // EVERY_NTH_CALL(210) {
             //     DEBUG_PRINTF("[QM_DEBUG_LOGO] (%.3f, %.3f)->(%.3f, %.3f) (%.3f, %.3f)->(%.3f, %.3f) bottomY=%.3f, d=%.3f\n",
@@ -146,17 +146,21 @@ uint16_t mode_DeadlineTrophy(void) {
         using namespace Logo;
 
         static uint32_t contourColor = uint32_t(CRGB(30, 40, 120));
-        // have some dim background
-        fillLogoArray(Contour.data(), Contour.size(), contourColor, 0.1, SEGMENT.call % 321 == 0);
-        // and one bright wandering point (in counter-contour-direction, as of why not? :D)
         int contourIndex = static_cast<int>(8. * beat) % Contour.size();
+        // some contour frames
+        if (contourIndex == 0) {
+            fillLogoArray(Contour.data(), Contour.size(), contourColor, 0.01);
+        } else if (contourIndex == 1) {
+            fillLogoArray(MiddleTriangle.data(), MiddleTriangle.size(), ORANGE, 0.1);
+        } else if (contourIndex == 2 || contourIndex == 3) {
+            fillLogoArray(InnerTriangle.data(), InnerTriangle.size(), YELLOW, 0.2);
+        }
+        // and one bright wandering point (in counter-contour-direction, as of why not? :D)
         Coord wanderPixel = coord(Contour[Contour.size() - 1 - contourIndex]);
         setLogo(wanderPixel.x, wanderPixel.y, contourColor);
-        // and also make some part blink when near the end of the leftmost bar:
-        if (contourIndex == 2 && SEGMENT.call > 2) {
-            fillLogoArray(MiddleTriangle.data(), MiddleTriangle.size(), ORANGE, 0.6, true);
-        }
-        if (contourIndex == InnerContour.size() - 1) {
+
+        // and change colors when a round is completed
+        if (contourIndex == Contour.size() - 1) {
             contourColor = uint32_t(CRGB(30, 90 + perlin8(SEGMENT.call) % 80, 170));
         }
 
