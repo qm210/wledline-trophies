@@ -104,15 +104,15 @@ uint16_t mode_DeadlineTrophy(void) {
 
             // draw one triangle to show usage of left/right tilt vectors
             CHSV triangleColor = CHSV(230, 200, 170);
-            Vec2 pointForLeft = triangleLeft + 8.f * perlin1D(10. * beat) * Logo::xUnit;
+            Vec2 pointForLeft = triangleLeft + (-8.f + 24.f * perlin1D(10. * beat)) * Logo::xUnit;
             d = coord.sdLine(pointForLeft - 10. * Logo::tiltRight, pointForLeft + 10. * Logo::tiltRight);
             color = mixHsv(color, triangleColor, exp(-6. * d));
-            Vec2 pointForRight = triangleRight - 5.f * perlin1D(10.1 * beat + 4.) * Logo::xUnit;
+            Vec2 pointForRight = triangleRight + (3.f - 7.f * perlin1D(10. * beat + 4.)) * Logo::xUnit;
             d = coord.sdLine(pointForRight - 10. * Logo::tiltLeft, pointForRight + 10. * Logo::tiltLeft);
-            color = mixHsv(color, triangleColor, exp(-5. * d));
-            float bottomLineHeight = triangleLeft.y + Logo::unit * (3.f + 6.f * perlin1D(9. * beat + 100.));
+            color = mixHsv(color, triangleColor, exp(-7. * d));
+            float bottomLineHeight = triangleLeft.y + Logo::unit * (-1.f + 5.f * perlin1D(6. * beat + 100.));
             d = coord.sdLine({-10., bottomLineHeight}, {10., bottomLineHeight});
-            color = mixHsv(color, triangleColor, exp(-5. * d));
+            color = mixHsv(color, triangleColor, exp(-8. * d));
 
             // EVERY_NTH_CALL(210) {
             //     DEBUG_PRINTF("[QM_DEBUG_LOGO] (%.3f, %.3f)->(%.3f, %.3f) (%.3f, %.3f)->(%.3f, %.3f) bottomY=%.3f, d=%.3f\n",
@@ -146,18 +146,26 @@ uint16_t mode_DeadlineTrophy(void) {
         using namespace Logo;
 
         static uint32_t contourColor = uint32_t(CRGB(30, 40, 120));
-        int contourIndex = static_cast<int>(8. * beat) % Contour.size();
+        int contourIndex = static_cast<int>(beat * 8.) % Contour.size();
         // some contour frames
         if (contourIndex == 0) {
             fillLogoArray(Contour.data(), Contour.size(), contourColor, 0.01);
         } else if (contourIndex == 1) {
-            fillLogoArray(MiddleTriangle.data(), MiddleTriangle.size(), ORANGE, 0.1);
-        } else if (contourIndex == 2 || contourIndex == 3) {
-            fillLogoArray(InnerTriangle.data(), InnerTriangle.size(), YELLOW, 0.2);
+            fillLogoArray(MiddleTriangle.data(), MiddleTriangle.size(), YELLOW, 0.003);
+            fillLogoArray(LeftmostBar.data(), LeftmostBar.size(), CYAN, 0.004);
+        } else if (contourIndex == 2) {
+            fillLogoArray(InnerTriangle.data(), InnerTriangle.size(), WHITE, 0.01);
+            fillLogoArray(OuterTriangle.data(), OuterTriangle.size(), CYAN, 0.004);
         }
-        // and one bright wandering point (in counter-contour-direction, as of why not? :D)
-        Coord wanderPixel = coord(Contour[Contour.size() - 1 - contourIndex]);
-        setLogo(wanderPixel.x, wanderPixel.y, contourColor);
+        // did have one bright wandering point but it was too ugly
+        // Coord wanderPixel = coord(Contour[Contour.size() - 1 - contourIndex]);
+        // setLogo(wanderPixel.x, wanderPixel.y, contourColor);
+        // // and another, as a tail
+        // if (contourIndex < Contour.size() - 1) {
+        //     wanderPixel = coord(Contour[Contour.size() - 2 - contourIndex]);
+        //     uint32_t paleContour = mixRgb(BLACK, contourColor, 0.07);
+        //     setLogo(wanderPixel.x, wanderPixel.y, paleContour);
+        // }
 
         // and change colors when a round is completed
         if (contourIndex == Contour.size() - 1) {
@@ -207,14 +215,15 @@ uint16_t mode_DeadlineTrophy(void) {
     }
 
     // for the first argument of beatsin8_t (accum88 type), "BPM << 8" just oscillates once per beat
-    uint8_t fourBeatSineWave = beatsin8_t(SEGMENT.speed << 6, 0, 255);
+    //uint8_t fourBeatSineWave = beatsin8_t(SEGMENT.speed << 6, 0, 255);
+    uint8_t beatSineWave = beatsin8_t(SEGMENT.speed << 8, 0, 255);
     uint8_t annoyingBlink = mix8(255, 0, exp(-fractBeat));
 
     if (IS_BACK_LED) {
         setSingle(annoyingBlink);
 
     } else if (IS_FLOOR_LED) {
-        setSingle(fourBeatSineWave);
+        setSingle(fmodf(beat, 4.) < 1. ? beatSineWave : BLACK);
 
     }
 

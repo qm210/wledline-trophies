@@ -24,6 +24,7 @@ void DeadlineUsermod::readRgbValues(bool printDebug)
     uint8_t r = R(color);
     uint8_t g = G(color);
     uint8_t b = B(color);
+    // development made use of these brightness-scaling options, but not needed to change anymore
     if (applyMasterBrightnessToRgbValues) {
         if (applyMasterBrightnessWithScaleVideo) {
             r = scale8_video(r, masterFader);
@@ -34,6 +35,11 @@ void DeadlineUsermod::readRgbValues(bool printDebug)
             g = scale8(g, masterFader);
             b = scale8(b, masterFader);
         }
+    } else {
+        // if the strip is off, also make the packets dark.
+        r = bri == 0 ? 0 : r;
+        g = bri == 0 ? 0 : g;
+        b = bri == 0 ? 0 : b;
     }
     s = 3 * index;
     rgbValues[s++] = r;

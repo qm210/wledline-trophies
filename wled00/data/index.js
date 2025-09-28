@@ -1541,12 +1541,15 @@ function readState(s,command=false)
             );
     }
     const dlBriLabel = gId('bri_label');
+    // QM: ignore that scaling options again, it was useful for development
+    /*
     if (s.DL && dlBriLabel) {
         dlBriLabel.classList.toggle("xBri", s.DL.xBri);
-        dlBriLabel.classList.toggle("xVid", s.DL.xVid);
+        // dlBriLabel.classList.toggle("xVid", s.DL.xVid);
         dlBriLabel.textContent = !s.DL.xBri ? "(ignored for UDP)"
-            : ("" + (s.DL.xVid ? "(scales in V mode)" : ""));
+            : ("(scales UDP packets)" + (s.DL.xVid ? "(scales in V mode)" : ""));
     }
+    */
 
 	if (s.seg.length>2) d.querySelectorAll(".pop").forEach((e)=>{e.classList.remove("hide");});
 

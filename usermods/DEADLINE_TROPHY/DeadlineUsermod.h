@@ -83,7 +83,7 @@ private:
     static const unsigned int N_RGB_VALUES = 3 * DeadlineTrophy::N_LEDS_TOTAL;
     byte rgbValues[N_RGB_VALUES];
     void readRgbValues(bool printDebug = false);
-    bool applyMasterBrightnessToRgbValues = true;
+    bool applyMasterBrightnessToRgbValues = false;
     bool applyMasterBrightnessWithScaleVideo = false;
 
     float sendUdpInSec = 0;

@@ -44,9 +44,10 @@ namespace DeadlineTrophy {
         }
 
         uint8_t mix8(uint8_t a, uint8_t b, float t) {
-            return a + static_cast<uint8_t>(
-                t * (static_cast<float>(b) - static_cast<float>(a))
-            );
+            float offset = static_cast<float>(a);
+            float delta = static_cast<float>(b) - offset;
+            float mixed = constrain(offset + t * delta, 0., 255.);
+            return static_cast<uint8_t>(mixed + 0.5f);
         }
 
         uint32_t mixRgb(uint32_t color1, uint32_t color2, float t) {
