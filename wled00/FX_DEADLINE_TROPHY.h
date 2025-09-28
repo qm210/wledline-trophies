@@ -20,6 +20,8 @@ extern uint16_t mode_static(void);
 // Notes:
 // - the if (...SEGMENT) { ... } is due to "this FX will be evaluated for every segment on its own"
 //   remember, that you also have to set it for each segment to be actually active.
+// - for "state" variables, there are two uint8_t SEGMENT.aux0 and SEGMENT.aux1,
+//   but you can also declare any variable "static" to be more flexible (QM figures that makes sense here)
 // - the EVERY_NTH_CALL(n) { ... } helper is great for debugging.
 
 uint16_t mode_DeadlineTrophy(void) {
@@ -61,23 +63,14 @@ uint16_t mode_DeadlineTrophy(void) {
         // mapping 0..255 to [1/4 .. 4] with centered 128 = 1:
         float k = exp2f((static_cast<float>(SEGMENT.intensity) - 128.) / 32.);
         static float k_factor = 1.;
-        // this is useful to get a point in there:
-        auto center = Vec2::fromParameters(SEGMENT.custom1, SEGMENT.custom2);
         // custom3 is only 5bit (0..31)
         float w = exp2f((static_cast<float>(SEGMENT.custom3) - 16.) / 8.);
 
         EVERY_NTH_CALL(5000) {
-            DEBUG_PRINTF("[QM_DEBUG_FX] Params %.3f (%.3f %.3f) %.3f / Raw sx=%d ix=%d c1=%d c2=%d c3=%d AND FRAMETIME %d\n",
-                k, center.x, center.y, w,
-                SEGMENT.speed, SEGMENT.intensity,
-                SEGMENT.custom1, SEGMENT.custom2, SEGMENT.custom3,
-                FRAMETIME
-            );
-        }
-
-        EVERY_NTH_CALL(10000) {
             measureMicros();
         }
+
+        SEGMENT.fill(BLACK);
 
         for (const auto& coord : logoCoordinates()) {
             float d = coord.uv.length();
@@ -100,7 +93,7 @@ uint16_t mode_DeadlineTrophy(void) {
 
             color.hue = static_cast<uint8_t>(hue - 3. * theta);
             color.sat = color_.sat;
-            color.val = static_cast<uint8_t>(30. * clip(d));
+            color.val = static_cast<uint8_t>(100. * clip(d));
 
             // as an example of controlling the parameters. draws a gauss curve / circle around teh given point, white.
             /*
@@ -109,31 +102,25 @@ uint16_t mode_DeadlineTrophy(void) {
             color.sat = min(color.sat, static_cast<uint8_t>(255. - d));
             */
 
-            EVERY_NTH_CALL(831) {
-                DEBUG_PRINTF("[QM_DEBUG_LOGO] %.3f %.3f vs %.3f %.3f: H%d S%d V%d",
-                    coord.uv.x, coord.uv.y, center.x, center.y, color.hue, color.sat, color.val
-                );
-            }
-
             // draw one triangle to show usage of left/right tilt vectors
-            CHSV triangleColor = CHSV(200, 100, 150);
-            float randomVariation = static_cast<float>(perlin8(static_cast<uint16_t>(100. * beat)))/128. - 1.;
-            Vec2 pointForLeft = triangleLeft + Vec2{ 3 * randomVariation, 0 };
+            CHSV triangleColor = CHSV(230, 200, 100);
+            Vec2 pointForLeft = triangleLeft + 4.f * perlin1D(10. * beat) * Logo::xUnit;
             d = coord.sdLine(pointForLeft - 10. * Logo::tiltRight, pointForLeft + 10. * Logo::tiltRight);
             color = mixHsv(color, triangleColor, exp(-5. * d));
-            Vec2 pointForRight = triangleRight + Vec2{ -2 * randomVariation, 0 };
+            Vec2 pointForRight = triangleRight - 5.f * perlin1D(10. * beat + 4.) * Logo::xUnit;
             d = coord.sdLine(pointForRight - 10. * Logo::tiltLeft, pointForRight + 10. * Logo::tiltLeft);
-            color = mixHsv(color, triangleColor, exp(-5. * d));
-            float bottomLineHeight = triangleLeft.y + Logo::stepSize * 4 * randomVariation;
+            color = mixHsv(color, triangleColor, exp(-3. * d));
+            float bottomLineHeight = triangleLeft.y + Logo::unit * 6.f * perlin1D(12. * beat + 100.);
             d = coord.sdLine({-10., bottomLineHeight}, {10., bottomLineHeight});
-            color = mixHsv(color, triangleColor, exp(-5. * d));
+            color = mixHsv(color, triangleColor, exp(-4. * d));
 
-            EVERY_NTH_CALL(831) {
-                DEBUG_PRINTF(" ... (%.3f, %.3f) (%.3f, %.3f) -> with steps %.3f d=%.4f, bh=%.4f -> HSV %d %d %d\n",
-                    Logo::tiltLeft.x, Logo::tiltLeft.y, Logo::tiltRight.x, Logo::tiltRight.y, Logo::stepSize,
-                    bottomLineHeight, d, color.hue, color.sat, color.val
-                );
-            }
+            // EVERY_NTH_CALL(210) {
+            //     DEBUG_PRINTF("[QM_DEBUG_LOGO] (%.3f, %.3f)->(%.3f, %.3f) (%.3f, %.3f)->(%.3f, %.3f) bottomY=%.3f, d=%.3f\n",
+            //         triangleLeft.x, triangleLeft.y, pointForLeft.x, pointForLeft.y,
+            //         triangleRight.x, triangleRight.y, pointForRight.x, pointForRight.y,
+            //         bottomLineHeight, d
+            //     );
+            // }
 
             setLogo(coord.x, coord.y, color);
         }
@@ -155,17 +142,31 @@ uint16_t mode_DeadlineTrophy(void) {
             }
         }
         */
-        static int contourIndex = 0;
-        static CRGB contourColor = CRGB(0, 90, 170);
-        fillLogoArray(Logo::Contour.data(), Logo::Contour.size(), uint32_t(contourColor));
 
-        EVERY_NTH_CALL(10000) {
+        using namespace Logo;
+
+        static uint32_t contourColor = uint32_t(CRGB(30, 40, 120));
+        // have some dim background
+        fillLogoArray(Contour.data(), Contour.size(), contourColor, 0.1, SEGMENT.call % 321 == 0);
+        // and one bright wandering point (in counter-contour-direction, as of why not? :D)
+        int contourIndex = static_cast<int>(8. * beat) % Contour.size();
+        Coord wanderPixel = coord(Contour[Contour.size() - 1 - contourIndex]);
+        setLogo(wanderPixel.x, wanderPixel.y, contourColor);
+        // and also make some part blink when near the end of the leftmost bar:
+        if (contourIndex == 2 && SEGMENT.call > 2) {
+            fillLogoArray(MiddleTriangle.data(), MiddleTriangle.size(), ORANGE, 0.6, true);
+        }
+        if (contourIndex == InnerContour.size() - 1) {
+            contourColor = uint32_t(CRGB(30, 90 + perlin8(SEGMENT.call) % 80, 170));
+        }
+
+        EVERY_NTH_CALL(5000) {
             DEBUG_PRINTF("[QM_DEBUG_FX] Logo took %ld µs.\n", measureMicros());
         }
+
     }
 
     if (IS_BASE_SEGMENT) {
-        // "state variables" -> static (can also use the uint16 seg.aux0 & seg.aux1)
         static float phi = 0.;
         static float omega = 1.7;
 
@@ -201,14 +202,15 @@ uint16_t mode_DeadlineTrophy(void) {
         }
     }
 
-    uint8_t whiteBeat = beatsin8_t(SEGMENT.speed, 0, 255);
+    // for the first argument of beatsin8_t (accum88 type), "BPM << 8" just oscillates once per beat
+    uint8_t fourBeatSineWave = beatsin8_t(SEGMENT.speed << 6, 0, 255);
     uint8_t annoyingBlink = mix8(255, 0, exp(-fractBeat));
 
     if (IS_BACK_LED) {
         setSingle(annoyingBlink);
 
     } else if (IS_FLOOR_LED) {
-        setSingle(whiteBeat);
+        setSingle(fourBeatSineWave);
 
     }
 
@@ -216,7 +218,7 @@ uint16_t mode_DeadlineTrophy(void) {
 }
 
 static const char _data_FX_MODE_DEADLINE_TROPHY[] PROGMEM =
-    "DEADLINE Trophy@BPM,SpotWidth,SpotX,SpotY,SpecialK;!,!;!;2;sx=110";
+    "DEADLINE Trophy@BPM,!,Contour Intensity,!,!;!,!;!;2;c1=0,sx=110,pal=59";
 // <-- cf. https://kno.wled.ge/interfaces/json-api/#effect-metadata
 // <EffectParameters>;<Colors>;<Palette>;<Flags>;<Defaults>
 // <Colors> = !,! = Two Defaults

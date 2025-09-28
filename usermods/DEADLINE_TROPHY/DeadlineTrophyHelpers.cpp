@@ -37,8 +37,16 @@ namespace DeadlineTrophy {
             return y;
         }
 
+        float perlin1D(float x) {
+            // result gonne be within [-1, 1], while util.cpp's perlin1D_raw/() is in [-24691, 24689]
+            int32_t raw = perlin1D_raw(static_cast<uint32_t>(x * 1e3), false);
+            return raw / 24691.;
+        }
+
         uint8_t mix8(uint8_t a, uint8_t b, float t) {
-            return a + static_cast<uint8_t>(static_cast<float>(b - a) * t);
+            return a + static_cast<uint8_t>(
+                t * (static_cast<float>(b) - static_cast<float>(a))
+            );
         }
 
         uint32_t mixRgb(uint32_t color1, uint32_t color2, float t) {
@@ -99,15 +107,26 @@ namespace DeadlineTrophy {
             return delta;
         }
 
-        void fillLogoArray(const uint8_t* pixels, size_t nPixels, uint32_t color, float opacity)
+        void fillLogoArray(const uint8_t* pixels, size_t nPixels, uint32_t color, float opacity, bool debug)
         {
             for (int i = 0; i < nPixels; i++) {
                 auto coord = Logo::coord(pixels[i]);
-                if (opacity != 1.) {
+                uint32_t blend = color;
+                if (opacity < 1.) {
                     uint32_t current = SEGMENT.getPixelColorXY(coord.x, coord.y);
-                    color = mixRgb(current, color, opacity);
+                    uint32_t blend = mixRgb(current, color, opacity);
+
+                    if (debug) {
+                        DEBUG_PRINTF("[DEBUG_LOGO_ARRAY] %d %d -> %d; %.3f * %d (%d/%d/%d) on current %d (%d/%d/%d) -> %d (%d/%d/%d)\n",
+                            nPixels, i, coord.index, opacity,
+                            color, R(color), G(color), B(color),
+                            current, R(current), G(current), B(current),
+                            blend, R(blend), G(blend), B(blend)
+                        );
+                    }
                 }
-                setLogo(coord.x, coord.y, color);
+
+                setLogo(coord.x, coord.y, blend);
             }
         }
     }

@@ -182,7 +182,7 @@ bool DeadlineUsermod::parseNotifyPacket(const uint8_t *udpIn) {
                 seg.setOpacity(segmentOpacity);
             }
             if (applyFxIndex) {
-                seg.setMode(fxIndex);
+                seg.setMode(fxIndex, true);
             }
             if (applyFxSpeed) {
                 seg.speed = fxSpeed;

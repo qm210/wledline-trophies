@@ -13,15 +13,15 @@
 #define DEADLINE_UDP_SENDER_PORT 3413
 #endif
 
-// These Limits are from the wled_cfg(2).json that Topy sent me on 2024/10/20 (via Signal)
+// The limit of wled_cfg(2).json from topy (on 2024/10/20) had 1200 mA limit
 #ifdef ABL_MILLIAMPS_DEFAULT
 #undef ABL_MILLIAMPS_DEFAULT
 #endif
-#define ABL_MILLIAMPS_DEFAULT 1200
+#define ABL_MILLIAMPS_DEFAULT 1000
 
-// Brightness default at max, because the current limitation should apply anyway (BE VERY SURE ABOUT THAT.)
+// The setting for the brightness - this will still be limited by the Ampere limits!
 #ifndef DEADLINE_INIT_BRIGHTNESS
-#define DEADLINE_INIT_BRIGHTNESS 255
+#define DEADLINE_INIT_BRIGHTNESS 50
 #endif
 
 // Network stuff -- mDNS might be irrelevant, as Scotty told me it isn't enabled (waste of power)

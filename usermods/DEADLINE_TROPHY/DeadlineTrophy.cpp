@@ -75,12 +75,12 @@ namespace DeadlineTrophy {
             PIN_FLOOR_SPOT
         ));
 
-        // QM: let's keep the gamma functioning right now,
-        // but we should fix it & communicate that before the compo
-        // gammaCorrectBri = false;
-        // gammaCorrectCol = true;
-        // gammaCorrectVal = 1.0; // <-- messy suggested, default was 2.7 or something
-        // NeoGammaWLEDMethod::calcGammaTable(gammaCorrectVal);
+        // QM: changing gamma did not survive re-flashing (??), so fix it.
+        // for the compo, it should be fixed anyway (and communicated before!)
+        gammaCorrectBri = false;
+        gammaCorrectCol = true;
+        gammaCorrectVal = 1.2; // <-- messy suggested 1.0, default is 2.8
+        NeoGammaWLEDMethod::calcGammaTable(gammaCorrectVal);
 
         #ifdef DEADLINE_INIT_BRIGHTNESS
             briS = DEADLINE_INIT_BRIGHTNESS;
@@ -181,23 +181,27 @@ namespace DeadlineTrophy {
     }
 
     namespace Logo {
-        float stepSize = 0.;
+        float unit;
+        Vec2 xUnit{};
+        Vec2 yUnit{};
         Vec2 tiltLeft{};
         Vec2 tiltRight{};
 
-        void initConstants(const std::array<Coord, N_LEDS_LOGO>& coords, float yStepSize) {
+        void initConstants(const std::array<Coord, N_LEDS_LOGO>& coords, float unitSize) {
             // will be called by the logoCoordinates() initialization
             // -> i.e. cannot use before the first logoCoordinates() call, but that should do it
-            stepSize = yStepSize;
+            unit = unitSize;
+            xUnit = { unitSize, 0 };
+            yUnit = { 0, unitSize };
 
-            const uint8_t ledForRightTiltBottom = 160 - N_LEDS_BASE;
+            const uint8_t ledForRightTiltBottom = 161 - N_LEDS_BASE;
             const uint8_t ledForRightTiltTop = 169 - N_LEDS_BASE;
             const uint8_t ledForLeftTiltBottom = 104 - N_LEDS_BASE;
             const uint8_t ledForLeftTiltTop = 120 - N_LEDS_BASE;
             tiltLeft = coords[ledForLeftTiltTop].uv - coords[ledForLeftTiltBottom].uv;
-            tiltLeft *= stepSize / tiltLeft.y;
+            tiltLeft *= unit / tiltLeft.y;
             tiltRight = coords[ledForRightTiltTop].uv - coords[ledForRightTiltBottom].uv;
-            tiltRight *= stepSize / tiltRight.y;
+            tiltRight *= unit / tiltRight.y;
         }
 
     }

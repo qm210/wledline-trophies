@@ -78,9 +78,18 @@ namespace DeadlineTrophy {
             return logoCoordinates()[index - N_LEDS_BASE];
         }
 
-        // some pre-figured-out areas in the Logo for easier iteration
-        const std::array<uint8_t, 53> Contour = {{
+        // some pre-figured-out areas / paths in the Logo for easier iteration
+        const std::array<uint8_t, 61> Contour = {{
             169, 168, 167, 166, 165, 164, 163, 162, 161, 160,
+            158, 157, 156, 155, 154, 153, 152, 151, 150, 149, 148, 125, 124, 120,
+            119, 114, 113, 109, 88, 89, 90, 91,
+            108, 107, 106, 105, 104, 103, 102, 101,100,
+            99, 82, 81, 76, 75, 70, 69, 64, 136, 137,
+            159,
+            // add a closed loop to the beginning:
+            160, 161, 162, 163, 164, 165, 166, 167, 168
+        }};
+        const std::array<uint8_t, 43> InnerContour = {{
             158, 157, 156, 155, 154, 153, 152, 151, 150, 149, 148, 125, 124, 120,
             119, 114, 113, 109, 88, 89, 90, 91,
             108, 107, 106, 105, 104, 103, 102, 101,100,
@@ -92,9 +101,9 @@ namespace DeadlineTrophy {
             122, 117, 116, 111,
             86, 85, 84, 79, 78, 73, 72, 67, 66
         }};
-        const std::array<uint8_t, 31> MiddleTriangle = {{
-            137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147,
-            126, 123, 121, 118, 115, 112, 110, 94,
+        const std::array<uint8_t, 30> MiddleTriangle = {{
+            138, 139, 140, 141, 142, 143, 144, 145, 146, 147,
+            126, 123, 121, 118, 115, 112, 110, 87,
             95, 96, 97, 98,
             83, 80, 77, 74, 71, 68, 65, 135
         }};
@@ -105,10 +114,10 @@ namespace DeadlineTrophy {
             104, 103, 102, 101, 100,
             99, 82, 81, 76, 75, 70, 69, 64, 136, 137
         }};
-        const std::array<uint8_t, 10> LeftmostLine = {{
+        const std::array<uint8_t, 10> LeftmostBar = {{
             160, 161, 162, 163, 164, 165, 166, 167, 168, 169
         }};
-        const std::array<uint8_t, 35> LeftBar = {{
+        const std::array<uint8_t, 34> LeftBar = {{
             159, 158, 157,
             156, 155, 154, 153, 152, 151, 150, 149,
             137, 138, 139,
@@ -116,14 +125,13 @@ namespace DeadlineTrophy {
             136, 135, 134,
             133, 132, 131, 130, 129, 128, 127, 126
         }};
-        const std::array<uint8_t, 35> UpperLeftBar = {{
-            159 ,158, 157,
-            156, 155, 154, 153, 152, 151, 150, 149,
+        const std::array<uint8_t, 26> UpperLeftBar = {{
+            157, 156, 155, 154, 153, 152, 151, 150, 149,
             140, 141, 142, 143, 144, 145, 146, 147, 148,
             133, 132, 131, 130, 129, 128, 127, 126
         }};
-        const std::array<uint8_t, 36> BottomBar = {{
-            137, 136, 64, 69, 79, 70, 75, 76, 81, 82, 99, 100,
+        const std::array<uint8_t, 37> BottomBar = {{
+            160, 137, 136, 64, 69, 79, 70, 75, 76, 81, 82, 99, 100,
             159, 138, 135, 65, 68, 71, 74, 77, 80, 83, 98, 101,
             158, 139, 134, 66, 67, 72, 73, 78, 79, 84, 97, 102
         }};
@@ -132,16 +140,18 @@ namespace DeadlineTrophy {
             110, 112, 115, 118, 121, 124,
             109, 113, 114, 119, 120
         }};
-        const std::array<uint8_t, 27> RightmostBar = {{
+        const std::array<uint8_t, 18> RightmostBar = {{
             85, 86, 87, 88, 89, 90,
             96, 95, 94, 93, 92, 91,
             103, 104, 105, 106, 107, 108
         }};
 
-        extern float stepSize;
+        extern float unit;
+        extern Vec2 xUnit;
+        extern Vec2 yUnit;
         extern Vec2 tiltLeft;
         extern Vec2 tiltRight;
-        void initConstants(const std::array<Coord, N_LEDS_LOGO>& coords, float yStepSize);
+        void initConstants(const std::array<Coord, N_LEDS_LOGO>& coords, float unitSize);
     }
 
     namespace FxHelpers {
@@ -195,6 +205,7 @@ namespace DeadlineTrophy {
         uint32_t floatHSV(float hue, float sat, float val);
         FloatRgb cosinePalette(float t, FloatRgb, FloatRgb, FloatRgb, FloatRgb);
         float invSqrt(float value);
+        float perlin1D(float x);
         uint8_t mix8(uint8_t a, uint8_t b, float t);
         uint32_t mixRgb(uint32_t c1, uint32_t c2, float t);
         CHSV mixHsv(CHSV c1, CHSV c2, float t);
@@ -203,7 +214,7 @@ namespace DeadlineTrophy {
         CRGB& scale(CRGB& color, float factor);
         CRGB& grade(CRGB& color, float exponent);
         long measureMicros();
-        void fillLogoArray(const uint8_t* pixels, size_t nPixels, uint32_t color, float mixing = 1.);
+        void fillLogoArray(const uint8_t* pixels, size_t nPixels, uint32_t color, float mixing = 1., bool debug = false);
     }
 
 }
