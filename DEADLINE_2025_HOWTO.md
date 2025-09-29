@@ -1,6 +1,6 @@
 ## What this is about ##
 
-The Trophies for the 10-year-anniversary Deadline 2024 compoparties have been absolutely overengineered but to honor all the hours spent by Thorin, QM, *etc.blalalala*, there had to be a possibility for you all to have some fun with it.
+The Trophies for the 10-year-anniversary Deadline 2024 compoparties have been absolutely overengineered but to honor all the hours spent by Thorin, QM, *etc.blalalala.$insertNameHere*, there had to be a possibility for you all to have some fun with it.
 
 Which is why this firmware [based on WLED](https://github.com/wled) has been modified to be somewhat moddable without diving *completely* into WLED sourcecode, and to preview the effects on the trophy LEDs without needing to having ~~manipulated the crowd~~ virtuously won one of these trophies in the past yourself - you just need a suitable ESP32 (WROOM 32D) controller.
 
