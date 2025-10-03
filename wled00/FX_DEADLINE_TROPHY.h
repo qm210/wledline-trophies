@@ -48,7 +48,7 @@ uint16_t mode_DeadlineTrophy(void) {
     // (this demonstrates random numbers and how to use the palette).
     static float randomTakenAtBeat = 0.;
     CRGBW lastRandomColor;
-    if (beat > randomTakenAtBeat + 4.) {
+    if (beat > randomTakenAtBeat + 16.) {
         SEGMENT.aux0 = hw_random8();
         randomTakenAtBeat = floor_t(beat);
         lastRandomColor = ColorFromPalette(SEGPALETTE, hw_random8(), 255, LINEARBLEND_NOWRAP);
@@ -66,9 +66,9 @@ uint16_t mode_DeadlineTrophy(void) {
         // custom3 is only 5bit (0..31)
         float w = exp2f((static_cast<float>(SEGMENT.custom3) - 16.) / 8.);
 
-        EVERY_NTH_CALL(5000) {
-            measureMicros();
-        }
+        // EVERY_NTH_CALL(5000) {
+        //     measureMicros();
+        // }
 
         SEGMENT.fill(BLACK);
 
@@ -103,6 +103,7 @@ uint16_t mode_DeadlineTrophy(void) {
             */
 
             // draw one triangle to show usage of left/right tilt vectors
+            // but only with a given random weight
             CHSV triangleColor = CHSV(230, 200, 170);
             Vec2 pointForLeft = triangleLeft + (-8.f + 24.f * perlin1D(10. * beat)) * Logo::xUnit;
             d = coord.sdLine(pointForLeft - 10. * Logo::tiltRight, pointForLeft + 10. * Logo::tiltRight);
@@ -148,33 +149,35 @@ uint16_t mode_DeadlineTrophy(void) {
         static uint32_t contourColor = uint32_t(CRGB(30, 40, 120));
         int contourIndex = static_cast<int>(beat * 8.) % Contour.size();
         // some contour frames
-        if (contourIndex == 0) {
-            fillLogoArray(Contour.data(), Contour.size(), contourColor, 0.01);
-        } else if (contourIndex == 1) {
-            fillLogoArray(MiddleTriangle.data(), MiddleTriangle.size(), YELLOW, 0.003);
-            fillLogoArray(LeftmostBar.data(), LeftmostBar.size(), CYAN, 0.004);
-        } else if (contourIndex == 2) {
-            fillLogoArray(InnerTriangle.data(), InnerTriangle.size(), WHITE, 0.01);
-            fillLogoArray(OuterTriangle.data(), OuterTriangle.size(), CYAN, 0.004);
+        if (SEGMENT.aux0 < 20) {
+            if (contourIndex == 0) {
+                fillLogoArray(Contour.data(), Contour.size(), contourColor, 0.01);
+            } else if (contourIndex == 1) {
+                fillLogoArray(MiddleTriangle.data(), MiddleTriangle.size(), YELLOW, 0.003);
+                fillLogoArray(LeftmostBar.data(), LeftmostBar.size(), CYAN, 0.004);
+            } else if (contourIndex == 2) {
+                fillLogoArray(InnerTriangle.data(), InnerTriangle.size(), WHITE, 0.01);
+                fillLogoArray(OuterTriangle.data(), OuterTriangle.size(), CYAN, 0.004);
+            }
         }
         // did have one bright wandering point but it was too ugly
-        // Coord wanderPixel = coord(Contour[Contour.size() - 1 - contourIndex]);
-        // setLogo(wanderPixel.x, wanderPixel.y, contourColor);
-        // // and another, as a tail
-        // if (contourIndex < Contour.size() - 1) {
-        //     wanderPixel = coord(Contour[Contour.size() - 2 - contourIndex]);
-        //     uint32_t paleContour = mixRgb(BLACK, contourColor, 0.07);
-        //     setLogo(wanderPixel.x, wanderPixel.y, paleContour);
-        // }
+        Coord wanderPixel = coord(Contour[Contour.size() - 1 - contourIndex]);
+        setLogo(wanderPixel.x, wanderPixel.y, contourColor);
+        // and another, as a tail
+        if (contourIndex < Contour.size() - 1) {
+            wanderPixel = coord(Contour[Contour.size() - 2 - contourIndex]);
+            uint32_t paleContour = mixRgb(BLACK, contourColor, 0.07);
+            setLogo(wanderPixel.x, wanderPixel.y, paleContour);
+        }
 
         // and change colors when a round is completed
         if (contourIndex == Contour.size() - 1) {
             contourColor = uint32_t(CRGB(30, 90 + perlin8(SEGMENT.call) % 80, 170));
         }
 
-        EVERY_NTH_CALL(5000) {
-            DEBUG_PRINTF("[QM_DEBUG_FX] Logo took %ld µs.\n", measureMicros());
-        }
+        // EVERY_NTH_CALL(5000) {
+        //     DEBUG_PRINTF("[QM_DEBUG_FX] Logo took %ld µs.\n", measureMicros());
+        // }
 
     }
 
@@ -215,15 +218,15 @@ uint16_t mode_DeadlineTrophy(void) {
     }
 
     // for the first argument of beatsin8_t (accum88 type), "BPM << 8" just oscillates once per beat
-    //uint8_t fourBeatSineWave = beatsin8_t(SEGMENT.speed << 6, 0, 255);
+    uint8_t fourBeatSineWave = beatsin8_t(SEGMENT.speed << 6, 0, 255);
     uint8_t beatSineWave = beatsin8_t(SEGMENT.speed << 8, 0, 255);
-    uint8_t annoyingBlink = mix8(255, 0, exp(-fractBeat));
+    // uint8_t annoyingBlink = mix8(255, 0, exp(-fractBeat));
 
     if (IS_BACK_LED) {
-        setSingle(annoyingBlink);
+        setSingle(beatSineWave);
 
     } else if (IS_FLOOR_LED) {
-        setSingle(fmodf(beat, 4.) < 1. ? beatSineWave : BLACK);
+        setSingle(fmodf(beat, 4.) < 1. ? fourBeatSineWave : BLACK);
 
     }
 
