@@ -180,6 +180,10 @@ public:
 
         // set InputCurrentSwitch to zero.
         dacWrite(DAC1, 0);
+
+        // precalc the coordinates so their first usage doesn't totally lag
+        DeadlineTrophy::logoCoordinates();
+        DeadlineTrophy::baseCoordinates();
     }
 
     void loop()

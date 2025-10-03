@@ -634,7 +634,8 @@ void handleNotifications()
   if (udpIn[0] > 0 && udpIn[0] < 6)
   {
     realtimeIP = (isSupp) ? notifier2Udp.remoteIP() : notifierUdp.remoteIP();
-    DEBUG_PRINTLN(realtimeIP);
+    // DEBUG_PRINT("[DEBUG UDP] ");
+    // DEBUG_PRINTLN(realtimeIP);
     if (packetSize < 2) return;
 
     if (udpIn[1] == 0) {
@@ -705,7 +706,7 @@ void handleNotifications()
 void setRealtimePixel(uint16_t i, byte r, byte g, byte b, byte w)
 {
   unsigned pix = i + arlsOffset;
-  strip.setRealtimePixelColor(pix, RGBW32(r,g,b,w));
+  strip.setRealtimePixelColor(pix, RGBW32(r, g, b, 0));
 }
 
 /*********************************************************************************************\
