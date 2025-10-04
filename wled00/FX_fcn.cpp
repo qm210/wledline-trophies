@@ -1688,6 +1688,35 @@ void WS2812FX::show() {
 }
 
 void WS2812FX::setRealtimePixelColor(unsigned i, uint32_t c) {
+  #if USE_DEADLINE_CONFIG
+    // rather quick hack on Deadline herself - but this needs the Trophy mapping, or else.
+    using namespace DeadlineTrophy;
+    int x, y, segment = -1;
+    if (i < N_LEDS_BASE) {
+        segment = 0;
+        Coord coord = baseCoordinates()[i];
+        x = coord.x;
+        y = coord.y + logoH;
+    } else if (i < N_LEDS_BASE + N_LEDS_LOGO) {
+        segment = 1;
+        Coord coord = logoCoordinates()[i - N_LEDS_BASE];
+        x = coord.x;
+        y = coord.y;
+    } else if (i == 170) {
+        segment = 2;
+        x = baseSize;
+        y = logoH;
+    } else if (i == 171) {
+        segment = 3;
+        x = baseSize;
+        y = logoH + 1;
+    }
+    if (segment >= 0) {
+        setPixelColor(x + y * logoW, c);
+    }
+    return;
+  #endif
+
   if (useMainSegmentOnly) {
     const Segment &seg = getMainSegment();
     if (seg.isActive() && i < seg.length()) seg.setPixelColorRaw(i, c);
