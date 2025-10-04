@@ -24,42 +24,6 @@ extern uint16_t mode_static(void);
 //   but you can also declare any variable "static" to be more flexible (QM figures that makes sense here)
 // - the EVERY_NTH_CALL(n) { ... } helper is great for debugging.
 
-inline float bpmAt(float t) {
-    // just taken stumpfly out of bitwig
-    const float t1 = 33.951;
-    const float t12 = 41.971;
-    const float t2 = 68.524;
-    const float t23 = 72.454;
-    const float t3 = 98.945;
-    const float t34 = 102.733;
-    const float bpm1 = 113.10;
-    const float bpm2 = 126.54;
-    const float bpm3 = 117.78;
-    const float bpm4 = 136.10;
-    if (t < t1) {
-        return bpm1;
-    } else if (t < t12) {
-        return bpm1 + (bpm2 - bpm1) * (t - t1) / (t12 - t1);
-    } else if (t < t2) {
-        return bpm2;
-    } else if (t < t23) {
-        return bpm2 + (bpm3 - bpm2) * (t - t2) / (t23 - t2);
-    } else if (t < t3) {
-        return bpm3;
-    } else if (t < t34) {
-        return bpm3 + (bpm4 - bpm3) * (t - t3) / (t34 - t3);
-    } else {
-        return bpm4;
-    }
-}
-
-struct Sparkle {
-    DeadlineTrophy::Vec2 pos;
-    DeadlineTrophy::Vec2 vel;
-    float size;
-    uint8_t hue;
-};
-
 static CHSV hsvNone = CHSV(0, 0, 0);
 
 float elapsed = 0.;
@@ -74,7 +38,6 @@ uint16_t mode_DeadlineTrophy(void) {
     CRGB segcolor0 = CRGB(SEGCOLOR(0));
     CHSV color = rgb2hsv_approximate(segcolor0);
     CHSV color_(color);
-    float hue = static_cast<float>(color.hue);
 
     SEGMENT.fill(BLACK);
 
