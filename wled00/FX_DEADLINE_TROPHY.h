@@ -24,6 +24,41 @@ extern uint16_t mode_static(void);
 //   but you can also declare any variable "static" to be more flexible (QM figures that makes sense here)
 // - the EVERY_NTH_CALL(n) { ... } helper is great for debugging.
 
+inline float bpm(float time) {
+    // just taken stumpfly out of bitwig
+    const float t1 = 33.951;
+    const float t12 = 41.971;
+    const float t2 = 68.524;
+    const float t23 = 72.454;
+    const float t3 = 98.945;
+    const float t34 = 102.733;
+    const float bpm1 = 113.10;
+    const float bpm2 = 126.54;
+    const float bpm3 = 117.78;
+    const float bpm4 = 136.10;
+    if (time < t1) {
+        return bpm1;
+    } else if (time < t12) {
+        return bpm1 + (bpm2 - bpm1) * (time - t1) / (t12 - t1);
+    } else if (time < t2) {
+        return bpm2;
+    } else if (time < t23) {
+        return bpm2 + (bpm3 - bpm2) * (time - t2) / (t23 - t2);
+    } else if (time < t3) {
+        return bpm3;
+    } else if (time < t34) {
+        return bpm3 + (bpm4 - bpm3) * (time - t3) / (t34 - t3);
+    } else {
+        return bpm4;
+    }
+}
+
+struct Sparkle {
+    DeadlineTrophy::Vec2 pos;
+    DeadlineTrophy::Vec2 vel;
+    float size;
+};
+
 uint16_t mode_DeadlineTrophy(void) {
     using namespace DeadlineTrophy;
     using namespace DeadlineTrophy::FxHelpers;
@@ -32,10 +67,14 @@ uint16_t mode_DeadlineTrophy(void) {
     CHSV color_(color);
     float hue = static_cast<float>(color.hue);
 
-    float bpm = static_cast<float>(SEGMENT.speed);
-    float beat = beatNow(bpm);
+    static float beat = 0.;
+    static float time = 0.;
+    float elapsed = secondNow() - time;
+    beat += bpm(time)/60. * elapsed;
+    time += elapsed;
+
     float fractBeat = fmodf(beat, 1.);
-    float time = secondNow();
+    float halfBeat = floor(beat * 2.) * 0.5;
 
     if (SEGENV.call == 0) {
         // DEBUG_PRINTF("[DEADLINE_TROPHY] FX was called, now initialized for segment %d (%s) :)\n", strip.getCurrSegmentId(), SEGMENT.name);
@@ -58,6 +97,8 @@ uint16_t mode_DeadlineTrophy(void) {
     static Vec2 triangleRight = Logo::coord(103).uv;
 
     if (IS_LOGO_SEGMENT) {
+        using namespace Logo;
+
         // QM: that width is useful for a point with exp(-r*r/w/w), values go from [1/8..1]
         // float width = exp2f((static_cast<float>(SEGMENT.intensity) - 192.) / 64.);
         // mapping 0..255 to [1/4 .. 4] with centered 128 = 1:
@@ -66,62 +107,73 @@ uint16_t mode_DeadlineTrophy(void) {
         // custom3 is only 5bit (0..31)
         float w = exp2f((static_cast<float>(SEGMENT.custom3) - 16.) / 8.);
 
-        // EVERY_NTH_CALL(5000) {
-        //     measureMicros();
-        // }
+        float d;
+        CHSV lineColor;
+        float lineY = triangleLeft.y - unit;
+        if (beat < 18.) {
+            if (beat < 1.5) {
+                lineColor = CHSV(230, 200, uint8_t(170. * beat / 1.5));
+            } else {
+                lineColor = CHSV(uint8_t(230 - (halfBeat - 3.) / (8. - 3.)), 200, uint8_t(170. * expf(-(beat - 1.5))));
+                lineY += (halfBeat - 3.);
+            }
+        }
 
-        SEGMENT.fill(BLACK);
+        static std::vector<Sparkle> sparks;
+        static float sparkedAtBeat = 4.;
+
+        for (auto& spark : sparks) {
+            spark.pos += spark.vel * elapsed;
+        }
+        if (beat > 4. && beat < 18. && beat - sparkedAtBeat > 0.5) {
+            float rand_x = 0.005 * float(random(-20, 20));
+            float rand_y = -0.3 + 0.008 * float(random(20));
+            sparks.push_back({
+                                     { rand_x, rand_y },
+                                     { 0.1f * rand_x, -unit },
+                                     0.01f
+                             });
+            sparkedAtBeat = beat;
+            // recycle them later
+        }
+        static CHSV beatColor = CHSV(210, 128, 200);
+        if (beat >= 18. && beat < 21.) {
+            float mixB18 = clip((beat - 18.) / 3.);
+            beatColor = CHSV(
+                    98,
+                    mix8(255, 0, mixB18),
+                    mix8(255, 140, mixB18)
+            );
+        }
+        if (beat >= 21. && beat < 36.) {
+            if (beat >= sparkedAtBeat + 1.) {
+                beatColor = CHSV(
+                        hw_random8(160, 230),
+                        hw_random8(128, 255),
+                        hw_random8(200, 255)
+                );
+                sparkedAtBeat = beat;
+            }
+        }
+        static CHSV hsvNone = CHSV(0, 0, 0);
 
         for (const auto& coord : logoCoordinates()) {
-            float d = coord.uv.length();
-            d = sin_t(M_TWOPI * (d * k * k_factor + w * beat));
-            d *= d;
-            d = 0.02 / d;
+            if (beat < 18.) {
+                d = coord.sdLine({-10., lineY}, {10., lineY});
+                color = mixHsv(hsvNone, lineColor, exp(-5. * d));
 
-            // nach Polarwinkel unterdrücken...
-            float theta = coord.uv.polarAngleFrom({0, 0}, 0.25 * beat * M_TWOPI);
-            // aber reicht alle 8 Takte mal.
-            float every8Beats = fmodf(beat, 8.);
-            float gaussCurveExponent = (every8Beats - 6.) / 2;
-            float swirlIntensity = exp(-sq(gaussCurveExponent));
-            d *= exp(-theta * swirlIntensity);
-
-            // at some other time, make k large and suppress points
-            gaussCurveExponent = (fmodf(beat, 16.) - 9.) / 2.4;
-            k_factor = 1. + exp(-sq(gaussCurveExponent));
-            d = powf(d, sq(k_factor));
-
-            color.hue = static_cast<uint8_t>(hue - 3. * theta);
-            color.sat = color_.sat;
-            color.val = static_cast<uint8_t>(50. * clip(d));
-
-            // as an example of controlling the parameters. draws a gauss curve / circle around teh given point, white.
-            /*
-            d = 255. * coord.gaussAt(center, 0.5 * k, w - 1.);
-            color.val = max(color.val, static_cast<uint8_t>(d));
-            color.sat = min(color.sat, static_cast<uint8_t>(255. - d));
-            */
-
-            // draw one triangle to show usage of left/right tilt vectors
-            // but only with a given random weight
-            CHSV triangleColor = CHSV(230, 200, 170);
-            Vec2 pointForLeft = triangleLeft + (-8.f + 24.f * perlin1D(10. * beat)) * Logo::xUnit;
-            d = coord.sdLine(pointForLeft - 10. * Logo::tiltRight, pointForLeft + 10. * Logo::tiltRight);
-            color = mixHsv(color, triangleColor, exp(-6. * d));
-            Vec2 pointForRight = triangleRight + (3.f - 7.f * perlin1D(10. * beat + 4.)) * Logo::xUnit;
-            d = coord.sdLine(pointForRight - 10. * Logo::tiltLeft, pointForRight + 10. * Logo::tiltLeft);
-            color = mixHsv(color, triangleColor, exp(-7. * d));
-            float bottomLineHeight = triangleLeft.y + Logo::unit * (-1.f + 5.f * perlin1D(6. * beat + 100.));
-            d = coord.sdLine({-10., bottomLineHeight}, {10., bottomLineHeight});
-            color = mixHsv(color, triangleColor, exp(-8. * d));
-
-            // EVERY_NTH_CALL(210) {
-            //     DEBUG_PRINTF("[QM_DEBUG_LOGO] (%.3f, %.3f)->(%.3f, %.3f) (%.3f, %.3f)->(%.3f, %.3f) bottomY=%.3f, d=%.3f\n",
-            //         triangleLeft.x, triangleLeft.y, pointForLeft.x, pointForLeft.y,
-            //         triangleRight.x, triangleRight.y, pointForRight.x, pointForRight.y,
-            //         bottomLineHeight, d
-            //     );
-            // }
+                for (auto& spark : sparks) {
+                    d = coord.gaussAt(spark.pos, spark.size);
+                    color = mixHsv(color, CHSV(98, 255, 255), d);
+                }
+            }
+            else if (beat < 21.) {
+                color = beatColor;
+                color.sat = uint8_t(beatColor.sat * exp(-coord.uv.length()));
+            }
+            else if (beat < 36.) {
+                color = mixHsv(hsvNone, beatColor, exp(-4. * fractBeat));
+            }
 
             setLogo(coord.x, coord.y, color);
         }
@@ -143,7 +195,7 @@ uint16_t mode_DeadlineTrophy(void) {
             }
         }
         */
-
+        /*
         using namespace Logo;
 
         static uint32_t contourColor = uint32_t(CRGB(30, 40, 120));
@@ -174,11 +226,11 @@ uint16_t mode_DeadlineTrophy(void) {
         if (contourIndex == Contour.size() - 1) {
             contourColor = uint32_t(CRGB(30, 90 + perlin8(SEGMENT.call) % 80, 170));
         }
+        */
 
-        // EVERY_NTH_CALL(5000) {
-        //     DEBUG_PRINTF("[QM_DEBUG_FX] Logo took %ld µs.\n", measureMicros());
-        // }
-
+        EVERY_NTH_CALL(5000) {
+            DEBUG_PRINTF("[QM_DEBUG_FX] Logo took %ld µs.\n", measureMicros());
+        }
     }
 
     if (IS_BASE_SEGMENT) {
