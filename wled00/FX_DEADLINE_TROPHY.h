@@ -140,7 +140,8 @@ uint16_t mode_DeadlineTrophy(void) {
 
         SEGMENT.fadeToBlackBy(0);
         for (auto &spark : sparks) {
-            spark.pos = spark.pos + spark.vel * deltaBeat;
+            spark.pos += spark.pos + spark.vel * deltaBeat;
+            // <-- NOTE qm: += looks like a bug, but was the state at the point of release ;)
         }
         if (beat > 4. && beat < 18. && beat - sparkedAtBeat > 0.5) {
             float rand_x = 0.04f * float(random(-20, 20));
